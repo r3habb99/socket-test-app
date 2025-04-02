@@ -17,6 +17,13 @@ const Chat = () => {
     isJoinRoomClicked,
   } = useSocket(); // Use socket context for functionality
 
+  // Function to handle sending the message when Enter key is pressed
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && message.trim()) {
+      handleSendMessage(); // Send message when Enter is pressed
+    }
+  };
+
   return (
     <div className="chat-container">
       <h1>Chat App 💬</h1>
@@ -75,6 +82,7 @@ const Chat = () => {
           placeholder="Type a message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyPress} // Listen for Enter key
         />
         <button
           className="send-btn"
