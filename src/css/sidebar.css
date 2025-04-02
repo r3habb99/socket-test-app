@@ -1,0 +1,93 @@
+/* sidebar.css */
+
+/* Sidebar styles */
+.sidebar {
+    width: 250px;
+    background-color: #333;
+    color: white;
+    padding: 20px;
+    height: 100vh;
+    box-sizing: border-box;
+    position: fixed;
+    left: 0;
+    top: 0;
+    transition: transform 0.3s ease;
+    transform: translateX(0); /* Show the sidebar */
+  }
+  
+  /* Sidebar heading styles */
+  .sidebar h3 {
+    margin-top: 0;
+    font-size: 1.5rem;
+  }
+  
+  /* Sidebar list */
+  .sidebar ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  /* Sidebar list item */
+  .sidebar ul li {
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    font-size: 1.1rem;
+  }
+  
+  .sidebar ul li:hover {
+    background-color: #555;
+  }
+  
+  .sidebar ul li:not(:last-child) {
+    margin-bottom: 10px;
+  }
+  
+  /* Main content styles */
+  .main-content {
+    flex-grow: 1;
+    padding: 20px;
+    background-color: #f9f9f9;
+    box-sizing: border-box;
+    margin-left: 250px; /* Adjusted to make space for the sidebar */
+    transition: margin-left 0.3s ease; /* Smooth transition for margin-left change */
+  }
+  
+  /* Hide sidebar on small screens */
+  @media (max-width: 768px) {
+    .sidebar {
+      width: 0;
+      transform: translateX(-250px); /* Hide the sidebar off-screen */
+    }
+  
+    .sidebar.open {
+      transform: translateX(0); /* Show the sidebar */
+    }
+  
+    .main-content {
+      margin-left: 0; /* Remove the left margin when the sidebar is hidden */
+    }
+  
+    .hamburger-icon {
+      display: block; /* Show the hamburger icon */
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 2rem;
+      cursor: pointer;
+      z-index: 100; /* Ensure the icon is on top */
+    }
+  
+    .sidebar ul li {
+      font-size: 1rem; /* Adjust font size on smaller screens */
+    }
+  }
+  
+  /* Hamburger icon (initially hidden on larger screens) */
+  .hamburger-icon {
+    display: none;
+  }
+  
