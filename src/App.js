@@ -67,8 +67,9 @@ function App() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>💬 Socket.IO Chat App</h1>
+    /* HTML structure remains the same in React JSX, we update only the input container */
+    <div className="container">
+      <h1>Chat App 💬</h1>
 
       <div className="form-container">
         <div>
@@ -94,32 +95,37 @@ function App() {
         </div>
       </div>
 
-      <div>
-        <h2>Send Message</h2>
-        <input
-          type="text"
-          placeholder="Enter Message"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
-        <button onClick={handleSendMessage}>Send</button>
-      </div>
+      <div className="chat-container">
+        <div className="messages-container">
+          <ul>
+            {messages.map((msg, index) => (
+              <li
+                key={index}
+                className={msg.sender._id === userId ? "sender" : "receiver"}
+              >
+                <strong>{msg.sender.username || msg.sender._id}:</strong>
+                {msg.content}
+              </li>
+            ))}
+          </ul>
+        </div>
 
-      <div className="messages-container">
-        <h2>Messages</h2>
-        <ul>
-          {messages.map((msg, index) => (
-            <li
-              key={index}
-              className={msg.sender._id === userId ? "sender-1" : "sender-2"}
-            >
-              <strong>
-                {msg.sender.username ? msg.sender.username : msg.sender._id}:
-              </strong>{" "}
-              {msg.content}
-            </li>
-          ))}
-        </ul>
+        <div className="input-container">
+          <input
+            type="text"
+            placeholder="Type a message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          <button
+            className="send-btn"
+            onClick={handleSendMessage}
+            disabled={!message.trim()}
+          >
+            <i className="fa-solid fa-paper-plane"></i>{" "}
+            {/* Font Awesome Send Icon */}
+          </button>
+        </div>
       </div>
     </div>
   );

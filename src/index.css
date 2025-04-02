@@ -1,77 +1,86 @@
 /* General Styles */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f0f0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #ece5dd;
   margin: 0;
   padding: 0;
 }
 
 h1 {
   text-align: center;
-  font-size: 2.5rem;
-  color: #333;
+  font-size: 2.8rem;
+  color: #4a4a4a;
+  font-weight: bold;
+  margin-bottom: 20px;
 }
 
 h2 {
-  color: #333;
+  color: #4a4a4a;
   font-size: 1.5rem;
   margin-bottom: 10px;
   text-transform: uppercase;
   font-weight: bold;
-  border-bottom: 2px solid #eee;
+  border-bottom: 2px solid #ddd;
   padding-bottom: 10px;
   margin-top: 20px;
 }
 
-/* Container for the app */
-div {
-  padding: 20px;
+/* Main Container */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
   margin: 0 auto;
-  width: 90%;
-  max-width: 500px;  /* Make the container smaller */
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-top: 20px;
+  height: 85vh;
 }
 
-/* Flexbox for arranging "Setup User" and "Join Room" side by side */
+/* Form Container - Arrange Setup and Join Room side by side */
 .form-container {
   display: flex;
   justify-content: space-between;
-  gap: 20px; /* Space between the two sections */
-  margin-bottom: 20px;
+  gap: 20px;
+  width: 100%;
+  margin-bottom: 30px;
 }
 
 .form-container > div {
-  flex: 1; /* Allow both sections to take equal width */
+  flex: 1;
 }
 
 input[type="text"] {
   width: 100%;
-  padding: 10px;
-  font-size: 1rem;
+  padding: 12px;
+  font-size: 1.1rem;
   margin-bottom: 10px;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 10px;
   box-sizing: border-box;
   outline: none;
+  background-color: #f0f0f0;
 }
 
 input[type="text"]:focus {
-  border-color: #0056b3;
-  box-shadow: 0 0 3px rgba(0, 91, 211, 0.6);
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
-/* Button Styles */
 button {
   background-color: #007bff;
   color: white;
-  padding: 10px 15px;
+  padding: 12px;
   border: none;
-  border-radius: 5px;
-  font-size: 1rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
   cursor: pointer;
   transition: background-color 0.3s;
+  width: 100%;
 }
 
 button:hover {
@@ -83,18 +92,30 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Messages container - This makes the message area smaller and scrollable */
-.messages-container {
-  max-height: 300px; /* Limit the height */
-  overflow-y: auto;  /* Allow vertical scrolling when messages exceed the height */
+/* Chat Container */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  width: 100%;
+  overflow-y: auto;
+  background-color: #fff;
+  border-radius: 10px;
   padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
   margin-top: 20px;
-  background-color: #f9f9f9;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
-/* Message List */
+/* Messages Area */
+.messages-container {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
 ul {
   list-style: none;
   padding: 0;
@@ -102,30 +123,106 @@ ul {
 }
 
 li {
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 20px;
+  margin-bottom: 10px;
   font-size: 1rem;
-  background-color: #f8f9fa;
   transition: background-color 0.3s;
+  max-width: 80%;
 }
 
 li strong {
   font-weight: bold;
+  margin-right: 5px;
 }
 
-/* For sender 1 and others */
-li.sender-1 {
-  background-color: #f8d7da; /* Light green for sender 1 */
+/* Sender-specific styles */
+li.sender {
+  background-color: #dcf8c6; /* Light green for sender's message */
+  justify-content: flex-end;
+  text-align: right;
+  color: #000; /* Dark text for visibility */
 }
 
-li.sender-2 {
-  background-color: #d1e7dd; /* Light red for others */
+li.receiver {
+  background-color: #f1f0f0; /* Light gray for receiver's message */
+  justify-content: flex-start;
+  text-align: left;
+  color: #333; /* Dark text for visibility */
 }
 
-/* For responsiveness */
+/* Sender's username color */
+li.sender strong {
+  color: #007bff; /* Blue for sender's username */
+}
+
+/* Receiver's username color */
+li.receiver strong {
+  color: #25d366; /* Green for receiver's username */
+}
+
+/* Input Container */
+.input-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 15px;
+}
+
+.input-container input[type="text"] {
+  width: 85%;
+  padding: 12px;
+  font-size: 1rem;
+  border-radius: 25px;
+  border: 1px solid #ddd;
+  background-color: #f1f1f1;
+  margin-right: 10px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.input-container input[type="text"]:focus {
+  border-color: #007bff;
+}
+
+.input-container button.send-btn {
+  width: 50px;
+  height: 50px;
+  padding: 12px;
+  font-size: 1.2rem;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  margin-left: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.input-container button.send-btn:hover {
+  background-color: #0056b3;  
+  transition: background-color 0.3s;
+}
+
+.input-container i {
+  font-size: 1.4rem;
+}
+
+.input-container button.send-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Responsive Adjustments */
 @media (max-width: 768px) {
-  div {
+  .container {
     width: 100%;
     padding: 10px;
   }
@@ -138,17 +235,23 @@ li.sender-2 {
     font-size: 1.3rem;
   }
 
-  /* Stack the form elements vertically on smaller screens */
   .form-container {
     flex-direction: column;
-    align-items: stretch;
   }
 
   .form-container > div {
-    margin-bottom: 15px; /* Space between sections when stacked */
+    margin-bottom: 10px;
+  }
+
+  .input-container input[type="text"] {
+    width: 70%;
+  }
+
+  .input-container button.send-btn {
+    width: 20%;
   }
 }
-/* For mobile devices */
+
 @media (max-width: 480px) {
   h1 {
     font-size: 1.8rem;
@@ -166,75 +269,5 @@ li.sender-2 {
   input[type="text"] {
     padding: 8px;
     font-size: 0.9rem;
-  }
-}
-/* For larger screens */
-@media (min-width: 1200px) {
-  div {
-    width: 80%;
-    padding: 30px;
-  }
-
-  h1 {
-    font-size: 3rem;
-  }
-
-  h2 {
-    font-size: 2rem;
-  }
-
-  button {
-    padding: 15px 20px;
-    font-size: 1.2rem;
-  }
-
-  input[type="text"] {
-    padding: 12px;
-    font-size: 1.1rem;
-  }
-}
-/* For very large screens */
-@media (min-width: 1600px) {
-  div {
-    width: 70%;
-    padding: 40px;
-  }
-
-  h1 {
-    font-size: 3.5rem;
-  }
-
-  h2 {
-    font-size: 2.5rem;
-  }
-
-  button {
-    padding: 20px 30px;
-    font-size: 1.5rem;
-  }
-
-  input[type="text"] {
-    padding: 15px;
-    font-size: 1.3rem;
-  }
-}
-/* For very small screens */  
-@media (max-width: 320px) {
-  h1 {
-    font-size: 1.5rem;
-  }
-
-  h2 {
-    font-size: 1rem;
-  }
-
-  button {
-    padding: 5px 10px;
-    font-size: 0.7rem;
-  }
-
-  input[type="text"] {
-    padding: 5px;
-    font-size: 0.7rem;
   }
 }
