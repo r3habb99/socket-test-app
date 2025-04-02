@@ -3,8 +3,8 @@
 /* Sidebar styles */
 .sidebar {
     width: 250px;
-    background-color: #333;
-    color: white;
+    background-color: #ffffff;
+    color: rgb(0, 0, 0);
     padding: 20px;
     height: 100vh;
     box-sizing: border-box;
@@ -39,7 +39,7 @@
   }
   
   .sidebar ul li:hover {
-    background-color: #555;
+    background-color: #f7f7f7;
   }
   
   .sidebar ul li:not(:last-child) {

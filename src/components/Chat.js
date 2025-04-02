@@ -1,6 +1,6 @@
 import React from "react";
 import { useSocket } from "./SocketProvider"; // Access socket context
-
+import "../css/chat.css";
 const Chat = () => {
   const {
     userId,
@@ -38,6 +38,7 @@ const Chat = () => {
             onChange={(e) => setUserId(e.target.value)}
           />
           <button
+            className="send-btn"
             onClick={handleSetup}
             disabled={isSetupClicked || !userId.trim()}
           >
@@ -54,6 +55,7 @@ const Chat = () => {
             onChange={(e) => setRoomId(e.target.value)}
           />
           <button
+            className="send-btn"
             onClick={handleJoinRoom}
             disabled={isJoinRoomClicked || !roomId.trim()}
           >
