@@ -10,6 +10,9 @@ function App() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
 
+  const [isSetupClicked, setIsSetupClicked] = useState(false);
+  const [isJoinRoomClicked, setIsJoinRoomClicked] = useState(false);
+
   useEffect(() => {
     socket.on("message received", (newMessage) => {
       // console.log("📩 New message received:", newMessage);
@@ -36,8 +39,11 @@ function App() {
       alert("⚠️ Please enter a user ID");
       return;
     }
-    socket.emit("setup", { _id: userId });
-    console.log(`📡 Sent setup event for user: ${userId}`);
+    if (userId.trim()) {
+      setIsSetupClicked(true);
+      socket.emit("setup", { _id: userId });
+      console.log(`📡 Sent setup event for user: ${userId}`);
+    }
   };
 
   const handleJoinRoom = () => {
@@ -45,8 +51,11 @@ function App() {
       alert("⚠️ Please enter a room ID");
       return;
     }
-    socket.emit("join room", roomId);
-    console.log(`📥 Sent join room event for room: ${roomId}`);
+    if (roomId.trim()) {
+      setIsJoinRoomClicked(true); // Disable the button after click
+      socket.emit("join room", roomId);
+      console.log(`📥 Sent join room event for room: ${roomId}`);
+    }
   };
 
   const handleSendMessage = () => {
@@ -80,7 +89,12 @@ function App() {
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
           />
-          <button onClick={handleSetup}>Setup</button>
+          <button
+            onClick={handleSetup}
+            disabled={isSetupClicked || !userId.trim()}
+          >
+            Setup
+          </button>
         </div>
 
         <div>
@@ -91,7 +105,12 @@ function App() {
             value={roomId}
             onChange={(e) => setRoomId(e.target.value)}
           />
-          <button onClick={handleJoinRoom}>Join Room</button>
+          <button
+            onClick={handleJoinRoom}
+            disabled={isJoinRoomClicked || !roomId.trim()}
+          >
+            Join Room
+          </button>
         </div>
       </div>
 
