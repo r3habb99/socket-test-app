@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../apis/auth";
 import "../css/login.css";
+import Input from "./Input"; // Import the reusable Input component
 
 const Login = ({ setAuthenticated }) => {
   const [email, setEmail] = useState("");
@@ -34,19 +35,19 @@ const Login = ({ setAuthenticated }) => {
         <h2>Login</h2>
         {error && <p className="error-message">{error}</p>}
         <form onSubmit={handleLogin}>
-          <input
+          <Input
             type="email"
+            name="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
           />
-          <input
+          <Input
             type="password"
+            name="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
           />
           <button type="submit">Login</button>
         </form>
