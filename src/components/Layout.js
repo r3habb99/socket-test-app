@@ -13,7 +13,7 @@ const Layout = ({ onLogout }) => {
     { name: "dashboard", label: "Dashboard" },
     { name: "chat", label: "Chat" },
     { name: "profile", label: "Profile" },
-    { name: "logout", label: "Logout" }, // Logout is handled here
+    { name: "logout", label: "Logout" },
   ];
 
   const toggleSidebar = () => {

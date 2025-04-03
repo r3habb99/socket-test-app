@@ -1,10 +1,4 @@
-import api from "./axios";
-
-// Helper function to get auth headers
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import api, { getAuthHeaders, handleApiError } from "./axios";
 
 // Register User API
 export const registerUser = async (userData) => {
@@ -53,19 +47,5 @@ export const fetchUserProfile = async () => {
   } catch (error) {
     console.error("Error fetching user profile:", error);
     handleApiError(error);
-  }
-};
-
-// Generic Error Handling function
-const handleApiError = (error) => {
-  if (error.response) {
-    console.error("Error Response:", error.response.data);
-    throw new Error(error.response.data.message || "An error occurred");
-  } else if (error.request) {
-    console.error("No response from server:", error.request);
-    throw new Error("No response from server");
-  } else {
-    console.error("Error:", error.message);
-    throw new Error(error.message);
   }
 };

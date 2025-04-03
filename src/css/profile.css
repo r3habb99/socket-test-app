@@ -1,0 +1,239 @@
+/* Profile Page */
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px;
+}
+
+.profile-header {
+  width: 100%;
+  position: relative;
+}
+
+.cover-photo {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 10px; /* Rounded corners for cover photo */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  padding: 20px;
+}
+
+/* .cover-photo {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+} */
+
+.profile-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.profile-pic {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-right {
+  flex: 1;
+  padding-left: 20px;
+}
+
+.follow-btn {
+  background-color: #1da1f2;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  border-radius: 30px;
+  transition: background-color 0.3s ease-in-out;
+  font-weight: bold;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.follow-btn:hover {
+  background-color: #1991d0; /* Darker blue for hover effect */
+}
+
+.follow-btn.following {
+  background-color: #e0245e;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-around;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.stats div {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.bio {
+  margin-top: 20px;
+}
+
+/* Modal for Followers and Following */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 400px;
+  width: 100%;
+}
+
+button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #1da1f2;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+/* Profile Picture Uploader */
+.profile-pic-uploader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.profile-pic-uploader input[type="file"] {
+  display: none; /* Hide the default file input */
+}
+
+.profile-pic-uploader button {
+  background-color: #1da1f2;
+  color: white;
+  padding: 12px 24px;
+  font-size: 16px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+  margin-top: 10px;
+  font-weight: bold;
+  width: 100%;
+  max-width: 250px;
+}
+
+.profile-pic-uploader button:hover {
+  background-color: #1991d0; /* Darker blue on hover */
+}
+
+.profile-pic-uploader label {
+  background-color: #f5f8fa;
+  padding: 12px 20px;
+  font-size: 16px;
+  color: #1da1f2;
+  border-radius: 30px;
+  cursor: pointer;
+  margin-top: 20px;
+  display: inline-block;
+  transition: background-color 0.3s ease-in-out;
+  font-weight: bold;
+}
+
+.profile-pic-uploader label:hover {
+  background-color: #e1f5fd;
+}
+
+.profile-pic-uploader button,
+.profile-pic-uploader label {
+  text-align: center;
+}
+
+/* Optional: Add an area to display the current profile pic */
+.profile-pic-preview {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 15px;
+  border: 2px solid #e1e8ed;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+}
+
+/* Cover Photo Uploader */
+.cover-photo-uploader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.cover-photo-uploader input[type="file"] {
+  display: none; /* Hide the default file input */
+}
+
+.cover-photo-uploader label {
+  background-color: #f5f8fa;
+  padding: 12px 20px;
+  font-size: 16px;
+  color: #1da1f2;
+  border-radius: 30px;
+  cursor: pointer;
+  margin-top: 20px;
+  display: inline-block;
+  transition: background-color 0.3s ease-in-out;
+  font-weight: bold;
+}
+
+.cover-photo-uploader label:hover {
+  background-color: #e1f5fd;
+}
+
+.cover-photo-uploader button {
+  background-color: #1da1f2;
+  color: white;
+  padding: 12px 24px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+  margin-top: 10px;
+  font-weight: bold;
+  max-width: 50px;
+  width: 100%;
+}
+
+.cover-photo-uploader button:hover {
+  background-color: #1991d0; /* Darker blue on hover */
+}
