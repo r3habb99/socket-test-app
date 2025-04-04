@@ -1,7 +1,7 @@
 import React from "react";
-import { useSocket } from "./SocketProvider"; // Access socket context
 import "../css/chat.css";
-const Chat = () => {
+import { useSocket } from "./Common";
+export const Chat = () => {
   const {
     userId,
     setUserId,
@@ -97,5 +97,3 @@ const Chat = () => {
     </div>
   );
 };
-
-export default Chat;

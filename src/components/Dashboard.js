@@ -3,6 +3,7 @@ import { SocketProvider } from "./SocketProvider";
 import Chat from "./Chat";
 import Sidebar from "./Sidebar";
 import "../css/dashboard.css"; // Styles for layout and sidebar
+import { Profile } from "./Profile";
 
 const Dashboard = () => {
   const [activeComponent, setActiveComponent] = useState("chat");
@@ -44,7 +45,7 @@ const Dashboard = () => {
 
         <div className="main-content">
           {activeComponent === "chat" && <Chat />}
-          {activeComponent === "profile" && <div>Profile</div>}
+          {activeComponent === "profile" && <Profile />}
           {/* Add more components here based on the active component */}
         </div>
       </div>

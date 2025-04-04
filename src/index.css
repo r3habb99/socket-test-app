@@ -1,6 +1,6 @@
 /* General Styles */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background-color: #ece5dd;
   margin: 0;
   padding: 0;
@@ -41,7 +41,7 @@ h2 {
   height: 85vh;
 }
 
-/* Form Container - Arrange Setup and Join Room side by side */
+/* Form Container */
 .form-container {
   display: flex;
   justify-content: space-between;
@@ -54,7 +54,13 @@ h2 {
   flex: 1;
 }
 
-input[type="text"] {
+/* Apply to all input types */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="tel"] {
   width: 100%;
   padding: 12px;
   font-size: 1.1rem;
@@ -66,7 +72,9 @@ input[type="text"] {
   background-color: #f0f0f0;
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
   border-color: #007bff;
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
@@ -93,7 +101,66 @@ button:disabled {
   opacity: 0.7; /* Add opacity change when disabled */
 }
 
+/* Input Container */
+.input-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 15px;
+  justify-content: center;
+}
 
+.input-container input[type="text"],
+.input-container input[type="email"],
+.input-container input[type="password"],
+.input-container input[type="number"],
+.input-container input[type="date"],
+.input-container input[type="tel"] {
+  width: 85%;
+  padding: 12px;
+  font-size: 1rem;
+  border-radius: 25px;
+  border: 1px solid #ddd;
+  background-color: #f1f1f1;
+  margin-right: 10px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.input-container input[type="text"]:focus,
+.input-container input[type="email"]:focus,
+.input-container input[type="password"]:focus {
+  border-color: #007bff;
+}
+
+.input-container button.send-btn {
+  width: 50px;
+  height: 50px;
+  padding: 12px;
+  font-size: 1.2rem;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  margin-left: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.input-container button.send-btn:hover {
+  background-color: #0056b3;
+  transition: background-color 0.3s;
+}
+
+.input-container button.send-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
 
 ul {
   list-style: none;
@@ -145,64 +212,6 @@ li.sender strong {
 /* Receiver's username color */
 li.receiver strong {
   color: #25d366; /* Green for receiver's username */
-}
-
-/* Input Container */
-.input-container {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 12px 0;
-  border-radius: 15px;
-  justify-content: center;
-}
-
-.input-container input[type="text"] {
-  width: 85%;
-  padding: 12px;
-  font-size: 1rem;
-  border-radius: 25px;
-  border: 1px solid #ddd;
-  background-color: #f1f1f1;
-  margin-right: 10px;
-  box-sizing: border-box;
-  outline: none;
-  transition: border-color 0.3s;
-}
-
-.input-container input[type="text"]:focus {
-  border-color: #007bff;
-}
-
-.input-container button.send-btn {
-  width: 50px;
-  height: 50px;
-  padding: 12px;
-  font-size: 1.2rem;
-  border-radius: 50%;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  margin-left: 10px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.input-container button.send-btn:hover {
-  background-color: #0056b3;
-  transition: background-color 0.3s;
-}
-
-.input-container i {
-  font-size: 1.4rem;
-}
-
-.input-container button.send-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
 }
 
 /* Responsive Adjustments */
