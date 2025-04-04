@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { getUserFollowing, followUser } from "../apis/profile";
+import { getUserFollowing, followUser } from "../../apis/profile";
 import FollowButton from "./FollowButton";
-import "../css/userlist.css";
+import "./css/userlist.css";
 
 const DEFAULT_PROFILE_PIC = "/assets/profilePic.jpeg";
 

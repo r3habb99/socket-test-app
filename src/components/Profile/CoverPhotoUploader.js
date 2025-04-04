@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { uploadCoverPhoto } from "../apis/profile";
-import "../css/profile.css";
+import "./css/profile.css";
 import { FaCamera } from "react-icons/fa";
+import { uploadCoverPhoto } from "../../apis/profile";
 
 const CoverPhotoUploader = ({ setUser }) => {
   const [image, setImage] = useState(null);

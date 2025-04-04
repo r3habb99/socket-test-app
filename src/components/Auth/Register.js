@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { registerUser } from "../apis/auth";
-import "../css/register.css"; // Correct import for the register styles
+import { registerUser } from "../../apis/auth";
+import "./css/auth.css"; // Correct import for the register styles
 import { useNavigate } from "react-router-dom";
-import InputField from "./Input"; // Correct import for the InputField component
+import Input from "../Common/Input";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -42,35 +42,35 @@ const Register = () => {
         {error && <p className="error-message">{error}</p>}
         {success && <p className="success-message">{success}</p>}
         <form onSubmit={handleRegister}>
-          <InputField
+          <Input
             type="text"
             name="firstName"
             placeholder="First Name"
             value={formData.firstName}
             onChange={handleChange}
           />
-          <InputField
+          <Input
             type="text"
             name="lastName"
             placeholder="Last Name"
             value={formData.lastName}
             onChange={handleChange}
           />
-          <InputField
+          <Input
             type="text"
             name="username"
             placeholder="Username"
             value={formData.username}
             onChange={handleChange}
           />
-          <InputField
+          <Input
             type="email"
             name="email"
             placeholder="Email"
             value={formData.email}
             onChange={handleChange}
           />
-          <InputField
+          <Input
             type="password"
             name="password"
             placeholder="Password"

@@ -6,10 +6,11 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
-import Login from "./components/Login";
-import Register from "./components/Register";
-import Layout from "./components/Layout";
-import Sidebar from "./components/Sidebar";
+
+import Layout from "./components/Common/Layout";
+import Sidebar from "./components/Common/Sidebar";
+import Login from "./components/Auth/Login";
+import Register from "./components/Auth/Register";
 
 // Helper function to check authentication status
 const isAuthenticated = () => !!localStorage.getItem("token");

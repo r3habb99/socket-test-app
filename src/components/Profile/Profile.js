@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import "../css/profile.css";
+import "./css/profile.css";
 import FollowButton from "./FollowButton";
-import { fetchUserProfile } from "../apis/auth";
-import { followUser } from "../apis/profile";
+import { fetchUserProfile } from "../../apis/auth";
+import { followUser } from "../../apis/profile";
 import ProfilePicUploader from "./ProfilePicUploader";
 import CoverPhotoUploader from "./CoverPhotoUploader";
 import { FaEdit } from "react-icons/fa";

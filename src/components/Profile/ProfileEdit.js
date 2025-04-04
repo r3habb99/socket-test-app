@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { fetchUserProfile, updateUserProfile } from "../apis/auth";
 import { useNavigate } from "react-router-dom";
-import Input from "./Input";
+import Input from "../Common/Input";
+import { fetchUserProfile, updateUserProfile } from "../../apis/auth";
 
 const ProfileEdit = () => {
   const [formData, setFormData] = useState({

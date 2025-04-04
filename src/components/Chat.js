@@ -1,5 +1,5 @@
 import React from "react";
-import { useSocket } from "./SocketProvider"; // Access socket context
+import { useSocket } from "../components/Common/SocketProvider"; // Access socket context
 import "../css/chat.css";
 const Chat = () => {
   const {

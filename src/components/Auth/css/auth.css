@@ -1,3 +1,4 @@
+/* login user form  */
 /* login.css */
 .login-container {
   display: flex;
@@ -62,6 +63,73 @@ button:hover {
 .form-footer {
   text-align: center;
   margin-top: 20px;
+}
+
+.form-footer a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.form-footer a:hover {
+  text-decoration: underline;
+}
+/* register user form  */
+/* register */
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f4f4f4;
+}
+
+.register-box {
+  background: white;
+  padding: 20px;
+  width: 350px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+h2 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+/* Styling the button */
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+  transition: background 0.3s ease-in-out;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* Error and success messages */
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.success-message {
+  color: green;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Footer links */
+.form-footer {
+  margin-top: 10px;
 }
 
 .form-footer a {

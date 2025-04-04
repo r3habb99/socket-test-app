@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { SocketProvider } from "./SocketProvider";
-import Sidebar from "./Sidebar";
-import Chat from "./Chat";
-import Profile from "./Profile";
-import FollowersList from "./FollowersList"; // Import the Followers List component
-import FollowingList from "./FollowingList"; // Import the Following List component
-import "../css/dashboard.css";
-import ProfileEdit from "./ProfileEdit";
+import ProfileEdit from "../../components/Profile/ProfileEdit";
+import Chat from "../../components/Chat";
+import Profile from "../../components/Profile/Profile";
+import FollowersList from "../Profile/FollowersList"; // Import the Followers List component
+import FollowingList from "../Profile/FollowingList"; // Import the Following List component
+import "../../css/dashboard.css";
+import { SocketProvider } from "../Common/SocketProvider";
+import Sidebar from "../Common/Sidebar";
 
 const Layout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

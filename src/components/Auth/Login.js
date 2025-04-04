@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../apis/auth";
-import "../css/login.css";
-import Input from "./Input"; // Import the reusable Input component
+import { loginUser } from "../../apis/auth";
+import "./css/auth.css"; 
+import Input from "../Common/Input";
 
 const Login = ({ setAuthenticated }) => {
   const [email, setEmail] = useState("");
