@@ -1,6 +1,6 @@
 import React from "react";
 import "../css/chat.css";
-import { useSocket } from "./Common";
+import { Input, useSocket } from "./Common";
 export const Chat = () => {
   const {
     userId,
@@ -31,8 +31,9 @@ export const Chat = () => {
       <div className="form-container">
         <div>
           <h2>Setup User</h2>
-          <input
+          <Input
             type="text"
+            name="userId"
             placeholder="Enter User ID"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
@@ -48,8 +49,9 @@ export const Chat = () => {
 
         <div>
           <h2>Join Room</h2>
-          <input
+          <Input
             type="text"
+            name="roomId"
             placeholder="Enter Room ID"
             value={roomId}
             onChange={(e) => setRoomId(e.target.value)}
@@ -79,8 +81,9 @@ export const Chat = () => {
       </div>
 
       <div className="input-container">
-        <input
+        <Input
           type="text"
+          name="message"
           placeholder="Type a message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
