@@ -65,3 +65,23 @@ button:nth-child(3) {
   background-color: #4299e1;
   color: white;
 }
+.post-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  margin-right: 10px;
+  object-fit: cover;
+  border: 1px solid #ccc;
+}
+
+.username {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #2d3748;
+}

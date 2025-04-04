@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { deletePost, getPosts, likePost, retweetPost } from "../../apis";
 import "./css/postList.css"; // Assuming you have some CSS for styling
+import { DEFAULT_PROFILE_PIC } from "../../constants";
 
 export const PostList = () => {
   const [posts, setPosts] = useState([]);
@@ -64,7 +65,20 @@ export const PostList = () => {
         ) : (
           posts.map((post) => (
             <div key={post.id} className="post-card">
+              <div className="post-header">
+                <img
+                  src={DEFAULT_PROFILE_PIC}
+                  //   src={post.postedBy?.profilePic || "/default-avatar.png"}
+                  alt={post.postedBy?.username || "User"}
+                  className="avatar"
+                />
+                <span className="username">
+                  @{post.postedBy?.username || "Unknown"}
+                </span>
+              </div>
+
               <p>{post.content}</p>
+
               <div className="post-actions">
                 <button onClick={() => handleLike(post.id)}>
                   {post.liked ? "❤️ Liked" : "🤍 Like"}
