@@ -1,12 +1,12 @@
 import axios from "axios";
 const API_URL = "http://192.168.0.88:8080/api";
-const api = axios.create({
+
+export const api = axios.create({
   baseURL: API_URL, // Your base URL
   headers: {
     "Content-Type": "application/json",
   },
 });
-export default api;
 
 // Helper function to get auth headers
 export const getAuthHeaders = () => {

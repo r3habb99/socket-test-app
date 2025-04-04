@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { registerUser } from "../../apis/auth";
 import "./css/auth.css"; // Correct import for the register styles
 import { useNavigate } from "react-router-dom";
-import Input from "../Common/Input";
+import { registerUser } from "../../apis";
+import { Input } from "../Common";
 
-const Register = () => {
+export const Register = () => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -88,5 +88,3 @@ const Register = () => {
     </div>
   );
 };
-
-export default Register;

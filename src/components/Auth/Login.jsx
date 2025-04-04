@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../../apis/auth";
-import "./css/auth.css"; 
-import Input from "../Common/Input";
+import "./css/auth.css";
+import { loginUser } from "../../apis";
+import { Input } from "../Common";
 
-const Login = ({ setAuthenticated }) => {
+export const Login = ({ setAuthenticated }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -63,5 +63,3 @@ const Login = ({ setAuthenticated }) => {
     </div>
   );
 };
-
-export default Login;

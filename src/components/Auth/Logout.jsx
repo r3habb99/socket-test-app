@@ -1,7 +1,7 @@
-import { logoutUser } from "../../apis/auth";
+import { logoutUser } from "../../apis";
 
 // Logout Component
-const Logout = ({ onLogout }) => {
+export const Logout = ({ onLogout }) => {
   const handleLogout = async () => {
     try {
       await logoutUser();
@@ -17,4 +17,3 @@ const Logout = ({ onLogout }) => {
 
   return <button onClick={handleLogout}>Logout</button>;
 };
-export default Logout;

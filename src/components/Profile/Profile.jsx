@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import "./css/profile.css";
-import FollowButton from "./FollowButton";
-import { fetchUserProfile } from "../../apis/auth";
-import { followUser } from "../../apis/profile";
-import ProfilePicUploader from "./ProfilePicUploader";
-import CoverPhotoUploader from "./CoverPhotoUploader";
+
+// import {FollowButton} from "./FollowButton";
+// import ProfilePicUploader from "./ProfilePicUploader";
+// import CoverPhotoUploader from "./CoverPhotoUploader";
 import { FaEdit } from "react-icons/fa";
+import { fetchUserProfile, followUser } from "../../apis";
+import { DEFAULT_COVER_PHOTO, DEFAULT_PROFILE_PIC } from "../../constants";
+import { CoverPhotoUploader, ProfilePicUploader, FollowButton } from "./index";
 
-const DEFAULT_COVER_PHOTO = "/assets/backgroundWall.jpg";
-const DEFAULT_PROFILE_PIC = "/assets/profilePic.jpeg";
-
-const Profile = () => {
+export const Profile = () => {
   const { userId } = useParams(); // ID from route, if available
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -123,5 +122,3 @@ const Profile = () => {
     </div>
   );
 };
-
-export default Profile;

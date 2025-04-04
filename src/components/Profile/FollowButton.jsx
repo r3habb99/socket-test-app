@@ -1,7 +1,7 @@
 import React from "react";
 import "./css/profile.css";
 
-const FollowButton = ({ isFollowing, toggleFollow }) => {
+export const FollowButton = ({ isFollowing, toggleFollow }) => {
   return (
     <button
       className={`follow-btn ${isFollowing ? "following" : ""}`}
@@ -11,5 +11,3 @@ const FollowButton = ({ isFollowing, toggleFollow }) => {
     </button>
   );
 };
-
-export default FollowButton;

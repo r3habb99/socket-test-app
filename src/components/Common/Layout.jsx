@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import ProfileEdit from "../../components/Profile/ProfileEdit";
-import Chat from "../../components/Chat";
-import Profile from "../../components/Profile/Profile";
-import FollowersList from "../Profile/FollowersList"; // Import the Followers List component
-import FollowingList from "../Profile/FollowingList"; // Import the Following List component
-import "../../css/dashboard.css";
-import { SocketProvider } from "../Common/SocketProvider";
-import Sidebar from "../Common/Sidebar";
+import ProfileEdit from "../Profile/ProfileEdit";
 
-const Layout = ({ onLogout }) => {
+import "../../css/dashboard.css";
+
+import { FollowersList, FollowingList, Profile } from "../Profile";
+import { SocketProvider } from "./SocketProvider";
+import { Sidebar } from "./index";
+import { Chat } from "../Chat";
+
+export const Layout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const links = [
@@ -45,5 +45,3 @@ const Layout = ({ onLogout }) => {
     </SocketProvider>
   );
 };
-
-export default Layout;

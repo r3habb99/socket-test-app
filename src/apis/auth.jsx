@@ -1,4 +1,4 @@
-import api, { getAuthHeaders, handleApiError } from "./axios";
+import { api, getAuthHeaders, handleApiError } from "./axios";
 
 // Register User API
 export const registerUser = async (userData) => {

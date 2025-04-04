@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import "./css/profile.css";
 import { FaCamera } from "react-icons/fa";
-import { uploadProfilePic } from "../../apis/profile";
+import { uploadProfilePic } from "../../apis";
 
-const ProfilePicUploader = ({ setUser }) => {
+export const ProfilePicUploader = ({ setUser }) => {
   const [image, setImage] = useState(null);
 
   const handleFileChange = (e) => {
@@ -48,5 +48,3 @@ const ProfilePicUploader = ({ setUser }) => {
     </div>
   );
 };
-
-export default ProfilePicUploader;

@@ -1,4 +1,4 @@
-import api, { getAuthHeaders, handleApiError } from "./axios";
+import { api, getAuthHeaders, handleApiError } from "./axios";
 
 // Upload Profile Picture
 export const uploadProfilePic = async (imageFile) => {

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import "./css/profile.css";
 import { FaCamera } from "react-icons/fa";
-import { uploadCoverPhoto } from "../../apis/profile";
+import { uploadCoverPhoto } from "../../apis";
 
-const CoverPhotoUploader = ({ setUser }) => {
+export const CoverPhotoUploader = ({ setUser }) => {
   const [image, setImage] = useState(null);
 
   const handleFileChange = (e) => {
@@ -49,5 +49,3 @@ const CoverPhotoUploader = ({ setUser }) => {
     </div>
   );
 };
-
-export default CoverPhotoUploader;

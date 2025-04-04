@@ -1,34 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import FollowButton from "./FollowButton";
+
+import { FollowButton } from "./index";
 import "./css/userlist.css";
-import { followUser, getUserFollowers } from "../../apis/profile";
+import { followUser, getUserFollowing } from "../../apis";
+import { DEFAULT_PROFILE_PIC } from "../../constants";
 
-const DEFAULT_PROFILE_PIC = "/assets/profilePic.jpeg";
-
-const FollowersList = () => {
+export const FollowingList = () => {
   const { userId } = useParams();
-  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
   const [loggedInUserId] = useState(localStorage.getItem("userId"));
   const [followingStates, setFollowingStates] = useState({});
 
   useEffect(() => {
-    const fetchFollowers = async () => {
+    const fetchFollowing = async () => {
       try {
-        const data = await getUserFollowers(userId);
-        setFollowers(data);
+        const data = await getUserFollowing(userId);
+        setFollowing(data);
+
         const followStatus = {};
-        data.forEach((follower) => {
-          followStatus[follower.id] =
-            follower.followers?.includes(loggedInUserId);
+        data.forEach((user) => {
+          followStatus[user.id] = user.followers?.includes(loggedInUserId);
         });
         setFollowingStates(followStatus);
       } catch (err) {
-        console.error("Error fetching followers:", err);
+        console.error("Error fetching following:", err);
       }
     };
 
-    fetchFollowers();
+    fetchFollowing();
   }, [userId, loggedInUserId]);
 
   const toggleFollow = async (targetUserId) => {
@@ -39,50 +39,48 @@ const FollowersList = () => {
         [targetUserId]: !prev[targetUserId],
       }));
     } catch (err) {
-      console.error("Follow/unfollow failed:", err);
+      console.error("Error toggling follow:", err);
     }
   };
 
   return (
     <div className="modal">
       <div className="modal-content">
-        <h3>Followers</h3>
+        <h3>Following</h3>
         <ul className="user-list">
-          {followers.length > 0 ? (
-            followers.map((follower) => (
-              <li className="user-item" key={follower.id}>
+          {following.length > 0 ? (
+            following.map((user) => (
+              <li className="user-item" key={user.id}>
                 <div className="user-info">
                   <img
                     src={DEFAULT_PROFILE_PIC}
-                    // src={follower.profilePic || DEFAULT_PROFILE_PIC}
-                    alt={follower.username}
+                    // src={user.profilePic || DEFAULT_PROFILE_PIC}
+                    alt={user.username}
                     className="user-avatar"
                   />
                   <div className="user-details">
                     <span className="user-name">
-                      {follower.firstName} {follower.lastName}
+                      {user.firstName} {user.lastName}
                     </span>
-                    <span className="user-handle">@{follower.username}</span>
+                    <span className="user-handle">@{user.username}</span>
                   </div>
                 </div>
 
-                {follower.id !== loggedInUserId && (
+                {user.id !== loggedInUserId && (
                   <div className="follow">
                     <FollowButton
-                      isFollowing={followingStates[follower.id]}
-                      toggleFollow={() => toggleFollow(follower.id)}
+                      isFollowing={followingStates[user.id]}
+                      toggleFollow={() => toggleFollow(user.id)}
                     />
                   </div>
                 )}
               </li>
             ))
           ) : (
-            <p>No followers yet.</p>
+            <p>Not following anyone yet.</p>
           )}
         </ul>
       </div>
     </div>
   );
 };
-
-export default FollowersList;
