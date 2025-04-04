@@ -1,27 +1,47 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { getUserFollowers } from "../apis/profile"; // Make sure this is the correct API call
+import { getUserFollowers, followUser } from "../apis/profile";
+import FollowButton from "./FollowButton";
+import "../css/userlist.css";
 
-const DEFAULT_PROFILE_PIC = "/assets/profilePic.jpeg"; // Fallback image
+const DEFAULT_PROFILE_PIC = "/assets/profilePic.jpeg";
 
 const FollowersList = () => {
-  const { userId } = useParams(); // Get the userId from the URL
-
+  const { userId } = useParams();
   const [followers, setFollowers] = useState([]);
+  const [loggedInUserId] = useState(localStorage.getItem("userId"));
+  const [followingStates, setFollowingStates] = useState({});
 
   useEffect(() => {
     const fetchFollowers = async () => {
       try {
-        // Make sure the userId is passed correctly in the API call
-        const data = await getUserFollowers(userId); // Assuming the function is defined in your API helper
+        const data = await getUserFollowers(userId);
         setFollowers(data);
+        const followStatus = {};
+        data.forEach((follower) => {
+          followStatus[follower.id] =
+            follower.followers?.includes(loggedInUserId);
+        });
+        setFollowingStates(followStatus);
       } catch (err) {
         console.error("Error fetching followers:", err);
       }
     };
 
     fetchFollowers();
-  }, [userId]); // Ensure the effect is rerun when the userId changes
+  }, [userId, loggedInUserId]);
+
+  const toggleFollow = async (targetUserId) => {
+    try {
+      await followUser(targetUserId);
+      setFollowingStates((prev) => ({
+        ...prev,
+        [targetUserId]: !prev[targetUserId],
+      }));
+    } catch (err) {
+      console.error("Follow/unfollow failed:", err);
+    }
+  };
 
   return (
     <div className="modal">
@@ -30,13 +50,30 @@ const FollowersList = () => {
         <ul className="user-list">
           {followers.length > 0 ? (
             followers.map((follower) => (
-              <li key={follower.id} className="user-item">
-                <img
-                  src={follower.profilePic || DEFAULT_PROFILE_PIC}
-                  alt="Profile"
-                  className="user-avatar"
-                />
-                <span className="user-name">{follower.username}</span>
+              <li className="user-item" key={follower.id}>
+                <div className="user-info">
+                  <img
+                    src={DEFAULT_PROFILE_PIC}
+                    // src={follower.profilePic || DEFAULT_PROFILE_PIC}
+                    alt={follower.username}
+                    className="user-avatar"
+                  />
+                  <div className="user-details">
+                    <span className="user-name">
+                      {follower.firstName} {follower.lastName}
+                    </span>
+                    <span className="user-handle">@{follower.username}</span>
+                  </div>
+                </div>
+
+                {follower.id !== loggedInUserId && (
+                  <div className="follow">
+                    <FollowButton
+                      isFollowing={followingStates[follower.id]}
+                      toggleFollow={() => toggleFollow(follower.id)}
+                    />
+                  </div>
+                )}
               </li>
             ))
           ) : (

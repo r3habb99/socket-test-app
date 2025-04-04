@@ -36,7 +36,7 @@ const Profile = () => {
       }
     };
     fetchProfile();
-  }, [userId]);
+  }, [userId, loggedInUserId]);
 
   const toggleFollow = async () => {
     try {
@@ -60,7 +60,8 @@ const Profile = () => {
     <div className="profile-container">
       <div className="profile-header">
         <img
-          src={user.coverPhoto || DEFAULT_COVER_PHOTO}
+          src={DEFAULT_COVER_PHOTO} // currently static images show
+          // src={user.coverPhoto || DEFAULT_COVER_PHOTO}
           alt="Cover"
           className="cover-photo"
         />
@@ -70,7 +71,8 @@ const Profile = () => {
       <div className="profile-content">
         <div className="profile-left">
           <img
-            src={user.profilePic || DEFAULT_PROFILE_PIC}
+            src={DEFAULT_PROFILE_PIC} // currently static images show
+            // src={user.profilePic || DEFAULT_PROFILE_PIC} // Use this directly as fallback
             alt="Profile"
             className="profile-pic"
           />
@@ -78,40 +80,43 @@ const Profile = () => {
         </div>
 
         <div className="profile-right">
-          <h2>
-            {user.firstName} {user.lastName}
-          </h2>
+          <div className="profile-info">
+            <h2 className="profile-name">
+              {user.firstName} {user.lastName}
+            </h2>
+            <div className="actions">
+              {isOwnProfile ? (
+                <button className="edit-button">
+                  <FaEdit onClick={handleEditClick} />
+                </button>
+              ) : (
+                <FollowButton
+                  isFollowing={isFollowing}
+                  toggleFollow={toggleFollow}
+                />
+              )}
+            </div>
+          </div>
+
           <p className="username">@{user.username}</p>
-          <p className="email">{user.email}</p>
+          {/* <p className="email">{user.email}</p> */}
+          <div className="bio">
+            <p>Bio: {user.bio || "Coming soon!"}</p>
+          </div>
 
           <div className="stats">
             <div>
-              <Link to={`/user/${user.id}/followers`}>
-                Followers <strong>{user.followers?.length || 0}</strong>
+              <Link to={`/user/${user.id}/followers`} className="link">
+                Followers{" "}
+                <strong className="count">{user.followers?.length || 0}</strong>
               </Link>
             </div>
             <div>
-              <Link to={`/user/${user.id}/following`}>
-                Following <strong>{user.following?.length || 0}</strong>
+              <Link to={`/user/${user.id}/following`} className="link">
+                Following{" "}
+                <strong className="count">{user.following?.length || 0}</strong>
               </Link>
             </div>
-          </div>
-
-          <div className="actions">
-            {isOwnProfile ? (
-              <button className="edit-button" onClick={handleEditClick}>
-                <FaEdit />
-              </button>
-            ) : (
-              <FollowButton
-                isFollowing={isFollowing}
-                toggleFollow={toggleFollow}
-              />
-            )}
-          </div>
-
-          <div className="bio">
-            <p>Bio: {user.bio || "Coming soon!"}</p>
           </div>
         </div>
       </div>
