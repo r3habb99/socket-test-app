@@ -4,6 +4,8 @@ import { SocketProvider } from "./SocketProvider";
 import Sidebar from "./Sidebar";
 import Chat from "./Chat";
 import Profile from "./Profile";
+import FollowersList from "./FollowersList"; // Import the Followers List component
+import FollowingList from "./FollowingList"; // Import the Following List component
 import "../css/dashboard.css";
 
 const Layout = ({ onLogout }) => {
@@ -29,8 +31,11 @@ const Layout = ({ onLogout }) => {
         <Sidebar links={links} sidebarOpen={sidebarOpen} onLogout={onLogout} />
         <div className="main-content">
           <Routes>
-            <Route path="/dashboard" element={<Chat />} />
+            <Route path="/chat" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />
+            {/* Add routes for followers and following */}
+            <Route path="/user/:userId/followers" element={<FollowersList />} />
+            <Route path="/user/:userId/following" element={<FollowingList />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>
         </div>

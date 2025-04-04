@@ -4,6 +4,10 @@
   flex-direction: column;
   align-items: center;
   margin: 20px;
+  background-color: #ffffff;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .profile-header {
@@ -15,8 +19,43 @@
   width: 100%;
   height: 250px;
   object-fit: cover;
-  border-radius: 10px; /* Rounded corners for cover photo */
+  border-radius: 0;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cover-photo-uploader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1da1f2;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+  font-size: 24px; /* Adjust the size of the icon */
+  width: 50px; /* Adjust the width of the button */
+  height: 50px; /* Adjust the height of the button */
+}
+
+.upload-btn:hover {
+  background-color: #1991d0; /* Darker blue on hover */
+}
+
+.upload-btn svg {
+  margin: 0; /* Ensure the icon is centered */
+  height: 24px; /* Adjust the size of the icon */
+  width: 24px; /* Adjust the size of the icon */
+  fill: white; /* Icon color */
+  transition: fill 0.3s ease-in-out;
 }
 
 .profile-content {
@@ -27,23 +66,12 @@
   padding: 20px;
 }
 
-/* .cover-photo {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-}
-
-.profile-content {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-} */
-
 .profile-left {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-right: 20px;
+  position: relative;
 }
 
 .profile-pic {
@@ -51,6 +79,15 @@
   height: 120px;
   border-radius: 50%;
   object-fit: cover;
+  border: 4px solid #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-pic-uploader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .profile-right {
@@ -72,7 +109,7 @@
 }
 
 .follow-btn:hover {
-  background-color: #1991d0; /* Darker blue for hover effect */
+  background-color: #1991d0;
 }
 
 .follow-btn.following {
@@ -116,7 +153,7 @@
   width: 100%;
 }
 
-button {
+/* button {
   margin-top: 10px;
   padding: 8px 16px;
   background-color: #1da1f2;
@@ -124,7 +161,7 @@ button {
   border: none;
   border-radius: 30px;
   cursor: pointer;
-}
+} */
 
 /* Profile Picture Uploader */
 .profile-pic-uploader {
@@ -136,10 +173,10 @@ button {
 }
 
 .profile-pic-uploader input[type="file"] {
-  display: none; /* Hide the default file input */
+  display: none;
 }
 
-.profile-pic-uploader button {
+/* .profile-pic-uploader button {
   background-color: #1da1f2;
   color: white;
   padding: 12px 24px;
@@ -155,8 +192,8 @@ button {
 }
 
 .profile-pic-uploader button:hover {
-  background-color: #1991d0; /* Darker blue on hover */
-}
+  background-color: #1991d0;
+} */
 
 .profile-pic-uploader label {
   background-color: #f5f8fa;
@@ -175,7 +212,7 @@ button {
   background-color: #e1f5fd;
 }
 
-.profile-pic-uploader button,
+/* .profile-pic-uploader button, */
 .profile-pic-uploader label {
   text-align: center;
 }
@@ -188,7 +225,7 @@ button {
   object-fit: cover;
   margin-bottom: 15px;
   border: 2px solid #e1e8ed;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Cover Photo Uploader */
@@ -200,7 +237,7 @@ button {
 }
 
 .cover-photo-uploader input[type="file"] {
-  display: none; /* Hide the default file input */
+  display: none;
 }
 
 .cover-photo-uploader label {
@@ -220,7 +257,7 @@ button {
   background-color: #e1f5fd;
 }
 
-.cover-photo-uploader button {
+/* .cover-photo-uploader button {
   background-color: #1da1f2;
   color: white;
   padding: 12px 24px;
@@ -235,5 +272,5 @@ button {
 }
 
 .cover-photo-uploader button:hover {
-  background-color: #1991d0; /* Darker blue on hover */
-}
+  background-color: #1991d0;
+} */

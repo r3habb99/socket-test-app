@@ -37,7 +37,10 @@ const ProfilePicUploader = ({ setUser }) => {
       />
 
       {/* Upload Button */}
-      <button onClick={() => document.getElementById("fileInput").click()}>
+      <button
+        className="upload-btn"
+        onClick={() => document.getElementById("fileInput").click()}
+      >
         <FaCamera />
       </button>
 

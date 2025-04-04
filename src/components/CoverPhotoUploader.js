@@ -37,7 +37,7 @@ const CoverPhotoUploader = ({ setUser }) => {
       />
 
       {/* Upload Button */}
-      <button onClick={() => document.getElementById("coverFileInput").click()}>
+      <button className="upload-btn" onClick={() => document.getElementById("coverFileInput").click()}>
         <FaCamera />
       </button>
 

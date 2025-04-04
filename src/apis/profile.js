@@ -58,7 +58,8 @@ export const getUserFollowing = async (userId) => {
     const response = await axios.get(`/user/${userId}/following`, {
       headers: getAuthHeaders(),
     });
-    return response.data.data.following; // Assuming response.data contains the following array
+    console.log(response, "response following");
+    return response.data.data; // Assuming response.data contains the following array
   } catch (error) {
     console.error("Error fetching following list:", error);
     handleApiError(error);
@@ -71,7 +72,8 @@ export const getUserFollowers = async (userId) => {
     const response = await axios.get(`/user/${userId}/followers`, {
       headers: getAuthHeaders(),
     });
-    return response.data.data.followers; // Assuming response.data contains the followers array
+    console.log(response, "response");
+    return response.data.data; // Assuming response.data contains the followers array
   } catch (error) {
     console.error("Error fetching followers list:", error);
     handleApiError(error);

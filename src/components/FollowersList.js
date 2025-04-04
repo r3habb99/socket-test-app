@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from "react";
-import "../css/userlist.css";
-import { getUserFollowers } from "../apis/profile";
+import { useParams } from "react-router-dom";
+import { getUserFollowers } from "../apis/profile"; // Make sure this is the correct API call
 
 const DEFAULT_PROFILE_PIC = "/assets/profilePic.jpeg"; // Fallback image
 
-const FollowersList = ({ userId, setModal }) => {
+const FollowersList = () => {
+  const { userId } = useParams(); // Get the userId from the URL
+
   const [followers, setFollowers] = useState([]);
 
   useEffect(() => {
     const fetchFollowers = async () => {
       try {
-        const data = await getUserFollowers(userId);
-        console.log(data);
+        // Make sure the userId is passed correctly in the API call
+        const data = await getUserFollowers(userId); // Assuming the function is defined in your API helper
         setFollowers(data);
       } catch (err) {
         console.error("Error fetching followers:", err);
@@ -19,13 +21,12 @@ const FollowersList = ({ userId, setModal }) => {
     };
 
     fetchFollowers();
-  }, [userId]);
+  }, [userId]); // Ensure the effect is rerun when the userId changes
 
   return (
     <div className="modal">
       <div className="modal-content">
         <h3>Followers</h3>
-        <button onClick={() => setModal(false)}>×</button>
         <ul className="user-list">
           {followers.length > 0 ? (
             followers.map((follower) => (

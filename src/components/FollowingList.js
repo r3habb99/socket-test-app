@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom"; // Import useParams to get the userId from the URL
 import "../css/userlist.css";
 import { getUserFollowing } from "../apis/profile";
 
-const DEFAULT_PROFILE_PIC = "/assets/backgroundWall.jpg";
+const DEFAULT_PROFILE_PIC = "/assets/profilePic.jpeg"; // Fallback image
 
-const FollowingList = ({ userId, setModal }) => {
+const FollowingList = () => {
+  const { userId } = useParams(); // Get userId from the route params
   const [following, setFollowing] = useState([]);
 
   useEffect(() => {
@@ -24,7 +26,6 @@ const FollowingList = ({ userId, setModal }) => {
     <div className="modal">
       <div className="modal-content">
         <h3>Following</h3>
-        <button onClick={() => setModal(false)}>×</button>
         <ul className="user-list">
           {following.length > 0 ? (
             following.map((follow) => (
