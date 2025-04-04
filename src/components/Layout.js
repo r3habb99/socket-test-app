@@ -7,6 +7,7 @@ import Profile from "./Profile";
 import FollowersList from "./FollowersList"; // Import the Followers List component
 import FollowingList from "./FollowingList"; // Import the Following List component
 import "../css/dashboard.css";
+import ProfileEdit from "./ProfileEdit";
 
 const Layout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -36,6 +37,7 @@ const Layout = ({ onLogout }) => {
             {/* Add routes for followers and following */}
             <Route path="/user/:userId/followers" element={<FollowersList />} />
             <Route path="/user/:userId/following" element={<FollowingList />} />
+            <Route path="/user/edit-profile" element={<ProfileEdit />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>
         </div>

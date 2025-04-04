@@ -93,6 +93,7 @@
 .profile-right {
   flex: 1;
   padding-left: 20px;
+  width: 100%;
 }
 
 .follow-btn {
@@ -274,3 +275,30 @@
 .cover-photo-uploader button:hover {
   background-color: #1991d0;
 } */
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+.actions .edit-button {
+  padding: 10px 20px;
+  background-color: #4caf50; /* Green */
+  color: white;
+  border: none;
+  width: 50%;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  /* margin-top: 15px; */
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.actions .edit-button:hover {
+  background-color: #45a049;
+  transform: translateY(-1px);
+}
+
+.actions .edit-button:active {
+  transform: scale(0.98);
+}

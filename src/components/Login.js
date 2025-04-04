@@ -14,14 +14,17 @@ const Login = ({ setAuthenticated }) => {
     e.preventDefault();
     try {
       const data = await loginUser({ email, password });
-      console.log(data, "token data");
-
       const token = data?.data?.token; // Fix: Access correct token path
+      const id = data?.data?.userData?.id;
+      if (!id) {
+        throw new Error("User ID is missing from the response");
+      }
       if (!token) {
         throw new Error("Token is missing from the response");
       }
-
+      // console.log(data?.data?.userData?.id, "token data");
       localStorage.setItem("token", token);
+      localStorage.setItem("userId", id);
       setAuthenticated(true);
       navigate("/dashboard"); // Redirect to dashboard after login
     } catch (err) {

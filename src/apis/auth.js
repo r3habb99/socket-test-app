@@ -28,11 +28,24 @@ export const logoutUser = async () => {
       headers: getAuthHeaders(),
       withCredentials: true,
     });
-
-    localStorage.removeItem("token"); // Remove token after logout
     return response.data;
   } catch (error) {
     console.error("Logout error:", error.response?.data || error.message);
+    handleApiError(error);
+    throw error; // make sure the error propagates
+  }
+};
+
+// api/userApi.js or similar
+
+export const updateUserProfile = async (updateData) => {
+  try {
+    const response = await api.put("/user/update", updateData, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Update user error:", error.response?.data || error.message);
     handleApiError(error);
   }
 };

@@ -7,7 +7,7 @@ export const uploadProfilePic = async (imageFile) => {
   formData.append("image", imageFile);
 
   try {
-    const response = await axios.post("/upload/profile-picture", formData, {
+    const response = await axios.post("user/upload/profile-picture", formData, {
       headers: {
         ...getAuthHeaders(),
         "Content-Type": "multipart/form-data",
@@ -26,7 +26,7 @@ export const uploadCoverPhoto = async (imageFile) => {
   formData.append("image", imageFile);
 
   try {
-    const response = await axios.post("/upload/cover-photo", formData, {
+    const response = await axios.post("user/upload/cover-photo", formData, {
       headers: {
         ...getAuthHeaders(),
         "Content-Type": "multipart/form-data",

@@ -5,10 +5,13 @@ const Logout = ({ onLogout }) => {
   const handleLogout = async () => {
     try {
       await logoutUser();
-      localStorage.removeItem("token");
-      onLogout();
     } catch (err) {
       console.error("Logout error:", err.message);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+
+      onLogout();
     }
   };
 

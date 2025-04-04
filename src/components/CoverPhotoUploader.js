@@ -14,6 +14,7 @@ const CoverPhotoUploader = ({ setUser }) => {
     if (image) {
       try {
         const data = await uploadCoverPhoto(image);
+        console.log(data, "cover photo data");
         setUser((prevUser) => ({
           ...prevUser,
           coverPhoto: data?.coverPhoto || prevUser.coverPhoto,
@@ -37,7 +38,10 @@ const CoverPhotoUploader = ({ setUser }) => {
       />
 
       {/* Upload Button */}
-      <button className="upload-btn" onClick={() => document.getElementById("coverFileInput").click()}>
+      <button
+        className="upload-btn"
+        onClick={() => document.getElementById("coverFileInput").click()}
+      >
         <FaCamera />
       </button>
 
