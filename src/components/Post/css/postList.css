@@ -1,0 +1,67 @@
+.post-list-container {
+  width: auto;
+  margin: 1rem auto;
+  padding: 0px 1rem;
+  font-family: Arial, sans-serif;
+}
+
+.post-list-title {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.post-card {
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s;
+}
+
+.post-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.post-card p {
+  font-size: 1rem;
+  color: #444;
+  margin-bottom: 1rem;
+  text-align: start;
+}
+
+.post-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.post-actions button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.post-actions button:hover {
+  opacity: 0.85;
+}
+
+button:nth-child(1) {
+  background-color: #f56565;
+  color: white;
+}
+
+button:nth-child(2) {
+  background-color: #48bb78;
+  color: white;
+}
+
+button:nth-child(3) {
+  background-color: #4299e1;
+  color: white;
+}

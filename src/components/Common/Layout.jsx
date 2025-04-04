@@ -8,12 +8,13 @@ import { FollowersList, FollowingList, Profile } from "../Profile";
 import { SocketProvider } from "./SocketProvider";
 import { Sidebar } from "./index";
 import { Chat } from "../Chat";
+import { Feed } from "../Post";
 
 export const Layout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const links = [
-    { name: "dashboard", label: "Dashboard" },
+    { name: "dashboard", label: "Feed" },
     { name: "chat", label: "Chat" },
     { name: "profile", label: "Profile" },
     { name: "logout", label: "Logout" },
@@ -32,12 +33,14 @@ export const Layout = ({ onLogout }) => {
         <Sidebar links={links} sidebarOpen={sidebarOpen} onLogout={onLogout} />
         <div className="main-content">
           <Routes>
+            <Route path="/dashboard" element={<Feed />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />
             {/* Add routes for followers and following */}
             <Route path="/user/:userId/followers" element={<FollowersList />} />
             <Route path="/user/:userId/following" element={<FollowingList />} />
             <Route path="/user/edit-profile" element={<ProfileEdit />} />
+
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>
         </div>
@@ -45,3 +48,4 @@ export const Layout = ({ onLogout }) => {
     </SocketProvider>
   );
 };
+// Layout.jsx
