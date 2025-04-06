@@ -1,8 +1,9 @@
+// components/Post/CreatePost.jsx
 import React, { useState } from "react";
 import { createPost } from "../../apis";
-import "./css/createPost.css"; // Import your CSS file for styling
+import "./css/createPost.css";
 
-export const CreatePost = () => {
+export const CreatePost = ({ onPostCreated }) => {
   const [content, setContent] = useState("");
   const [error, setError] = useState(null);
 
@@ -14,12 +15,11 @@ export const CreatePost = () => {
       return;
     }
 
-    const postData = { content };
-
     try {
-      await createPost(postData);
-      setContent(""); // Clear the form after successful creation
-      alert("Post created successfully!");
+      await createPost({ content });
+      setContent("");
+      setError(null);
+      onPostCreated(); // 🔄 Trigger refresh
     } catch (err) {
       setError("Error creating post. Please try again.");
     }

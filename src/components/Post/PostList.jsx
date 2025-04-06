@@ -1,33 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { deletePost, getPosts, likePost, retweetPost } from "../../apis";
-import "./css/postList.css"; // Assuming you have some CSS for styling
+// components/Post/PostList.jsx
+import React from "react";
+import { deletePost, likePost, retweetPost } from "../../apis";
+import "./css/postList.css";
 import { DEFAULT_PROFILE_PIC } from "../../constants";
 
-export const PostList = () => {
-  const [posts, setPosts] = useState([]);
-
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const data = await getPosts();
-        if (Array.isArray(data)) {
-          setPosts(data);
-        } else {
-          setPosts([]); // fallback to avoid crash
-          console.error("Unexpected response:", data);
-        }
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-      }
-    };
-
-    fetchPosts();
-  }, []);
-
+export const PostList = ({ posts, setPosts }) => {
   const handleLike = async (postId) => {
     try {
       await likePost(postId);
-      // Optimistically update the like count here if needed
       setPosts(
         posts.map((post) =>
           post.id === postId ? { ...post, liked: true } : post
@@ -41,7 +21,7 @@ export const PostList = () => {
   const handleRetweet = async (postId) => {
     try {
       await retweetPost(postId);
-      // Add retweeted post to the list or update retweet count
+      // You can handle retweet UI update here if needed
     } catch (error) {
       console.error("Error retweeting post:", error);
     }
@@ -50,7 +30,7 @@ export const PostList = () => {
   const handleDelete = async (postId) => {
     try {
       await deletePost(postId);
-      setPosts(posts.filter((post) => post.id !== postId)); // Remove deleted post from state
+      setPosts(posts.filter((post) => post.id !== postId));
     } catch (error) {
       console.error("Error deleting post:", error);
     }
@@ -68,7 +48,6 @@ export const PostList = () => {
               <div className="post-header">
                 <img
                   src={DEFAULT_PROFILE_PIC}
-                  //   src={post.postedBy?.profilePic || "/default-avatar.png"}
                   alt={post.postedBy?.username || "User"}
                   className="avatar"
                 />
