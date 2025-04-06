@@ -36,11 +36,10 @@ export const Layout = ({ onLogout }) => {
             <Route path="/dashboard" element={<Feed />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />
-            {/* Add routes for followers and following */}
+            <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/user/:userId/followers" element={<FollowersList />} />
             <Route path="/user/:userId/following" element={<FollowingList />} />
             <Route path="/user/edit-profile" element={<ProfileEdit />} />
-
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>
         </div>

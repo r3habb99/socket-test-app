@@ -61,7 +61,7 @@ export const PostList = () => {
       <h1 className="post-list-title">Posts</h1>
       <div>
         {posts.length === 0 ? (
-          <p>No posts to show.</p>
+          <p className="no-post">No posts to show.</p>
         ) : (
           posts.map((post) => (
             <div key={post.id} className="post-card">

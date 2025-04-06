@@ -62,3 +62,15 @@ export const fetchUserProfile = async () => {
     handleApiError(error);
   }
 };
+export const fetchUser = async (query) => {
+  try {
+    const res = await api.get("/user", {
+      params: { query },
+      headers: getAuthHeaders(),
+    });
+    return res.data.data; // assuming `data` is nested under `data` based on your response
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    throw error;
+  }
+};

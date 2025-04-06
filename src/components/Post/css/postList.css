@@ -25,7 +25,13 @@
 .post-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
-
+.no-post {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #999;
+  margin-top: 2rem;
+  font-weight: 500;
+}
 .post-card p {
   font-size: 1rem;
   color: #444;
@@ -84,4 +90,13 @@ button:nth-child(3) {
   font-weight: 600;
   font-size: 1rem;
   color: #2d3748;
+}
+.username.clickable {
+  cursor: pointer;
+  color: #1da1f2;
+  font-weight: 500;
+}
+
+.username.clickable:hover {
+  text-decoration: underline;
 }
