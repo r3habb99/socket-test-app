@@ -74,3 +74,29 @@ export const fetchUser = async (query) => {
     throw error;
   }
 };
+
+export const getUserById = async (userId) => {
+  try {
+    // Ensure userId is a string
+    if (typeof userId !== "string") {
+      console.log(
+        "Invalid userId type, expected a string but got:",
+        typeof userId
+      );
+      throw new Error("Invalid userId type. Expected a string.");
+    }
+
+    // Log the userId to see what is being passed
+    console.log("Fetching user with ID:", userId);
+
+    // Fetch user data with authentication headers
+    const response = await api.get(`/user/${userId}`, {
+      headers: getAuthHeaders(), // Use the helper to get auth headers
+    });
+
+    return response.data; // Return the user data from the response
+  } catch (error) {
+    handleApiError(error); // Use the generic error handler from your helpers
+    throw error; // Ensure that the error is propagated
+  }
+};

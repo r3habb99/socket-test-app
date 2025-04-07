@@ -1,18 +1,18 @@
 // components/Post/PostActions.jsx
-import React from 'react';
-import { api } from '../../api'; // Assuming you've already set up axios API functions
+import React from "react";
+import { api } from "../../apis/axios";
 
 const PostActions = ({ post }) => {
   const handleLike = async () => {
     try {
       await api.put(`/post/${post.id}/like`, null, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       // Optionally, you could update state or rerender here to reflect the like change
     } catch (error) {
-      console.error('Error liking post', error);
+      console.error("Error liking post", error);
     }
   };
 
@@ -20,12 +20,12 @@ const PostActions = ({ post }) => {
     try {
       await api.post(`/post/${post.id}/retweet`, null, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       // Optionally, you could update state or rerender here to reflect the retweet
     } catch (error) {
-      console.error('Error retweeting post', error);
+      console.error("Error retweeting post", error);
     }
   };
 
@@ -33,12 +33,12 @@ const PostActions = ({ post }) => {
     try {
       await api.delete(`/post/${post.id}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       // Optionally, trigger state update to remove post from view
     } catch (error) {
-      console.error('Error deleting post', error);
+      console.error("Error deleting post", error);
     }
   };
 

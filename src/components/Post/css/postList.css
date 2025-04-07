@@ -100,3 +100,22 @@ button:nth-child(3) {
 .username.clickable:hover {
   text-decoration: underline;
 }
+/* Style for liked button */
+.post-actions button.liked {
+  background-color: #f56565; /* Red color for liked button */
+  color: white;
+}
+
+/* Style for unliked button */
+.post-actions button.unliked {
+  background-color: #f3f4f6; /* Light grey color for unliked button */
+  color: #2d3748; /* Dark color for unliked */
+}
+
+.post-actions button.liked:hover {
+  opacity: 0.85;
+}
+
+.post-actions button.unliked:hover {
+  opacity: 0.85;
+}
