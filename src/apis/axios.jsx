@@ -1,12 +1,15 @@
 import axios from "axios";
-// const API_URL = "http://192.168.0.88:8080/api";
-const API_URL = "http://192.168.0.88:8080/api" || "http://localhost:8080/api";
+
+// Use environment variable or fallback to IP or localhost
+const API_URL = "http://localhost:8080/api";
+// process.env.REACT_APP_API_URL || "http://192.168.0.88:8080/api" ||
 
 export const api = axios.create({
   baseURL: API_URL, // Your base URL
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 10000, // 10 seconds timeout to avoid hanging requests
 });
 
 // Helper function to get auth headers
