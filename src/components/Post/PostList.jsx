@@ -8,6 +8,7 @@ export const PostList = ({ posts, setPosts }) => {
     try {
       const response = await likePost(postId);
       const updatedPost = response.data;
+
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId ? { ...post, ...updatedPost } : post
@@ -23,13 +24,17 @@ export const PostList = ({ posts, setPosts }) => {
       const response = await retweetPost(postId);
       const newRetweet = response.data;
 
-      setPosts((prevPosts) => [newRetweet, ...prevPosts]);
+      // Add new retweet at the top and remove duplicate if any
+      setPosts((prevPosts) => {
+        const filteredPosts = prevPosts.filter((post) => post.id !== newRetweet.id);
+        return [newRetweet, ...filteredPosts];
+      });
     } catch (error) {
       console.error("Error retweeting post:", error);
     }
   };
 
-  const handleDelete = async (postId) => {
+const handleDelete = async (postId) => {
     try {
       await deletePost(postId);
       setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
@@ -50,7 +55,6 @@ export const PostList = ({ posts, setPosts }) => {
 
         <div className="post-header">
           <img
-            // src={postedByUser.profilePic || DEFAULT_PROFILE_PIC}
             src={DEFAULT_PROFILE_PIC}
             alt={postedByUser.username || "User"}
             className="avatar"

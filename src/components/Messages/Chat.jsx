@@ -1,6 +1,6 @@
 import React from "react";
 import "../css/chat.css";
-import { Input, useSocket } from "./Common";
+import { Input, useSocket } from "../Common";
 export const Chat = () => {
   const {
     userId,

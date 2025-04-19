@@ -5,9 +5,9 @@ import ProfileEdit from "../Profile/ProfileEdit";
 import "../../css/dashboard.css";
 
 import { FollowersList, FollowingList, Profile } from "../Profile";
-import { SocketProvider } from "./SocketProvider";
+import { SocketProvider } from "../Messages/SocketProvider";
 import { Sidebar } from "./index";
-import { Chat } from "../Chat";
+import { Chat } from "../Messages/Chat";
 import { Feed } from "../Post";
 
 export const Layout = ({ onLogout }) => {
