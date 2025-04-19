@@ -1,9 +1,11 @@
 import { api, getAuthHeaders, handleApiError } from "./axios";
+import { toast } from "react-toastify";
 
 // Register User API
 export const registerUser = async (userData) => {
   try {
     const response = await api.post("/user/register", userData);
+    toast.success("Registration successful!");
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -14,6 +16,7 @@ export const registerUser = async (userData) => {
 export const loginUser = async (userData) => {
   try {
     const response = await api.post("/user/login", userData);
+    toast.success("Login successful!");
     return response.data;
   } catch (error) {
     console.error("Login error:", error.response?.data || error.message);
@@ -28,6 +31,7 @@ export const logoutUser = async () => {
       headers: getAuthHeaders(),
       withCredentials: true,
     });
+    toast.success("Logout successful!");
     return response.data;
   } catch (error) {
     console.error("Logout error:", error.response?.data || error.message);
@@ -36,13 +40,13 @@ export const logoutUser = async () => {
   }
 };
 
-// api/userApi.js or similar
-
+// Update User Profile
 export const updateUserProfile = async (updateData) => {
   try {
     const response = await api.put("/user/update", updateData, {
       headers: getAuthHeaders(),
     });
+    toast.success("Profile updated successfully!");
     return response.data;
   } catch (error) {
     console.error("Update user error:", error.response?.data || error.message);
@@ -62,6 +66,7 @@ export const fetchUserProfile = async () => {
     handleApiError(error);
   }
 };
+
 export const fetchUser = async (query) => {
   try {
     const res = await api.get("/user", {

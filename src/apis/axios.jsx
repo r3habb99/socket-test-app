@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 
 // Use environment variable or fallback to IP or localhost
 const API_URL = "http://localhost:8080/api";
@@ -28,14 +29,17 @@ export const handleApiError = (error) => {
     console.error("Error Response:", error.response.data);
     console.error("Error Status:", error.response.status);
     console.error("Error Headers:", error.response.headers);
+    toast.error(error.response.data.message || "An error occurred");
     throw new Error(error.response.data.message || "An error occurred");
   } else if (error.request) {
     // No response from server
     console.error("No response from server:", error.request);
+    toast.error("No response from server");
     throw new Error("No response from server");
   } else {
     // Something else went wrong
     console.error("Error:", error.message);
+    toast.error(error.message);
     throw new Error(error.message);
   }
 };

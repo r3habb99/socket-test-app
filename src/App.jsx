@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { Login, Register } from "./components/Auth";
 import { Layout, Sidebar } from "./components/Common";
+import ToastController from "./components/Common/ToastController";
 
 const isAuthenticated = () => !!localStorage.getItem("token");
 
@@ -32,47 +33,54 @@ const App = () => {
   };
 
   return (
-    <Router>
-      <SidebarWrapper authenticated={authenticated} onLogout={handleLogout} />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            authenticated ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        <Route
-          path="/login"
-          element={
-            authenticated ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Login setAuthenticated={setAuthenticated} />
-            )
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            authenticated ? <Navigate to="/dashboard" replace /> : <Register />
-          }
-        />
-        <Route
-          path="/*"
-          element={
-            authenticated ? (
-              <Layout onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-      </Routes>
-    </Router>
+    <>
+      <Router>
+        <SidebarWrapper authenticated={authenticated} onLogout={handleLogout} />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              authenticated ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              authenticated ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Login setAuthenticated={setAuthenticated} />
+              )
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              authenticated ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Register />
+              )
+            }
+          />
+          <Route
+            path="/*"
+            element={
+              authenticated ? (
+                <Layout onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+        </Routes>
+      </Router>
+      <ToastController />
+    </>
   );
 };
 
