@@ -6,7 +6,7 @@ import "./css/profile.css";
 // import ProfilePicUploader from "./ProfilePicUploader";
 // import CoverPhotoUploader from "./CoverPhotoUploader";
 import { FaEdit } from "react-icons/fa";
-import { fetchUserProfile, followUser } from "../../apis";
+import { fetchUserProfileById, followUser } from "../../apis";
 import { DEFAULT_COVER_PHOTO, DEFAULT_PROFILE_PIC } from "../../constants";
 import { CoverPhotoUploader, ProfilePicUploader, FollowButton } from "./index";
 
@@ -22,7 +22,8 @@ export const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const data = await fetchUserProfile(userId); // Optional: pass userId to fetch other's profile
+        const data = await fetchUserProfileById(userId);
+        console.log(data, "profile data");
         if (data && data.id) {
           setUser(data);
           setIsFollowing(data.followers?.includes(loggedInUserId));

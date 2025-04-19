@@ -41,10 +41,17 @@ export const uploadCoverPhoto = async (imageFile) => {
 // Follow/Unfollow a User
 export const followUser = async (userId) => {
   try {
-    const response = await api.put(`/user/${userId}/follow`, null, {
-      headers: getAuthHeaders(),
-    });
-    return response.data; // Response contains the updated data of the followed user
+    const response = await api.put(
+      `/user/${userId}/follow`,
+      {},
+      {
+        headers: {
+          ...getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
   } catch (error) {
     console.error("Error following/unfollowing user:", error);
     handleApiError(error);
@@ -82,3 +89,23 @@ export const getUserFollowers = async (userId) => {
   }
 };
 
+// Fetch User Profile (own or by userId)
+export const fetchUserProfileById = async (userId) => {
+  try {
+    const url = userId ? `/user/${userId}` : "/user/profile";
+    const response = await api.get(url, {
+      headers: getAuthHeaders(),
+    });
+    console.log("fetchUserProfileById response:", response.data);
+    if (userId) {
+      // For other users, assume user data is in response.data.data
+      return response.data.data || response.data;
+    } else {
+      // For logged-in user, user data is in response.data.data.user
+      return response.data.data?.user || response.data;
+    }
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    handleApiError(error);
+  }
+};
