@@ -1,33 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { deletePost, likePost, retweetPost, getUserById } from "../../apis"; // Assuming you have a function to fetch user by ID
+import React from "react";
+import { deletePost, likePost, retweetPost } from "../../apis";
 import "./css/postList.css";
 import { DEFAULT_PROFILE_PIC } from "../../constants";
 
 export const PostList = ({ posts, setPosts }) => {
-  const [users, setUsers] = useState({}); // To store user data by ID
-
-  // Fetch user data when the component mounts (or when posts change)
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const userIds = posts.map((post) => post.postedBy.id);
-      const uniqueUserIds = [...new Set(userIds)];
-
-      console.log("Unique user IDs:", uniqueUserIds); // Log the user IDs
-
-      const userPromises = uniqueUserIds.map((userId) => getUserById(userId));
-      const userResponses = await Promise.all(userPromises);
-
-      const userMap = userResponses.reduce((acc, user) => {
-        acc[user.id] = user;
-        return acc;
-      }, {});
-
-      setUsers(userMap);
-    };
-
-    fetchUsers();
-  }, [posts]);
-
   const handleLike = async (postId) => {
     try {
       const response = await likePost(postId);
@@ -65,8 +41,8 @@ export const PostList = ({ posts, setPosts }) => {
   const renderPostContent = (post) => {
     const original = post.retweetedFrom;
 
-    // Get the user data for the postedBy field
-    const postedByUser = users[post.postedBy.id] || {}; // Accessing the ID correctly if postedBy is an object
+    // Use postedBy object directly from post
+    const postedByUser = post.postedBy || {};
 
     return (
       <>
@@ -74,7 +50,8 @@ export const PostList = ({ posts, setPosts }) => {
 
         <div className="post-header">
           <img
-            src={postedByUser.profilePic || DEFAULT_PROFILE_PIC} // Use profilePic if available
+            // src={postedByUser.profilePic || DEFAULT_PROFILE_PIC}
+            src={DEFAULT_PROFILE_PIC}
             alt={postedByUser.username || "User"}
             className="avatar"
           />
