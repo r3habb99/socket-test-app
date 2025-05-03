@@ -104,11 +104,43 @@ export const Chat = ({ selectedChat }) => {
 
   return (
     <div className="chat-container">
-      <h1>{selectedChat.chatName || "Chat"} 💬</h1>
+      <div className="chat-header-container">
+        <div className="chat-header-info">
+          <div className="chat-header-avatar">
+            {(selectedChat.chatName || selectedChat.users?.[0]?.username || "?")
+              .charAt(0)
+              .toUpperCase()}
+          </div>
+          <div className="chat-header-details">
+            <h2 className="chat-header-name">
+              {selectedChat.chatName ||
+                selectedChat.users?.map((u) => u.username).join(", ") ||
+                "Chat"}
+            </h2>
+            <div className="chat-header-status">
+              {selectedChat.isGroupChat
+                ? `${selectedChat.users?.length || 0} members`
+                : "Active now"}
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="messages-container">
         {loadingMessages ? (
-          <p>Loading messages...</p>
+          <div className="loading-messages">
+            <p>Loading messages...</p>
+          </div>
+        ) : messages?.length === 0 ? (
+          <div className="no-messages">
+            <div className="no-messages-content">
+              <i className="fa-solid fa-comments no-messages-icon"></i>
+              <p>No messages yet</p>
+              <p className="no-messages-hint">
+                Send a message to start the conversation
+              </p>
+            </div>
+          </div>
         ) : (
           <ul>
             {(messages || []).map((msg, index) => (

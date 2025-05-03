@@ -34,6 +34,53 @@ export const SocketProvider = ({ children }) => {
   // Add a ref to track recently sent messages to prevent duplicates
   const [recentlySentMessages, setRecentlySentMessages] = useState({});
 
+  // Listen for storage events to update userId and username
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const storedUserId = localStorage.getItem("userId");
+      const storedUsername = localStorage.getItem("username");
+
+      if (storedUserId && storedUserId !== userId) {
+        console.log("UserId updated from storage:", storedUserId);
+        setUserId(storedUserId);
+      }
+
+      if (storedUsername && storedUsername !== username) {
+        console.log("Username updated from storage:", storedUsername);
+        setUsername(storedUsername);
+      }
+    };
+
+    // Force check localStorage on component mount
+    const checkLocalStorage = () => {
+      const storedUserId = localStorage.getItem("userId");
+      const storedUsername = localStorage.getItem("username");
+
+      console.log("Checking localStorage for user data:", {
+        storedUserId,
+        storedUsername,
+      });
+
+      if (storedUserId) {
+        setUserId(storedUserId);
+      }
+
+      if (storedUsername) {
+        setUsername(storedUsername);
+      }
+    };
+
+    // Run immediately
+    checkLocalStorage();
+
+    // Also listen for storage events
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
   // Initialize socket connection when component mounts
   useEffect(() => {
     if (userId && username) {
@@ -104,6 +151,9 @@ export const SocketProvider = ({ children }) => {
       // Get message ID (might be _id or id)
       const messageId = newMessage._id || newMessage.id;
 
+      // Get message content
+      const messageContent = newMessage.content;
+
       // Get sender ID (might be _id or id or an object with _id/id)
       const senderId =
         typeof newMessage.sender === "object"
@@ -111,13 +161,42 @@ export const SocketProvider = ({ children }) => {
           : newMessage.sender;
 
       // Check if this is a message we just sent (to avoid duplicates)
-      const isRecentlySentMessage = recentlySentMessages[messageId];
+      const isRecentlySentMessage =
+        recentlySentMessages[messageId] ||
+        Object.keys(recentlySentMessages).some((key) =>
+          key.startsWith(`${messageContent}-`)
+        );
 
       if (isRecentlySentMessage) {
         console.log(
-          "Ignoring message we just sent to avoid duplication:",
+          "Received confirmation for message we just sent:",
           messageId
         );
+
+        // Replace any temporary message with the real one
+        setMessages((prevMessages) => {
+          // Find any temporary messages that match this content
+          const tempMessage = prevMessages.find(
+            (msg) =>
+              msg.isTemp &&
+              msg.content === messageContent &&
+              msg.sender._id === senderId
+          );
+
+          if (tempMessage) {
+            console.log(
+              "Replacing temporary message with real message:",
+              tempMessage._id
+            );
+            return prevMessages.map((msg) =>
+              msg._id === tempMessage._id ? newMessage : msg
+            );
+          }
+
+          // If no temp message found, just return the current messages
+          return prevMessages;
+        });
+
         return;
       }
 
@@ -199,8 +278,8 @@ export const SocketProvider = ({ children }) => {
 
   // Join chat room
   const joinChatRoom = (chatId) => {
-    if (!chatId || !isConnected) {
-      console.warn("Cannot join chat room: invalid chat ID or not connected");
+    if (!chatId) {
+      console.warn("Cannot join chat room: invalid chat ID");
       return;
     }
 
@@ -208,6 +287,44 @@ export const SocketProvider = ({ children }) => {
     if (currentChatId === chatId) {
       console.log("Already in chat room:", chatId);
       return;
+    }
+
+    // If not connected, try to initialize the socket first
+    if (!isConnected) {
+      if (userId && username) {
+        console.log(
+          "Not connected, attempting to initialize socket before joining room"
+        );
+        try {
+          const newSocket = initializeSocket(userId, username);
+          if (newSocket) {
+            setIsConnected(true);
+            console.log(
+              `Socket initialized successfully for user: ${userId} (${username})`
+            );
+
+            // Now join the room
+            console.log("Joining chat room:", chatId);
+            joinRoom(chatId);
+            setCurrentChatId(chatId);
+            console.log("Successfully joined chat room:", chatId);
+            return;
+          } else {
+            console.error("Failed to initialize socket: socket is null");
+            toast.error("Failed to connect to chat server");
+            return;
+          }
+        } catch (error) {
+          console.error("Failed to initialize socket:", error);
+          toast.error("Failed to connect to chat server");
+          return;
+        }
+      } else {
+        console.warn(
+          "Cannot join chat room: not connected and missing userId or username"
+        );
+        return;
+      }
     }
 
     console.log("Joining chat room:", chatId);
@@ -241,8 +358,8 @@ export const SocketProvider = ({ children }) => {
 
   // Send message
   const sendMessage = async (messageContent) => {
-    if (!currentChatId || !isConnected) {
-      console.warn("Cannot send message: no chat room joined or not connected");
+    if (!currentChatId) {
+      console.warn("Cannot send message: no chat room joined");
       return;
     }
 
@@ -256,84 +373,123 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
+    // If not connected, try to initialize the socket first
+    if (!isConnected && userId && username) {
+      console.log(
+        "Not connected, attempting to initialize socket before sending message"
+      );
+      try {
+        const newSocket = initializeSocket(userId, username);
+        if (newSocket) {
+          setIsConnected(true);
+          console.log(
+            `Socket initialized successfully for user: ${userId} (${username})`
+          );
+
+          // Join the chat room if needed
+          joinRoom(currentChatId);
+          console.log(
+            "Joined chat room before sending message:",
+            currentChatId
+          );
+        } else {
+          console.error("Failed to initialize socket: socket is null");
+          toast.error("Failed to connect to chat server");
+        }
+      } catch (error) {
+        console.error("Failed to initialize socket:", error);
+        toast.error("Failed to connect to chat server");
+      }
+    }
+
     try {
       console.log("📤 Sending message:", messageContent);
 
       // Stop typing indicator
       handleTyping(false);
 
-      // Send message via API
-      const savedMessageResponse = await sendMessageApi(
-        currentChatId,
-        messageContent
-      );
-      console.log("API response for sending message:", savedMessageResponse);
-
-      // Extract the actual message data
-      let savedMessage = savedMessageResponse;
-      if (savedMessageResponse && savedMessageResponse.data) {
-        savedMessage = savedMessageResponse.data;
-        console.log("Using nested message data:", savedMessage);
-      }
-
-      if (!savedMessage) {
-        console.error("Failed to save message:", savedMessageResponse);
-        throw new Error("Failed to save message");
-      }
-
-      // Add message to local state
-      const formattedMessage = {
-        ...savedMessage,
-        sender: savedMessage.sender || { _id: userId, username },
-        chat: savedMessage.chat || { _id: currentChatId },
+      // Create a temporary message for immediate display
+      const tempMessage = {
+        _id: `temp-${Date.now()}`,
+        content: messageContent,
+        sender: { _id: userId, username },
+        chat: { _id: currentChatId },
+        createdAt: new Date(),
+        isTemp: true,
       };
 
-      console.log("Adding message to local state:", formattedMessage);
+      // Add the temporary message to the UI immediately
+      setMessages((prev) => [...prev, tempMessage]);
 
-      // Get message ID (might be _id or id)
-      const messageId = formattedMessage._id || formattedMessage.id;
+      // IMPORTANT: Only use socket to send the message, not both API and socket
+      // This prevents duplicate messages in the database
+      if (isConnected) {
+        // Send via socket only
+        console.log("Sending message via socket only");
 
-      // Track this message as recently sent to prevent duplication
-      setRecentlySentMessages((prev) => ({
-        ...prev,
-        [messageId]: true,
-      }));
+        // Track this message to prevent duplication when it comes back from the server
+        const tempId = tempMessage._id;
+        const trackingKey = `${messageContent}-${Date.now()}`;
 
-      // Set a timeout to remove the message from tracking after a short delay
-      setTimeout(() => {
-        setRecentlySentMessages((prev) => {
-          const updated = { ...prev };
-          delete updated[messageId];
-          return updated;
+        setRecentlySentMessages((prev) => ({
+          ...prev,
+          [tempId]: true,
+          [trackingKey]: true, // Also track by content+timestamp as fallback
+        }));
+
+        // Clean up tracking after 10 seconds
+        setTimeout(() => {
+          setRecentlySentMessages((prev) => {
+            const updated = { ...prev };
+            delete updated[tempId];
+            delete updated[trackingKey];
+            return updated;
+          });
+        }, 10000);
+
+        // Send message via socket
+        sendSocketMessage({
+          content: messageContent,
+          chat: currentChatId,
+          sender: userId,
         });
-      }, 5000); // 5 seconds should be enough for the socket to echo back
+      } else {
+        // Fallback to API if socket is not connected
+        console.log("Socket not connected, falling back to API");
+        const savedMessageResponse = await sendMessageApi(
+          currentChatId,
+          messageContent
+        );
 
-      // Send message via socket AFTER tracking it
-      sendSocketMessage({
-        content: messageContent,
-        chat: currentChatId,
-        sender: userId,
-      });
-
-      // Add to messages if not already there
-      setMessages((prev) => {
-        // Check if message already exists to avoid duplicates
-        const exists = prev.some((msg) => (msg._id || msg.id) === messageId);
-
-        if (exists) {
-          console.log(
-            "Message already exists in the list, not adding again:",
-            messageId
-          );
-          return prev;
+        // Extract the actual message data
+        let savedMessage = savedMessageResponse;
+        if (savedMessageResponse && savedMessageResponse.data) {
+          savedMessage = savedMessageResponse.data;
         }
 
-        console.log("Adding new message to the list:", messageId);
-        return [...prev, formattedMessage];
-      });
+        if (!savedMessage) {
+          throw new Error("Failed to save message");
+        }
+
+        // Replace the temporary message with the real one
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg._id === tempMessage._id
+              ? {
+                  ...savedMessage,
+                  sender: savedMessage.sender || { _id: userId, username },
+                  chat: savedMessage.chat || { _id: currentChatId },
+                }
+              : msg
+          )
+        );
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
       toast.error("Failed to send message");
+
+      // Remove the temporary message if there was an error
+      setMessages((prev) => prev.filter((msg) => !msg.isTemp));
     }
   };
 

@@ -8,6 +8,7 @@ export const ChatList = ({
   prefillGroupName = "",
   prefillGroupUsers = "",
   hideCreateInputs = false,
+  selectedChatId = null,
 }) => {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -132,19 +133,39 @@ export const ChatList = ({
         <ul className="chatlist">
           {(Array.isArray(chats) ? chats : []).map((chat) => (
             <li
-              key={chat._id}
-              className="chatlist-item"
+              key={
+                chat._id ||
+                chat.id ||
+                `chat-${Math.random().toString(36).substring(2, 11)}`
+              }
+              className={`chatlist-item ${
+                (chat._id || chat.id) === selectedChatId ? "selected" : ""
+              }`}
               onClick={() => onSelectChat(chat)}
             >
-              {chat.chatName ||
-                chat.users?.map((u) => u.username).join(", ") ||
-                "Unnamed Chat"}
+              <div className="chat-item-content">
+                <div className="chat-avatar">
+                  {(chat.chatName || chat.users?.[0]?.username || "?")
+                    .charAt(0)
+                    .toUpperCase()}
+                </div>
+                <div className="chat-details">
+                  <div className="chat-name">
+                    {chat.chatName ||
+                      chat.users?.map((u) => u.username).join(", ") ||
+                      "Unnamed Chat"}
+                  </div>
+                  <div className="chat-preview">
+                    {chat.latestMessage?.content || "No messages yet"}
+                  </div>
+                </div>
+              </div>
             </li>
           ))}
         </ul>
       )}
 
-      {!hideCreateInputs && (
+      {/* {!hideCreateInputs && (
         <>
           <div className="create-chat">
             <h3>Create Individual Chat</h3>
@@ -181,7 +202,7 @@ export const ChatList = ({
             </button>
           </div>
         </>
-      )}
+      )} */}
     </div>
   );
 };

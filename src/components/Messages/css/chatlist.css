@@ -1,10 +1,10 @@
 .chatlist-container {
-  width: 300px;
-  border-right: 1px solid #ccc;
-  padding: 10px;
+  width: 100%;
+  padding: 0;
   overflow-y: auto;
-  height: 100vh;
+  height: 100%;
   box-sizing: border-box;
+  background-color: #f8f9fa;
 }
 
 .chatlist {
@@ -14,36 +14,98 @@
 }
 
 .chatlist-item {
-  padding: 10px;
+  padding: 15px;
   cursor: pointer;
   border-bottom: 1px solid #eee;
+  transition: background-color 0.2s ease;
+  position: relative;
 }
 
 .chatlist-item:hover {
   background-color: #f0f0f0;
 }
 
+.chatlist-item.selected {
+  background-color: #e6f2ff;
+  border-left: 4px solid #007bff;
+}
+
+.chat-item-content {
+  display: flex;
+  align-items: center;
+}
+
+.chat-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.chat-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-name {
+  font-weight: 600;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-preview {
+  color: #777;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .create-chat,
 .create-group-chat {
   margin-top: 20px;
+  padding: 0 15px 15px;
+}
+
+.create-chat h3,
+.create-group-chat h3 {
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: #555;
 }
 
 .create-chat input,
 .create-group-chat input {
   width: 100%;
-  padding: 5px;
-  margin-bottom: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
   box-sizing: border-box;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
 .create-chat button,
 .create-group-chat button {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   background-color: #007bff;
   color: white;
   border: none;
+  border-radius: 4px;
   cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
 }
 
 .create-chat button:hover,
@@ -56,17 +118,5 @@
 .create-group-chat button:disabled {
   background-color: #a0a0a0;
   cursor: not-allowed;
-}
-
-/* Add some spacing and border radius for inputs and buttons */
-.create-chat input,
-.create-group-chat input {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.create-chat button,
-.create-group-chat button {
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
+  opacity: 0.7;
 }

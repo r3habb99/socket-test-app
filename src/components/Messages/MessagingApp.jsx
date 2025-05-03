@@ -78,35 +78,35 @@ export const MessagingAppContent = () => {
 
   return (
     <div className="messaging-app-container">
-      {!selectedChat ? (
+      <div className="messaging-app-layout">
+        {/* Chat list - always visible */}
         <div className="chatlist-section">
+          <h2 className="chat-header">Conversations</h2>
           <ChatList
             onSelectChat={setSelectedChat}
             prefillUserId={prefillUserId}
             prefillGroupName={prefillGroupName}
             prefillGroupUsers={prefillGroupUsers}
             hideCreateInputs={!!(prefillUserId || prefillGroupName)}
+            selectedChatId={selectedChat?._id || selectedChat?.id}
           />
         </div>
-      ) : (
+
+        {/* Chat window - shows when a chat is selected */}
         <div className="chat-section">
-          <button
-            className="back-button"
-            onClick={() => setSelectedChat(null)}
-            style={{
-              margin: "10px",
-              padding: "5px 10px",
-              cursor: "pointer",
-              borderRadius: "4px",
-              border: "1px solid #ccc",
-              backgroundColor: "#f0f0f0",
-            }}
-          >
-            &larr; Back
-          </button>
-          <Chat selectedChat={selectedChat} />
+          {selectedChat ? (
+            <Chat selectedChat={selectedChat} />
+          ) : (
+            <div className="no-chat-selected">
+              <div className="no-chat-content">
+                <i className="fa-solid fa-comments no-chat-icon"></i>
+                <h3>Select a conversation</h3>
+                <p>Choose a chat from the list or start a new conversation</p>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
