@@ -1,0 +1,74 @@
+/* ProfileEdit.css */
+.edit-profile-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.edit-profile-container h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #657786;
+  border-bottom: 2px solid transparent;
+}
+
+.tabs button.active {
+  color: #1da1f2;
+  border-bottom: 2px solid #1da1f2;
+}
+
+.edit-profile-container input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.edit-profile-container button {
+  padding: 10px 20px;
+  background-color: #1da1f2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.edit-profile-container button:hover {
+  background-color: #0c85d0;
+}
+
+.reset-password-container {
+  margin-top: 20px;
+}
+
+.error-message {
+  color: #e0245e;
+  margin-bottom: 15px;
+}
+
+.success-message {
+  color: #17bf63;
+  margin-bottom: 15px;
+}

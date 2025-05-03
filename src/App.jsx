@@ -1,107 +1,67 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  useLocation,
 } from "react-router-dom";
-import { Login, Register } from "./components/Auth";
-import { Sidebar } from "./components/Common";
-import { Layout } from "./components/Common/Layout";
-import ToastController from "./components/Common/ToastController";
+import { AuthProvider, SocketProvider } from "./core/providers";
+import { PrivateRoute } from "./core/router";
 
-const isAuthenticated = () => !!localStorage.getItem("token");
+// Import components directly
+import Login from "./features/auth/components/Login/Login";
+import Register from "./features/auth/components/Register/Register";
+import Layout from "./shared/components/Layout/Layout";
+import Feed from "./features/feed/components/Feed";
+import MessagingApp from "./features/messaging/components/MessagingApp";
+import { Profile } from "./features/profile/components/Profile/Profile";
+import { FollowersList } from "./features/profile/components/FollowersList/FollowersList";
+import ProfileEdit from "./features/profile/components/ProfileEdit";
+import ToastController from "./shared/components/ToastController/ToastController";
 
 const App = () => {
-  const [authenticated, setAuthenticated] = useState(isAuthenticated());
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setAuthenticated(isAuthenticated());
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    setAuthenticated(false);
-  };
-
   return (
-    <>
-      <Router>
-        <SidebarWrapper authenticated={authenticated} onLogout={handleLogout} />
-        <Routes>
-          <Route
-            path="/"
-            element={
-              authenticated ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              authenticated ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <Login setAuthenticated={setAuthenticated} />
-              )
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              authenticated ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <Register />
-              )
-            }
-          />
-          <Route
-            path="/messages"
-            element={
-              authenticated ? (
-                <Navigate to="/dashboard/messages" replace />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/*"
-            element={
-              authenticated ? (
-                <Layout onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-        </Routes>
-      </Router>
-      <ToastController />
-    </>
-  );
-};
+    <AuthProvider>
+      <SocketProvider>
+        <Router>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-// Sidebar should be hidden on login/register pages
-const SidebarWrapper = ({ authenticated, onLogout }) => {
-  const location = useLocation();
-  if (location.pathname === "/login" || location.pathname === "/register") {
-    return null;
-  }
-  return <Sidebar authenticated={authenticated} onLogout={onLogout} />;
+            {/* Private routes with children */}
+            <Route
+              path="/*"
+              element={
+                <PrivateRoute>
+                  <Layout />
+                </PrivateRoute>
+              }
+            >
+              <Route path="dashboard" element={<Feed />} />
+              <Route path="dashboard/messages" element={<MessagingApp />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="profile/:userId" element={<Profile />} />
+              <Route
+                path="profile/:userId/followers"
+                element={<FollowersList />}
+              />
+              <Route
+                path="profile/:userId/following"
+                element={<FollowersList />}
+              />
+              <Route path="user/edit-profile" element={<ProfileEdit />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Route>
+
+            {/* Default route */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+          <ToastController />
+        </Router>
+      </SocketProvider>
+    </AuthProvider>
+  );
 };
 
 export default App;

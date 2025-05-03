@@ -1,0 +1,145 @@
+import { useState, useEffect, useCallback } from "react";
+import { login as loginApi, register as registerApi } from "../api/authApi";
+
+/**
+ * Custom hook for authentication
+ * @returns {Object} Auth methods and state
+ */
+export const useAuth = () => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Check if user is authenticated on mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+
+    if (token && userId) {
+      setUser({ id: userId });
+    }
+
+    setLoading(false);
+  }, []);
+
+  // Login function
+  const login = useCallback(async (credentials) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await loginApi(credentials);
+
+      if (response.error) {
+        setError(response.message);
+        return { success: false, message: response.message };
+      }
+
+      console.log("Login response:", response);
+
+      // Extract token and user data, handling different response structures
+      const responseData = response.data;
+
+      // Handle nested response structure based on the old Login.jsx component
+      let token, userId, userData;
+
+      // Try to extract token from various possible locations
+      token = responseData?.data?.token || responseData?.token;
+
+      // Try to extract user data from various possible locations
+      userData =
+        responseData?.data?.userData ||
+        responseData?.data?.user ||
+        responseData?.userData ||
+        responseData?.user ||
+        {};
+
+      // Try to extract user ID from user data
+      userId = userData?.id || userData?._id;
+
+      console.log("Extracted auth data:", {
+        token: token ? "Token found" : "Token missing",
+        userId,
+        userData,
+      });
+
+      if (!token) {
+        console.error("Token is missing from the response:", responseData);
+        setError("Authentication failed: Token is missing");
+        return {
+          success: false,
+          message: "Authentication failed: Token is missing",
+        };
+      }
+
+      if (!userId) {
+        console.error("User ID is missing from the response:", responseData);
+        setError("Authentication failed: User ID is missing");
+        return {
+          success: false,
+          message: "Authentication failed: User ID is missing",
+        };
+      }
+
+      // Save to localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("userId", userId);
+
+      // Update state
+      setUser({ id: userId });
+
+      return { success: true };
+    } catch (err) {
+      const message = err.message || "An error occurred during login";
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Register function
+  const register = useCallback(async (userData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await registerApi(userData);
+
+      if (response.error) {
+        setError(response.message);
+        return { success: false, message: response.message };
+      }
+
+      return { success: true };
+    } catch (err) {
+      const message = err.message || "An error occurred during registration";
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Logout function
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    setUser(null);
+  }, []);
+
+  // Check if user is authenticated
+  const isAuthenticated = useCallback(() => {
+    return !!localStorage.getItem("token");
+  }, []);
+
+  return {
+    user,
+    loading,
+    error,
+    login,
+    register,
+    logout,
+    isAuthenticated,
+  };
+};

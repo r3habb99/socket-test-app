@@ -499,43 +499,47 @@ li.receiver .message-timestamp {
   }
 
   li {
-    max-width: 80%;
+    max-width: 85%;
+  }
+
+  .input-container {
+    padding: 10px;
   }
 }
 
+/* For very small screens */
 @media (max-width: 480px) {
-  .messages-container {
-    padding: 12px;
+  .messaging-app-container {
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
   }
 
-  li {
-    max-width: 85%;
-    margin-bottom: 16px;
+  .chat-avatar {
+    width: 40px;
+    height: 40px;
   }
 
-  .message-bubble {
-    padding: 10px 12px;
-  }
-
-  .message-content {
+  .chat-name {
     font-size: 14px;
   }
 
-  .message-timestamp {
-    font-size: 11px;
+  .chat-preview {
+    font-size: 13px;
+  }
+
+  .no-chat-selected h3 {
+    font-size: 22px;
+  }
+
+  .no-chat-selected p {
+    font-size: 14px;
   }
 
   .input-container {
     padding: 8px 12px;
-  }
-
-  .input-container input[type="text"] {
-    font-size: 14px;
-  }
-
-  .message-action-button,
-  .input-container button.send-btn {
-    width: 32px;
-    height: 32px;
   }
 }
