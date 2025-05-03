@@ -97,15 +97,36 @@ export const fetchUserProfileById = async (userId) => {
       headers: getAuthHeaders(),
     });
     console.log("fetchUserProfileById response:", response.data);
-    if (userId) {
-      // For other users, assume user data is in response.data.data
-      return response.data.data || response.data;
+
+    // Extract the user data from the response
+    let userData;
+
+    if (response.data && response.data.statusCode === 200) {
+      // API returns data in the data field
+      userData = response.data.data;
     } else {
-      // For logged-in user, user data is in response.data.data.user
-      return response.data.data?.user || response.data;
+      // Fallback to the entire response
+      userData = response.data;
     }
+
+    // For logged-in user, the structure might be different
+    if (!userId && userData && userData.user) {
+      userData = userData.user;
+    }
+
+    // Ensure we have a valid user object
+    if (!userData) {
+      console.error("No user data found in response:", response.data);
+      return null;
+    }
+
+    // Log the extracted user data
+    console.log("Extracted user data:", userData);
+
+    return userData;
   } catch (error) {
     console.error("Error fetching user profile:", error);
     handleApiError(error);
+    return null;
   }
 };

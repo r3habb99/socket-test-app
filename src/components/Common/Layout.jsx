@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import ProfileEdit from "../Profile/ProfileEdit";
 
 import "../../css/dashboard.css";
+import "../../css/main-content.css";
 
 import { FollowersList, FollowingList, Profile } from "../Profile/index";
 import { SocketProvider } from "../Messages/SocketProvider";

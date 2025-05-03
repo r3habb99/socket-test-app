@@ -79,14 +79,40 @@ export const getChatMessages = async (chatId) => {
 };
 
 // Send a message in a chat
-export const sendMessage = async (chatId, content) => {
+export const sendMessage = async (chatId, content, additionalData = {}) => {
   try {
-    console.log(`Sending message to chat ${chatId}: "${content}"`);
-    const response = await api.post(`/chat/${chatId}/message`, { content });
+    console.log(
+      `Sending message to chat ${chatId}: "${content}"`,
+      additionalData
+    );
+
+    // Include any additional data in the request
+    const requestData = {
+      content,
+      ...additionalData,
+    };
+
+    const response = await api.post(`/chat/${chatId}/message`, requestData);
     console.log("Raw API response from sendMessage:", response.data);
 
     // Check if the response has the expected structure
     if (response.data && response.data.data) {
+      // If we have username in additionalData, make sure it's included in the response
+      if (additionalData.username && response.data.data.sender) {
+        // If sender is an object, add username to it
+        if (typeof response.data.data.sender === "object") {
+          response.data.data.sender.username = additionalData.username;
+        }
+        // If sender is just an ID, convert it to an object with username
+        else {
+          response.data.data.sender = {
+            _id: response.data.data.sender,
+            id: response.data.data.sender,
+            username: additionalData.username,
+          };
+        }
+      }
+
       // Return the actual message data
       return response.data.data;
     }

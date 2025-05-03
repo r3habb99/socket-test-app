@@ -15,6 +15,7 @@ import {
   disconnectSocket,
 } from "../../apis/socket";
 import { sendMessage as sendMessageApi } from "../../apis/chat";
+import { getUserById } from "../../apis/auth";
 
 const SocketContext = createContext();
 
@@ -25,6 +26,9 @@ export const SocketProvider = ({ children }) => {
   const [username, setUsername] = useState(
     localStorage.getItem("username") || ""
   );
+
+  // Debug userId
+  console.log("SocketProvider userId:", userId);
   const [currentChatId, setCurrentChatId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
@@ -33,6 +37,8 @@ export const SocketProvider = ({ children }) => {
   const [typingTimeout, setTypingTimeout] = useState(null);
   // Add a ref to track recently sent messages to prevent duplicates
   const [recentlySentMessages, setRecentlySentMessages] = useState({});
+  // Cache for user information to avoid repeated API calls
+  const [userCache, setUserCache] = useState({});
 
   // Listen for storage events to update userId and username
   useEffect(() => {
@@ -124,15 +130,23 @@ export const SocketProvider = ({ children }) => {
 
   // Set up event listeners
   useEffect(() => {
-    if (!isConnected) {
-      console.warn("Cannot set up event listeners: not connected");
-      return;
-    }
+    // Always try to set up event listeners, even if not connected
+    // This ensures we catch events when the connection is established
 
     // Check if socket is initialized
     const socket = getSocket();
     if (!socket) {
       console.error("Cannot set up event listeners: socket is null");
+
+      // Try to initialize the socket if we have user info
+      if (userId && username) {
+        console.log("Attempting to initialize socket for event listeners");
+        const newSocket = initializeSocket(userId, username);
+        if (newSocket) {
+          setIsConnected(true);
+          console.log(`Socket initialized successfully for event listeners`);
+        }
+      }
       return;
     }
 
@@ -159,6 +173,125 @@ export const SocketProvider = ({ children }) => {
         typeof newMessage.sender === "object"
           ? newMessage.sender._id || newMessage.sender.id
           : newMessage.sender;
+
+      // Make sure the sender object has a username
+      if (
+        typeof newMessage.sender === "object" &&
+        !newMessage.sender.username
+      ) {
+        // If the sender is the current user, add the username
+        if (String(senderId) === String(userId)) {
+          newMessage.sender.username = username;
+          console.log(
+            "Added username to sender object for current user:",
+            username
+          );
+        } else {
+          // For other users, try to get their username from the message data
+          // This is important for incoming messages from other users
+          if (newMessage.senderUsername) {
+            newMessage.sender.username = newMessage.senderUsername;
+            console.log(
+              "Added username to sender object from message data:",
+              newMessage.senderUsername
+            );
+          } else {
+            // If no username is available, use a placeholder
+            console.log("No username available for sender:", senderId);
+            // Try to fetch user info here if needed
+          }
+        }
+      } else if (typeof newMessage.sender !== "object") {
+        // If the sender is just an ID, create a proper sender object
+        if (String(senderId) === String(userId)) {
+          // For current user
+          newMessage.sender = {
+            _id: senderId,
+            id: senderId,
+            username: username,
+          };
+          console.log(
+            "Created sender object with username for current user:",
+            username
+          );
+        } else if (newMessage.senderUsername) {
+          // For other users with username in message data
+          newMessage.sender = {
+            _id: senderId,
+            id: senderId,
+            username: newMessage.senderUsername,
+          };
+          console.log(
+            "Created sender object with username from message data:",
+            newMessage.senderUsername
+          );
+        } else {
+          // For other users without username
+          newMessage.sender = {
+            _id: senderId,
+            id: senderId,
+          };
+          console.log(
+            "Created sender object without username for user:",
+            senderId
+          );
+
+          // Try to fetch user info from cache first
+          if (userCache[senderId]) {
+            console.log(
+              "Using cached user info for sender:",
+              userCache[senderId]
+            );
+            newMessage.sender.username = userCache[senderId].username;
+          } else {
+            // Fetch user info from API
+            console.log("Fetching user info for sender:", senderId);
+
+            // Create a function to fetch and update user info
+            const fetchUserInfo = async () => {
+              try {
+                const userData = await getUserById(senderId);
+                console.log("Fetched user info:", userData);
+
+                if (userData && userData.data && userData.data.username) {
+                  // Update the cache
+                  setUserCache((prev) => ({
+                    ...prev,
+                    [senderId]: userData.data,
+                  }));
+
+                  // Update the message sender
+                  setMessages((prevMessages) => {
+                    return prevMessages.map((msg) => {
+                      // Find messages from this sender that don't have a username
+                      if (
+                        (msg.sender._id === senderId ||
+                          msg.sender.id === senderId) &&
+                        !msg.sender.username
+                      ) {
+                        // Create a new message object with the username
+                        return {
+                          ...msg,
+                          sender: {
+                            ...msg.sender,
+                            username: userData.data.username,
+                          },
+                        };
+                      }
+                      return msg;
+                    });
+                  });
+                }
+              } catch (error) {
+                console.error("Error fetching user info:", error);
+              }
+            };
+
+            // Execute the fetch function
+            fetchUserInfo();
+          }
+        }
+      }
 
       // Check if this is a message we just sent (to avoid duplicates)
       const isRecentlySentMessage =
@@ -200,6 +333,8 @@ export const SocketProvider = ({ children }) => {
         return;
       }
 
+      // Always process messages for the current chat
+      // This ensures we don't miss messages even if the currentChatId state hasn't updated yet
       if (messageChat === currentChatId) {
         // Check if this message is already in the messages array
         setMessages((prevMessages) => {
@@ -217,7 +352,18 @@ export const SocketProvider = ({ children }) => {
           }
 
           console.log("Adding new message to the list:", messageId);
-          return [...prevMessages, newMessage];
+
+          // Add the new message and ensure it's at the end (newest messages at the bottom)
+          const updatedMessages = [...prevMessages, newMessage];
+
+          // Sort messages by timestamp if available
+          if (updatedMessages.length > 0 && updatedMessages[0].createdAt) {
+            return updatedMessages.sort(
+              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+            );
+          }
+
+          return updatedMessages;
         });
 
         // Mark message as read automatically if it's not from the current user
@@ -227,6 +373,24 @@ export const SocketProvider = ({ children }) => {
             markMessageReadViaSocket(messageId, currentChatId);
           } catch (error) {
             console.error("Error marking message as read:", error);
+          }
+        }
+
+        // Force a notification for new messages
+        if (senderId !== userId) {
+          toast.info(
+            `New message from ${newMessage.sender?.username || "User"}`
+          );
+
+          // If the sender doesn't have a username, refresh messages to get the latest data
+          if (!newMessage.sender?.username) {
+            console.log(
+              "Sender has no username, refreshing messages to get updated data"
+            );
+            // Add a small delay to ensure the message is saved on the server
+            setTimeout(() => {
+              refreshMessages();
+            }, 500);
           }
         }
       }
@@ -267,14 +431,16 @@ export const SocketProvider = ({ children }) => {
       }
     );
 
+    // Return cleanup function to unsubscribe from all events
     return () => {
+      console.log("Cleaning up socket event listeners");
       unsubscribeMessageReceived();
       unsubscribeMessageDelivered();
       unsubscribeUserTyping();
       unsubscribeUserStoppedTyping();
       unsubscribeMessageReadConfirmation();
     };
-  }, [isConnected, currentChatId, userId, recentlySentMessages]);
+  }, [userId, username, currentChatId, recentlySentMessages]);
 
   // Join chat room
   const joinChatRoom = (chatId) => {
@@ -412,14 +578,35 @@ export const SocketProvider = ({ children }) => {
       const tempMessage = {
         _id: `temp-${Date.now()}`,
         content: messageContent,
-        sender: { _id: userId, username },
+        sender: {
+          _id: userId,
+          id: userId, // Add id as well to ensure compatibility
+          username,
+        },
         chat: { _id: currentChatId },
         createdAt: new Date(),
         isTemp: true,
       };
 
       // Add the temporary message to the UI immediately
-      setMessages((prev) => [...prev, tempMessage]);
+      setMessages((prev) => {
+        // Sort messages by timestamp if available
+        const updatedMessages = [...prev, tempMessage];
+        if (updatedMessages.length > 0 && updatedMessages[0].createdAt) {
+          return updatedMessages.sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          );
+        }
+        return updatedMessages;
+      });
+
+      // Scroll to the bottom to show the new message
+      setTimeout(() => {
+        const messagesContainer = document.querySelector(".messages-container");
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }, 100);
 
       // IMPORTANT: Only use socket to send the message, not both API and socket
       // This prevents duplicate messages in the database
@@ -447,18 +634,32 @@ export const SocketProvider = ({ children }) => {
           });
         }, 10000);
 
-        // Send message via socket
-        sendSocketMessage({
-          content: messageContent,
-          chat: currentChatId,
-          sender: userId,
-        });
+        // Send message via socket with acknowledgement
+        sendSocketMessage(
+          {
+            content: messageContent,
+            chat: currentChatId,
+            sender: userId,
+            username: username, // Include username in the message data
+          },
+          (acknowledgement) => {
+            if (acknowledgement && acknowledgement.success) {
+              console.log("Message sent successfully:", acknowledgement);
+            } else {
+              console.error("Failed to send message:", acknowledgement);
+              toast.warning(
+                "Message may not have been delivered. Please check your connection."
+              );
+            }
+          }
+        );
       } else {
         // Fallback to API if socket is not connected
         console.log("Socket not connected, falling back to API");
         const savedMessageResponse = await sendMessageApi(
           currentChatId,
-          messageContent
+          messageContent,
+          { username } // Pass username as additional data
         );
 
         // Extract the actual message data
@@ -493,6 +694,49 @@ export const SocketProvider = ({ children }) => {
     }
   };
 
+  // Function to refresh messages for the current chat
+  const refreshMessages = async () => {
+    if (!currentChatId) {
+      console.warn("Cannot refresh messages: no chat room joined");
+      return;
+    }
+
+    try {
+      console.log("Refreshing messages for chat:", currentChatId);
+      const { getMessagesForChat } = require("../../apis/messages");
+      const refreshedMessages = await getMessagesForChat(currentChatId);
+
+      console.log("Refreshed messages:", refreshedMessages);
+
+      // Check if we have a valid messages array
+      let msgs = refreshedMessages;
+
+      // If the response has a data property, use that
+      if (refreshedMessages && refreshedMessages.data) {
+        console.log("Using nested messages data");
+        msgs = refreshedMessages.data;
+      }
+
+      // Ensure we have an array of messages
+      if (!Array.isArray(msgs)) {
+        console.error("Invalid messages data format:", refreshedMessages);
+        return;
+      }
+
+      // Sort messages by createdAt timestamp if available
+      if (msgs.length > 0 && msgs[0].createdAt) {
+        msgs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      }
+
+      // Update the messages state
+      setMessages(msgs);
+
+      console.log("Messages refreshed successfully");
+    } catch (error) {
+      console.error("Failed to refresh messages:", error);
+    }
+  };
+
   return (
     <SocketContext.Provider
       value={{
@@ -510,8 +754,25 @@ export const SocketProvider = ({ children }) => {
         joinChatRoom,
         sendMessage,
         handleTyping,
+        refreshMessages, // Add the refresh function to the context
         markMessageRead: (messageId) =>
           markMessageReadViaSocket(messageId, currentChatId),
+        // Add a reconnect function for manual reconnection
+        reconnect: () => {
+          if (userId && username) {
+            console.log("Manual reconnection attempt");
+            const newSocket = initializeSocket(userId, username);
+            if (newSocket) {
+              setIsConnected(true);
+              if (currentChatId) {
+                joinRoom(currentChatId);
+              }
+              toast.success("Reconnected to chat server");
+              return true;
+            }
+          }
+          return false;
+        },
       }}
     >
       {children}

@@ -3,6 +3,8 @@
   flex-direction: column;
   padding: 2rem;
   background-color: #f8f9fa;
-  min-height: 100vh;
+  height: 100vh;
   font-family: Arial, sans-serif;
+  overflow: hidden;
+  position: relative;
 }

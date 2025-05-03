@@ -24,10 +24,21 @@ export const Profile = () => {
       try {
         const data = await fetchUserProfileById(userId);
         console.log(data, "profile data");
-        if (data && data.id) {
-          setUser(data);
-          setIsFollowing(data.followers?.includes(loggedInUserId));
+
+        // Check for both id and _id since the API might return either
+        if (data && (data.id || data._id)) {
+          // Normalize the user object to ensure it has an id property
+          const normalizedUser = {
+            ...data,
+            id: data.id || data._id, // Use id if available, otherwise use _id
+          };
+
+          setUser(normalizedUser);
+          // Check if the logged-in user is in the followers array
+          const followersArray = normalizedUser.followers || [];
+          setIsFollowing(followersArray.includes(loggedInUserId));
         } else {
+          console.error("User data missing id/._id:", data);
           setError("User profile data not found.");
         }
       } catch (err) {
@@ -40,9 +51,13 @@ export const Profile = () => {
 
   const toggleFollow = async () => {
     try {
-      await followUser(user.id);
+      // Get the user ID (either id or _id)
+      const userId = user.id || user._id;
+
+      await followUser(userId);
       setIsFollowing(!isFollowing);
     } catch (err) {
+      console.error("Error toggling follow:", err);
       setError("An error occurred while following/unfollowing.");
     }
   };
@@ -54,16 +69,21 @@ export const Profile = () => {
   if (error) return <div className="error-message">{error}</div>;
   if (!user) return <div>Loading...</div>;
 
-  const isOwnProfile = loggedInUserId === user.id;
+  // Check if this is the logged-in user's profile by comparing IDs
+  // Convert both to strings to handle potential type mismatches
+  const isOwnProfile = String(loggedInUserId) === String(user.id || user._id);
 
   return (
     <div className="profile-container">
       <div className="profile-header">
         <img
-          src={DEFAULT_COVER_PHOTO} // currently static images show
-          // src={user.coverPhoto || DEFAULT_COVER_PHOTO}
+          src={user.coverPhoto || DEFAULT_COVER_PHOTO}
           alt="Cover"
           className="cover-photo"
+          onError={(e) => {
+            e.target.onerror = null; // Prevent infinite loop
+            e.target.src = DEFAULT_COVER_PHOTO;
+          }}
         />
         {isOwnProfile && <CoverPhotoUploader setUser={setUser} />}
       </div>
@@ -71,10 +91,13 @@ export const Profile = () => {
       <div className="profile-content">
         <div className="profile-left">
           <img
-            src={DEFAULT_PROFILE_PIC} // currently static images show
-            // src={user.profilePic || DEFAULT_PROFILE_PIC} // Use this directly as fallback
+            src={user.profilePic || DEFAULT_PROFILE_PIC}
             alt="Profile"
             className="profile-pic"
+            onError={(e) => {
+              e.target.onerror = null; // Prevent infinite loop
+              e.target.src = DEFAULT_PROFILE_PIC;
+            }}
           />
           {isOwnProfile && <ProfilePicUploader setUser={setUser} />}
         </div>
@@ -100,12 +123,14 @@ export const Profile = () => {
                     onClick={async () => {
                       console.log("Message button clicked"); // Add this to verify rendering
                       try {
-                        console.log("Creating chat with user ID:", user.id);
-                        const chatData = await createChat(user.id);
+                        // Get the user ID (either id or _id)
+                        const userId = user.id || user._id;
+                        console.log("Creating chat with user ID:", userId);
+
+                        const chatData = await createChat(userId);
                         console.log("Chat created successfully:", chatData);
 
                         // Check if we have a valid chat object
-                        // The API returns 'id' instead of '_id'
                         if (!chatData) {
                           console.error("No chat data returned");
                           alert("Failed to create chat. Please try again.");
@@ -124,7 +149,7 @@ export const Profile = () => {
                         navigate("/dashboard/messages", {
                           state: {
                             initialChat: normalizedChat,
-                            prefillUserId: user.id,
+                            prefillUserId: userId,
                           },
                         });
                       } catch (error) {
@@ -149,13 +174,19 @@ export const Profile = () => {
 
           <div className="stats">
             <div>
-              <Link to={`/user/${user.id}/followers`} className="link">
+              <Link
+                to={`/user/${user.id || user._id}/followers`}
+                className="link"
+              >
                 Followers{" "}
                 <strong className="count">{user.followers?.length || 0}</strong>
               </Link>
             </div>
             <div>
-              <Link to={`/user/${user.id}/following`} className="link">
+              <Link
+                to={`/user/${user.id || user._id}/following`}
+                className="link"
+              >
                 Following{" "}
                 <strong className="count">{user.following?.length || 0}</strong>
               </Link>

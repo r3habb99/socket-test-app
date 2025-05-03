@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useSocket } from "./SocketProvider";
 import { ChatList } from "./ChatList";
 import { Chat } from "./Chat";
@@ -7,8 +7,20 @@ import "./css/messagingApp.css";
 
 export const MessagingAppContent = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [selectedChat, setSelectedChat] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const { joinChatRoom } = useSocket();
+
+  // Handle window resize for responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const prefillUserId = location.state?.prefillUserId || "";
   const prefillGroupName = location.state?.prefillGroupName || "";
@@ -78,10 +90,13 @@ export const MessagingAppContent = () => {
 
   return (
     <div className="messaging-app-container">
-      <div className="messaging-app-layout">
+      <div
+        className={`messaging-app-layout ${
+          selectedChat && isMobile ? "chat-selected" : ""
+        }`}
+      >
         {/* Chat list - always visible */}
         <div className="chatlist-section">
-          <h2 className="chat-header">Conversations</h2>
           <ChatList
             onSelectChat={setSelectedChat}
             prefillUserId={prefillUserId}
@@ -95,13 +110,55 @@ export const MessagingAppContent = () => {
         {/* Chat window - shows when a chat is selected */}
         <div className="chat-section">
           {selectedChat ? (
-            <Chat selectedChat={selectedChat} />
+            <Chat
+              selectedChat={selectedChat}
+              onBackClick={() => {
+                // Always hide the chat view when back button is clicked
+                setSelectedChat(null);
+
+                // On mobile, we might want to add additional behavior
+                if (isMobile) {
+                  // For example, scroll to the top of the chat list
+                  const chatList = document.querySelector(".chatlist");
+                  if (chatList) {
+                    chatList.scrollTop = 0;
+                  }
+                }
+              }}
+            />
           ) : (
             <div className="no-chat-selected">
               <div className="no-chat-content">
-                <i className="fa-solid fa-comments no-chat-icon"></i>
-                <h3>Select a conversation</h3>
-                <p>Choose a chat from the list or start a new conversation</p>
+                <i className="fa-solid fa-envelope no-chat-icon"></i>
+                <h3>Select a message</h3>
+                <p>
+                  Choose an existing conversation or start a new one with
+                  someone on Twitter.
+                </p>
+                <button
+                  className="start-message-btn"
+                  onClick={() => {
+                    // Focus the search input in the ChatList component
+                    const searchInput = document.querySelector(
+                      ".chatlist-search input"
+                    );
+                    if (searchInput) {
+                      searchInput.focus();
+                      searchInput.scrollIntoView({ behavior: "smooth" });
+
+                      // Find the ChatList component's search functions
+                      // This is a bit of a hack, but it works for this case
+                      const chatListSearchInput =
+                        document.querySelector(".chatlist-search");
+                      if (chatListSearchInput) {
+                        // Trigger a click on the search input to show the search UI
+                        chatListSearchInput.click();
+                      }
+                    }
+                  }}
+                >
+                  New Message
+                </button>
               </div>
             </div>
           )}
