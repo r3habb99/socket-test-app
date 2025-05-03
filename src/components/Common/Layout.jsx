@@ -4,18 +4,19 @@ import ProfileEdit from "../Profile/ProfileEdit";
 
 import "../../css/dashboard.css";
 
-import { FollowersList, FollowingList, Profile } from "../Profile";
+import { FollowersList, FollowingList, Profile } from "../Profile/index";
 import { SocketProvider } from "../Messages/SocketProvider";
-import { Sidebar } from "./index";
-import { Chat } from "../Messages/Chat";
+import { Sidebar } from "./Sidebar";
+// Removed import of Chat component
 import { Feed } from "../Post";
+import { MessagingAppContent } from "../Messages/MessagingApp";
 
 export const Layout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const links = [
     { name: "dashboard", label: "Feed" },
-    { name: "chat", label: "Chat" },
+    { name: "dashboard/messages", label: "Messages" },
     { name: "profile", label: "Profile" },
     { name: "logout", label: "Logout" },
   ];
@@ -34,7 +35,14 @@ export const Layout = ({ onLogout }) => {
         <div className="main-content">
           <Routes>
             <Route path="/dashboard" element={<Feed />} />
-            <Route path="/chat" element={<Chat />} />
+            <Route
+              path="/dashboard/messages"
+              element={<MessagingAppContent />}
+            />
+            <Route
+              path="/chat"
+              element={<Navigate to="/dashboard/messages" replace />}
+            />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/user/:userId/followers" element={<FollowersList />} />

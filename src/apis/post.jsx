@@ -3,11 +3,38 @@ import { api, getAuthHeaders, handleApiError } from "./axios";
 // Get All Posts
 export const getPosts = async () => {
   try {
+    // Check if token exists
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No authentication token found");
+      return [];
+    }
+
+    // Log the request for debugging
+    console.log("Fetching posts with token:", token.substring(0, 20) + "...");
+
     const response = await api.get("/post", {
       headers: getAuthHeaders(),
     });
+
+    // Log successful response
+    console.log("Posts fetched successfully:", response.data);
+
     return response.data.data || []; // ✅ This returns only the posts array
   } catch (error) {
+    console.error("Error fetching posts:", error);
+
+    // Check if it's an authentication error
+    if (error.response?.status === 401) {
+      console.error("Authentication error. Token may be invalid or expired.");
+
+      // Clear token if it's invalid
+      if (error.response?.data?.error?.includes("Invalid or expired token")) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      }
+    }
+
     handleApiError(error);
     return []; // fallback
   }

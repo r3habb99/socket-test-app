@@ -1,9 +1,8 @@
 import axios from "axios";
 import { toast } from "react-toastify";
 
-// Use environment variable or fallback to IP or localhost
-const API_URL = "http://localhost:8080/api";
-// process.env.REACT_APP_API_URL || "http://192.168.0.88:8080/api" ||
+// Use environment variable or fallback to localhost
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
 
 export const api = axios.create({
   baseURL: API_URL, // Your base URL
@@ -12,6 +11,100 @@ export const api = axios.create({
   },
   timeout: 10000, // 10 seconds timeout to avoid hanging requests
 });
+
+// Add a request interceptor to include Authorization header
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Add a response interceptor to handle token expiration
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If the error is not 401 or the request has already been retried, reject
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    // Mark the request as retried
+    originalRequest._retry = true;
+
+    // If token refresh is already in progress, add this request to the queue
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      })
+        .then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        })
+        .catch((err) => {
+          return Promise.reject(err);
+        });
+    }
+
+    isRefreshing = true;
+
+    try {
+      // Import here to avoid circular dependency
+      const { refreshToken } = await import("./auth");
+      const newToken = await refreshToken();
+
+      if (newToken) {
+        // Update the original request with the new token
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+        // Process the queue with the new token
+        processQueue(null, newToken);
+
+        // Retry the original request
+        return api(originalRequest);
+      } else {
+        // If refresh token fails, process the queue with an error
+        processQueue(new Error("Failed to refresh token"));
+
+        // Redirect to login
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
+    } catch (refreshError) {
+      // If refresh token fails, process the queue with an error
+      processQueue(refreshError);
+
+      // Redirect to login
+      window.location.href = "/login";
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
+  }
+);
 
 // Helper function to get auth headers
 export const getAuthHeaders = () => {

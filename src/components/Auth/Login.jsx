@@ -16,15 +16,27 @@ export const Login = ({ setAuthenticated }) => {
       const data = await loginUser({ email, password });
       const token = data?.data?.token; // Fix: Access correct token path
       const id = data?.data?.userData?.id;
+      const username = data?.data?.userData?.username;
+
       if (!id) {
         throw new Error("User ID is missing from the response");
       }
       if (!token) {
         throw new Error("Token is missing from the response");
       }
-      // console.log(data?.data?.userData?.id, "token data");
+      if (!username) {
+        throw new Error("Username is missing from the response");
+      }
+
+      console.log("Login successful:", {
+        id,
+        username,
+        token: token.substring(0, 20) + "...",
+      });
+
       localStorage.setItem("token", token);
       localStorage.setItem("userId", id);
+      localStorage.setItem("username", username);
       setAuthenticated(true);
       navigate("/dashboard"); // Redirect to dashboard after login
     } catch (err) {

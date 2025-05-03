@@ -106,16 +106,34 @@ button:nth-child(3) {
   color: white;
 }
 
-/* Style for unliked button */
-.post-actions button.unliked {
-  background-color: #f3f4f6; /* Light grey color for unliked button */
-  color: #2d3748; /* Dark color for unliked */
+/* Style for not-liked button */
+.post-actions button.not-liked {
+  background-color: #f3f4f6; /* Light grey color for not-liked button */
+  color: #2d3748; /* Dark color for not-liked */
 }
 
 .post-actions button.liked:hover {
   opacity: 0.85;
 }
 
-.post-actions button.unliked:hover {
+.post-actions button.not-liked:hover {
   opacity: 0.85;
+}
+
+/* Disabled button styles */
+.post-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loading indicator */
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+  margin: 2rem 0;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
 }

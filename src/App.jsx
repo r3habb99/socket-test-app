@@ -7,7 +7,8 @@ import {
   useLocation,
 } from "react-router-dom";
 import { Login, Register } from "./components/Auth";
-import { Layout, Sidebar } from "./components/Common";
+import { Sidebar } from "./components/Common";
+import { Layout } from "./components/Common/Layout";
 import ToastController from "./components/Common/ToastController";
 
 const isAuthenticated = () => !!localStorage.getItem("token");
@@ -64,6 +65,16 @@ const App = () => {
                 <Navigate to="/dashboard" replace />
               ) : (
                 <Register />
+              )
+            }
+          />
+          <Route
+            path="/messages"
+            element={
+              authenticated ? (
+                <Navigate to="/dashboard/messages" replace />
+              ) : (
+                <Navigate to="/login" replace />
               )
             }
           />

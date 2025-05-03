@@ -1,6 +1,60 @@
 import { api, getAuthHeaders, handleApiError } from "./axios";
 import { toast } from "react-toastify";
 
+// Function to check if token is expired
+export const isTokenExpired = (token) => {
+  if (!token) return true;
+
+  try {
+    // Get the expiration time from the token
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+
+    const { exp } = JSON.parse(jsonPayload);
+
+    // Check if the token is expired
+    return Date.now() >= exp * 1000;
+  } catch (error) {
+    console.error("Error checking token expiration:", error);
+    return true;
+  }
+};
+
+// Function to refresh the token
+export const refreshToken = async () => {
+  try {
+    const response = await api.post(
+      "/user/refresh-token",
+      {},
+      {
+        headers: getAuthHeaders(),
+      }
+    );
+
+    const newToken = response.data.token;
+    if (newToken) {
+      localStorage.setItem("token", newToken);
+      return newToken;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+    // If refresh token fails, log the user out
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    window.location.href = "/login";
+    return null;
+  }
+};
+
 // Register User API
 export const registerUser = async (userData) => {
   try {

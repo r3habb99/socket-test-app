@@ -5,8 +5,8 @@ import "./css/profile.css";
 // import {FollowButton} from "./FollowButton";
 // import ProfilePicUploader from "./ProfilePicUploader";
 // import CoverPhotoUploader from "./CoverPhotoUploader";
-import { FaEdit } from "react-icons/fa";
-import { fetchUserProfileById, followUser } from "../../apis";
+import { FaEdit, FaRegCommentDots } from "react-icons/fa";
+import { fetchUserProfileById, followUser, createChat } from "../../apis";
 import { DEFAULT_COVER_PHOTO, DEFAULT_PROFILE_PIC } from "../../constants";
 import { CoverPhotoUploader, ProfilePicUploader, FollowButton } from "./index";
 
@@ -90,10 +90,53 @@ export const Profile = () => {
                   <FaEdit onClick={handleEditClick} />
                 </button>
               ) : (
-                <FollowButton
-                  isFollowing={isFollowing}
-                  toggleFollow={toggleFollow}
-                />
+                <>
+                  <FollowButton
+                    isFollowing={isFollowing}
+                    toggleFollow={toggleFollow}
+                  />
+                  <button
+                    className="message-button"
+                    onClick={async () => {
+                      console.log("Message button clicked"); // Add this to verify rendering
+                      try {
+                        console.log("Creating chat with user ID:", user.id);
+                        const chatData = await createChat(user.id);
+                        console.log("Chat created successfully:", chatData);
+
+                        // Check if we have a valid chat object
+                        // The API returns 'id' instead of '_id'
+                        if (!chatData) {
+                          console.error("No chat data returned");
+                          alert("Failed to create chat. Please try again.");
+                          return;
+                        }
+
+                        // Create a normalized chat object with _id property
+                        const normalizedChat = {
+                          ...chatData,
+                          _id: chatData._id || chatData.id, // Use _id if available, otherwise use id
+                        };
+
+                        console.log("Normalized chat object:", normalizedChat);
+
+                        // Navigate to the dashboard/messages route with the normalized chat data
+                        navigate("/dashboard/messages", {
+                          state: {
+                            initialChat: normalizedChat,
+                            prefillUserId: user.id,
+                          },
+                        });
+                      } catch (error) {
+                        console.error("Failed to start chat:", error);
+                        alert("Failed to start chat. Please try again.");
+                      }
+                    }}
+                    title="Message"
+                  >
+                    <FaRegCommentDots size={20} />
+                  </button>
+                </>
               )}
             </div>
           </div>

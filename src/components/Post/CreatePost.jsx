@@ -1,11 +1,15 @@
 // components/Post/CreatePost.jsx
 import React, { useState } from "react";
 import { createPost } from "../../apis";
+import { getSocket } from "../../apis/socket";
+import { useSocket } from "../Messages/SocketProvider";
 import "./css/createPost.css";
 
 export const CreatePost = ({ onPostCreated }) => {
   const [content, setContent] = useState("");
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isConnected } = useSocket();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,13 +19,25 @@ export const CreatePost = ({ onPostCreated }) => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      await createPost({ content });
+      const newPost = await createPost({ content });
       setContent("");
       setError(null);
+
+      // Emit socket event if connected
+      if (isConnected) {
+        const socket = getSocket();
+        if (socket) {
+          socket.emit("new post", newPost);
+        }
+      }
+
       onPostCreated(); // 🔄 Trigger refresh
     } catch (err) {
       setError("Error creating post. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -34,8 +50,11 @@ export const CreatePost = ({ onPostCreated }) => {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="What's happening?"
+          disabled={isSubmitting}
         />
-        <button type="submit">Post</button>
+        <button type="submit" disabled={isSubmitting || !content.trim()}>
+          {isSubmitting ? "Posting..." : "Post"}
+        </button>
       </form>
     </div>
   );
