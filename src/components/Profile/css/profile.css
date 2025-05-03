@@ -10,6 +10,24 @@
   overflow: hidden;
 }
 
+.message-button {
+  margin-left: 10px;
+  color: black;
+  background-color: white;
+  border-radius: 50%;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.message-button:hover {
+  background-color: #f0f0f0;
+}
+
 .profile-header {
   width: 100%;
   position: relative;

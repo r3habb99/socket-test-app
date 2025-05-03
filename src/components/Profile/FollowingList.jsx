@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 
 import { FollowButton } from "./index";
 import "./css/userlist.css";
@@ -51,20 +51,22 @@ export const FollowingList = () => {
           {following.length > 0 ? (
             following.map((user) => (
               <li className="user-item" key={user.id}>
-                <div className="user-info">
-                  <img
-                    src={DEFAULT_PROFILE_PIC}
-                    // src={user.profilePic || DEFAULT_PROFILE_PIC}
-                    alt={user.username}
-                    className="user-avatar"
-                  />
-                  <div className="user-details">
-                    <span className="user-name">
-                      {user.firstName} {user.lastName}
-                    </span>
-                    <span className="user-handle">@{user.username}</span>
+<Link to={`/profile/${user.id}`} className="user-info-link">
+                  <div className="user-info">
+                    <img
+                      src={DEFAULT_PROFILE_PIC}
+                      // src={user.profilePic || DEFAULT_PROFILE_PIC}
+                      alt={user.username}
+                      className="user-avatar"
+                    />
+                    <div className="user-details">
+                      <span className="user-name">
+                        {user.firstName} {user.lastName}
+                      </span>
+                      <span className="user-handle">@{user.username}</span>
+                    </div>
                   </div>
-                </div>
+                </Link>
 
                 {user.id !== loggedInUserId && (
                   <div className="follow">

@@ -14,20 +14,47 @@ export const Login = ({ setAuthenticated }) => {
     e.preventDefault();
     try {
       const data = await loginUser({ email, password });
-      const token = data?.data?.token; // Fix: Access correct token path
-      const id = data?.data?.userData?.id;
+      console.log("Login response:", data);
+
+      // Extract token and user data, handling different response structures
+      const token = data?.data?.token || data?.token;
+      const userData =
+        data?.data?.userData ||
+        data?.userData ||
+        data?.data?.user ||
+        data?.user ||
+        {};
+      const id = userData?.id || userData?._id;
+      const username = userData?.username;
+
       if (!id) {
         throw new Error("User ID is missing from the response");
       }
       if (!token) {
         throw new Error("Token is missing from the response");
       }
-      // console.log(data?.data?.userData?.id, "token data");
+      if (!username) {
+        throw new Error("Username is missing from the response");
+      }
+
+      console.log("Login successful:", {
+        id,
+        username,
+        token: token.substring(0, 20) + "...",
+      });
+
+      // Store user data in localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("userId", id);
+      localStorage.setItem("username", username);
+
+      // Dispatch a storage event to notify other components
+      window.dispatchEvent(new Event("storage"));
+
       setAuthenticated(true);
       navigate("/dashboard"); // Redirect to dashboard after login
     } catch (err) {
+      console.error("Login error details:", err);
       setError(err.message || "Login failed");
     }
   };

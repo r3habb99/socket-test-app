@@ -26,6 +26,17 @@
   display: flex;
   align-items: center;
   gap: 15px;
+  flex-grow: 1;
+  flex-shrink: 0;
+  flex-basis: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  padding-right: 10px;
+  flex: 1;
+  min-width: 0;
 }
 
 .user-avatar {
@@ -55,4 +66,14 @@
 /* Responsive Follow Button in list */
 .user-item .follow-btn {
   flex-shrink: 0;
+}
+
+.user-info-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  padding: 12px 16px;
 }

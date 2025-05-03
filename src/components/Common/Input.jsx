@@ -1,4 +1,12 @@
-export const Input = ({ type, name, placeholder, value, onChange }) => {
+export const Input = ({
+  type,
+  name,
+  placeholder,
+  value,
+  onChange,
+  onKeyDown,
+  ...props
+}) => {
   return (
     <input
       className="input-field" // This class will inherit styles from global CSS
@@ -7,8 +15,10 @@ export const Input = ({ type, name, placeholder, value, onChange }) => {
       placeholder={placeholder}
       value={value}
       onChange={onChange}
+      onKeyDown={onKeyDown}
       required
       autoComplete="off" // Prevents autofill styling issues
+      {...props} // Pass any additional props
     />
   );
 };
