@@ -48,6 +48,13 @@ export const useSocket = (
     // Check if socket is already initialized
     if (socketRef.current) {
       console.log("Socket already initialized, skipping initialization");
+
+      // If socket exists but is not connected, try to connect it
+      if (socketRef.current && !socketRef.current.connected) {
+        console.log("Socket exists but not connected, attempting to connect");
+        socketRef.current.connect();
+      }
+
       return;
     }
 
@@ -70,15 +77,21 @@ export const useSocket = (
         token: localStorage.getItem("token"), // Add token for authentication
       },
       reconnection: true,
-      reconnectionAttempts: 3,
+      reconnectionAttempts: 5, // Increased from 3
       reconnectionDelay: 1000,
-      timeout: 10000,
+      timeout: 20000, // Increased from 10000
       autoConnect: true, // Connect automatically
-      transports: ["polling", "websocket"], // Try polling first, then websocket
+      transports: ["websocket", "polling"], // Try websocket first, then polling
       withCredentials: true, // Enable CORS credentials
       forceNew: false, // Reuse existing connections
       multiplex: true, // Enable multiplexing
     });
+
+    // Log connection status
+    console.log(
+      "Socket connection status:",
+      socket.connected ? "Connected" : "Disconnected"
+    );
 
     // Log connection attempt
     console.log(
@@ -159,6 +172,15 @@ export const useSocket = (
     const messageReceivedHandler = (newMessage) => {
       console.log("📥 Message received:", newMessage);
 
+      // Enhanced logging to debug message structure
+      console.log("Message structure:", {
+        id: newMessage._id || newMessage.id,
+        content: newMessage.content,
+        sender: newMessage.sender,
+        chat: newMessage.chat,
+        timestamp: newMessage.createdAt,
+      });
+
       // Normalize chat ID (might be an object or a string)
       const messageChat =
         typeof newMessage.chat === "object"
@@ -176,6 +198,10 @@ export const useSocket = (
         typeof newMessage.sender === "object"
           ? newMessage.sender._id || newMessage.sender.id
           : newMessage.sender;
+
+      console.log(
+        `Message for chat: ${messageChat}, current chat: ${currentChatIdRef.current}`
+      );
 
       // Check if this is a message we just sent (to avoid duplicates)
       // Use the ref for recentlySentMessages to avoid dependency on state
@@ -211,29 +237,42 @@ export const useSocket = (
             );
           }
 
-          // If no temp message found, just return the current messages
-          return prevMessages;
+          // If no temp message found, just add the message to avoid missing it
+          console.log("No temp message found, adding as new message");
+          const updatedMessages = [...prevMessages, newMessage];
+
+          // Sort messages by timestamp if available
+          if (updatedMessages.length > 0 && updatedMessages[0].createdAt) {
+            return updatedMessages.sort(
+              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+            );
+          }
+
+          return updatedMessages;
         });
 
         return;
       }
 
       // Process messages for the current chat - use ref for currentChatId
-      if (messageChat === currentChatIdRef.current) {
-        setMessages((prevMessages) => {
-          // Check if message already exists to avoid duplicates
-          const exists = prevMessages.some(
-            (msg) => (msg._id || msg.id) === messageId
+      // IMPORTANT: We're now processing ALL messages, even if they're not for the current chat
+      // This ensures we don't miss any messages when switching chats
+      setMessages((prevMessages) => {
+        // Check if message already exists to avoid duplicates
+        const exists = prevMessages.some(
+          (msg) => (msg._id || msg.id) === messageId
+        );
+
+        if (exists) {
+          console.log(
+            "Message already exists in the list, not adding again:",
+            messageId
           );
+          return prevMessages;
+        }
 
-          if (exists) {
-            console.log(
-              "Message already exists in the list, not adding again:",
-              messageId
-            );
-            return prevMessages;
-          }
-
+        // Only add the message if it's for the current chat
+        if (messageChat === currentChatIdRef.current) {
           console.log("Adding new message to the list:", messageId);
 
           // Add the new message and ensure it's at the end (newest messages at the bottom)
@@ -247,14 +286,29 @@ export const useSocket = (
           }
 
           return updatedMessages;
-        });
-
-        // Force a notification for new messages from other users
-        if (senderId !== localStorage.getItem("userId")) {
-          toast.info(
-            `New message from ${newMessage.sender?.username || "User"}`
-          );
         }
+
+        // If the message is not for the current chat, don't add it to the messages list
+        return prevMessages;
+      });
+
+      // Force a notification for new messages from other users
+      // We'll show notifications for ALL messages, even if they're not for the current chat
+      if (senderId !== localStorage.getItem("userId")) {
+        // Get sender username from the message if available
+        const senderUsername =
+          typeof newMessage.sender === "object"
+            ? newMessage.sender.username
+            : "User";
+
+        // Show a toast notification
+        toast.info(`New message from ${senderUsername}`, {
+          onClick: () => {
+            // This will be handled by the component that uses this hook
+            console.log("Notification clicked for chat:", messageChat);
+          },
+          autoClose: 5000,
+        });
       }
     };
 
@@ -265,30 +319,64 @@ export const useSocket = (
     // User typing handlers
     const typingHandler = (data) => {
       console.log("✍️ User typing:", data);
-      setTypingUsers((prev) => ({
-        ...prev,
-        [data.userId]: {
-          username: data.username || "User",
-          timestamp: new Date(data.timestamp || Date.now()),
-        },
-      }));
+
+      // Enhanced logging to debug typing data
+      console.log("Typing data structure:", {
+        userId: data.userId,
+        username: data.username,
+        roomId: data.roomId,
+        isTyping: data.isTyping,
+        timestamp: data.timestamp,
+      });
+
+      // Only process typing events for the current chat
+      if (data.roomId === currentChatIdRef.current) {
+        if (data.isTyping) {
+          // User is typing
+          setTypingUsers((prev) => ({
+            ...prev,
+            [data.userId]: {
+              username: data.username || "User",
+              timestamp: new Date(data.timestamp || Date.now()),
+            },
+          }));
+
+          console.log(
+            `User ${data.username} (${data.userId}) is typing in room ${data.roomId}`
+          );
+        } else {
+          // User stopped typing
+          setTypingUsers((prev) => {
+            const newTypingUsers = { ...prev };
+            delete newTypingUsers[data.userId];
+            console.log(
+              `User ${data.username} (${data.userId}) stopped typing in room ${data.roomId}`
+            );
+            return newTypingUsers;
+          });
+        }
+      }
     };
 
     // Register for both possible event names
     socket.on("user typing", typingHandler);
     socket.on("typing", typingHandler);
 
-    // User stopped typing handlers
+    // We'll also handle the stop typing event separately for backward compatibility
     const stoppedTypingHandler = (data) => {
-      console.log("✋ User stopped typing:", data);
-      setTypingUsers((prev) => {
-        const newTypingUsers = { ...prev };
-        delete newTypingUsers[data.userId];
-        return newTypingUsers;
-      });
+      console.log("✋ User stopped typing (legacy event):", data);
+
+      // Only process typing events for the current chat
+      if (data.roomId === currentChatIdRef.current) {
+        setTypingUsers((prev) => {
+          const newTypingUsers = { ...prev };
+          delete newTypingUsers[data.userId];
+          return newTypingUsers;
+        });
+      }
     };
 
-    // Register for both possible event names
+    // Register for both possible event names for backward compatibility
     socket.on("user stopped typing", stoppedTypingHandler);
     socket.on("stop typing", stoppedTypingHandler);
 
@@ -354,46 +442,94 @@ export const useSocket = (
         return;
       }
 
-      if (socketRef.current) {
-        // If we're in a different chat room, leave it first
-        if (currentChatIdRef.current) {
-          console.log(
-            `Leaving previous chat room: ${currentChatIdRef.current}`
-          );
-          socketRef.current.emit("leave room", currentChatIdRef.current);
+      // Update both state and ref for current chat ID immediately
+      // This ensures we have the current chat ID set even if the socket isn't connected yet
+      setCurrentChatId(chatId);
+      currentChatIdRef.current = chatId;
+
+      // Clear messages when joining a new chat
+      setMessages([]);
+
+      // Initialize socket if it doesn't exist
+      if (!socketRef.current) {
+        console.log("Socket not initialized, creating new socket connection");
+
+        const userId = localStorage.getItem("userId");
+        const username = localStorage.getItem("username");
+
+        if (!userId || !username) {
+          console.warn("Cannot initialize socket: missing user info");
+          toast.error("User information required to connect to chat");
+          return;
         }
 
-        // Update both state and ref for current chat ID
-        setCurrentChatId(chatId);
-        currentChatIdRef.current = chatId;
+        // Create a new socket connection
+        const newSocket = io(url, {
+          auth: {
+            userId,
+            username,
+            token: localStorage.getItem("token"),
+          },
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+          timeout: 20000,
+          autoConnect: true,
+          transports: ["websocket", "polling"],
+          withCredentials: true,
+          forceNew: false,
+          multiplex: true,
+        });
 
-        // Clear messages when joining a new chat
-        setMessages([]);
+        // Set up basic event handlers
+        newSocket.on("connect", () => {
+          console.log("Socket connected successfully");
+          setConnected(true);
 
-        // Check connection status
-        if (connected) {
-          console.log("Joining chat room:", chatId);
+          // Join the chat room now that we're connected
+          console.log(`Joining chat room ${chatId} after connection`);
+          newSocket.emit("join room", chatId);
+        });
 
-          // Use only the event name that matches the backend
-          socketRef.current.emit("join room", chatId);
+        // Store the socket in the ref
+        socketRef.current = newSocket;
 
-          // Log success
-          console.log(`Successfully joined chat room: ${chatId}`);
-        } else {
-          console.warn("Socket not connected, will join room when connected");
+        return;
+      }
 
-          // Connect the socket if not connected
-          socketRef.current.connect();
+      // If we have a socket, handle the chat room joining
 
-          // The reconnect event handler will join the room when connected
-        }
+      // If we're in a different chat room, leave it first
+      if (currentChatIdRef.current !== chatId && socketRef.current.connected) {
+        console.log(`Leaving previous chat room: ${currentChatIdRef.current}`);
+        socketRef.current.emit("leave room", currentChatIdRef.current);
+      }
+
+      // Check connection status
+      if (socketRef.current.connected) {
+        console.log("Joining chat room:", chatId);
+
+        // Use only the event name that matches the backend
+        socketRef.current.emit("join room", chatId);
+
+        // Log success
+        console.log(`Successfully joined chat room: ${chatId}`);
       } else {
-        console.warn("Socket not initialized");
-        toast.warning("Chat service not initialized. Please refresh the page.");
+        console.warn("Socket not connected, attempting to connect");
+
+        // Connect the socket if not connected
+        socketRef.current.connect();
+
+        // Set up a one-time connect handler to join the room when connected
+        socketRef.current.once("connect", () => {
+          console.log(`Socket connected, now joining room: ${chatId}`);
+          socketRef.current.emit("join room", chatId);
+          setConnected(true);
+        });
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [] // Remove all dependencies to prevent unnecessary re-renders
+    [url] // Include url to ensure we use the correct socket server
   );
 
   // Leave a chat room
@@ -499,71 +635,248 @@ export const useSocket = (
           });
         }, 10000);
 
-        if (socketRef.current && connected) {
-          // Send via socket - format to match backend expectations
-          const messagePayload = {
-            content: messageData.content.trim(),
-            chat: chatId, // This is what the backend expects
-            sender: userId,
-          };
+        // Prepare the message payload
+        const messagePayload = {
+          content: messageData.content.trim(),
+          chat: chatId, // This is what the backend expects
+          sender: userId,
+        };
 
-          console.log("Sending message payload:", messagePayload);
+        // Check if socket exists
+        if (!socketRef.current) {
+          console.log(
+            "Socket not initialized, creating new socket connection for sending message"
+          );
 
-          // Send message with callback to handle acknowledgement
-          socketRef.current.emit("new message", messagePayload, (response) => {
-            console.log("Message send acknowledgement:", response);
-            if (response && !response.success) {
-              toast.warning(
-                "Message may not have been delivered. Please check your connection."
-              );
-            } else {
-              console.log("Message delivered successfully");
-            }
+          // Create a new socket connection
+          const newSocket = io(url, {
+            auth: {
+              userId,
+              username,
+              token: localStorage.getItem("token"),
+            },
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            timeout: 20000,
+            autoConnect: true,
+            transports: ["websocket", "polling"],
+            withCredentials: true,
+            forceNew: false,
+            multiplex: true,
           });
-        } else {
-          // If socket is not connected, show an error
-          console.error("Socket not connected, cannot send message");
-          toast.error("Not connected to chat server. Please try again.");
 
-          // Remove the temporary message
-          setMessages((prev) => prev.filter((msg) => msg._id !== tempId));
+          // Set up basic event handlers
+          newSocket.on("connect", () => {
+            console.log("Socket connected successfully for sending message");
+            setConnected(true);
+
+            // Join the chat room now that we're connected
+            console.log(
+              `Joining chat room ${chatId} after connection for sending message`
+            );
+            newSocket.emit("join room", chatId);
+
+            // Send the message now that we're connected
+            console.log("Now sending message:", messagePayload);
+            newSocket.emit("new message", messagePayload, (response) => {
+              console.log("Message send acknowledgement:", response);
+              if (response && !response.success) {
+                toast.warning(
+                  "Message may not have been delivered. Please check your connection."
+                );
+              } else {
+                console.log("Message delivered successfully");
+              }
+            });
+          });
+
+          // Store the socket in the ref
+          socketRef.current = newSocket;
+          return;
         }
+
+        // If socket exists but is not connected, connect it
+        if (socketRef.current && !socketRef.current.connected) {
+          console.log(
+            "Socket exists but not connected, connecting for sending message"
+          );
+
+          // Connect the socket
+          socketRef.current.connect();
+
+          // Set up a one-time connect handler to send message when connected
+          socketRef.current.once("connect", () => {
+            console.log("Socket connected, now sending message");
+
+            // Join the chat room first
+            socketRef.current.emit("join room", chatId);
+
+            // Then send the message
+            socketRef.current.emit(
+              "new message",
+              messagePayload,
+              (response) => {
+                console.log("Message send acknowledgement:", response);
+                if (response && !response.success) {
+                  toast.warning(
+                    "Message may not have been delivered. Please check your connection."
+                  );
+                } else {
+                  console.log("Message delivered successfully");
+                }
+              }
+            );
+
+            setConnected(true);
+          });
+
+          return;
+        }
+
+        // If we get here, socket exists and is connected
+        console.log("Socket connected, sending message directly");
+        console.log("Sending message payload:", messagePayload);
+
+        // Send message with callback to handle acknowledgement
+        socketRef.current.emit("new message", messagePayload, (response) => {
+          console.log("Message send acknowledgement:", response);
+          if (response && !response.success) {
+            toast.warning(
+              "Message may not have been delivered. Please check your connection."
+            );
+          } else {
+            console.log("Message delivered successfully");
+          }
+        });
       } catch (error) {
         console.error("Failed to send message:", error);
         toast.error("Failed to send message");
       }
     },
-    [connected, setMessages, setRecentlySentMessages] // Remove currentChatId from dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [url] // Include url to ensure we use the correct socket server
   );
 
   // Send typing indicator
   const sendTyping = useCallback(
-    (isTyping) => {
-      if (!currentChatIdRef.current || !socketRef.current || !connected) return;
+    (isTyping, chatId) => {
+      // Use provided chatId or fall back to currentChatIdRef
+      const roomId = chatId || currentChatIdRef.current;
+
+      // Check if we have a valid chat ID
+      if (!roomId) {
+        console.log(
+          "Cannot send typing indicator: no chat ID provided or selected"
+        );
+        return;
+      }
 
       // Get user info
       const userId = localStorage.getItem("userId");
       const username = localStorage.getItem("username");
 
-      console.log(
-        `Sending ${
-          isTyping ? "typing" : "stopped typing"
-        } indicator for chat: ${currentChatIdRef.current}`
-      );
+      if (!userId || !username) {
+        console.warn("Cannot send typing indicator: missing user info");
+        return;
+      }
 
-      // Use the event name that matches the backend
+      // Prepare the payload regardless of connection status
       const payload = {
-        roomId: currentChatIdRef.current, // Backend expects roomId
+        roomId: roomId, // Backend expects roomId
         isTyping: isTyping, // Backend expects isTyping boolean
         userId,
         username,
         timestamp: Date.now(),
       };
 
-      // Send typing event
+      // Check if socket exists
+      if (!socketRef.current) {
+        console.log(
+          "Socket not initialized, creating new socket connection for typing"
+        );
+
+        // Create a new socket connection
+        const newSocket = io(url, {
+          auth: {
+            userId,
+            username,
+            token: localStorage.getItem("token"),
+          },
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+          timeout: 20000,
+          autoConnect: true,
+          transports: ["websocket", "polling"],
+          withCredentials: true,
+          forceNew: false,
+          multiplex: true,
+        });
+
+        // Set up basic event handlers
+        newSocket.on("connect", () => {
+          console.log("Socket connected successfully for typing");
+          setConnected(true);
+
+          // Join the chat room now that we're connected
+          console.log(
+            `Joining chat room ${roomId} after connection for typing`
+          );
+          newSocket.emit("join room", roomId);
+
+          // Send the typing indicator now that we're connected
+          console.log(
+            `Now sending typing indicator: ${
+              isTyping ? "typing" : "stopped typing"
+            }`
+          );
+          newSocket.emit("typing", payload);
+        });
+
+        // Store the socket in the ref
+        socketRef.current = newSocket;
+        return;
+      }
+
+      // If socket exists but is not connected, connect it
+      if (socketRef.current && !socketRef.current.connected) {
+        console.log("Socket exists but not connected, connecting for typing");
+
+        // Connect the socket
+        socketRef.current.connect();
+
+        // Set up a one-time connect handler to send typing indicator when connected
+        socketRef.current.once("connect", () => {
+          console.log("Socket connected, now sending typing indicator");
+          socketRef.current.emit("typing", payload);
+          setConnected(true);
+        });
+
+        return;
+      }
+
+      // If we get here, socket exists and is connected
+      console.log(
+        `Sending ${
+          isTyping ? "typing" : "stopped typing"
+        } indicator for chat: ${roomId}`
+      );
+
+      console.log("Sending typing payload:", payload);
+
+      // Send typing event - use a single event name for both typing and stopped typing
       socketRef.current.emit("typing", payload);
+
+      // Log confirmation
+      console.log(
+        `Typing indicator (${
+          isTyping ? "typing" : "stopped typing"
+        }) sent successfully`
+      );
     },
-    [connected] // Remove currentChatId from dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [url] // Include url to ensure we use the correct socket server
   );
 
   // Subscribe to an event

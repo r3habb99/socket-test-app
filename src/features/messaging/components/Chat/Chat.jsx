@@ -137,21 +137,64 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
   // Handle typing indicator with debounce
   const handleTyping = (isTyping) => {
+    // Clear any existing timeout
     if (typingTimeout) {
       clearTimeout(typingTimeout);
+      setTypingTimeout(null);
     }
 
-    // Send typing indicator
-    socketContext.sendTyping(isTyping);
+    // Only send typing indicator if we're connected and have a selected chat
+    if (!socketContext.connected || !selectedChat) {
+      console.log(
+        "Cannot send typing indicator: not connected or no chat selected"
+      );
+      return;
+    }
+
+    // Get the chat ID from the selected chat
+    const chatId = selectedChat?._id || selectedChat?.id;
+
+    if (!chatId) {
+      console.log("Cannot send typing indicator: invalid chat ID");
+      return;
+    }
+
+    // Send typing indicator with explicit chat ID
+    console.log(
+      `Sending typing indicator: ${
+        isTyping ? "typing" : "stopped typing"
+      } for chat ${chatId}`
+    );
+    socketContext.sendTyping(isTyping, chatId);
 
     // If user is typing, set a timeout to automatically stop typing indicator
     if (isTyping) {
       const timeout = setTimeout(() => {
-        socketContext.sendTyping(false);
+        console.log("Typing timeout expired, sending stopped typing");
+        socketContext.sendTyping(false, chatId);
       }, 3000); // 3 seconds
       setTypingTimeout(timeout);
     }
   };
+
+  // Clean up typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+
+        // Get the chat ID from the selected chat
+        const chatId = selectedChat?._id || selectedChat?.id;
+
+        if (chatId) {
+          // Also send a stopped typing event when unmounting
+          console.log(`Cleanup: sending stopped typing for chat ${chatId}`);
+          socketContext.sendTyping(false, chatId);
+        }
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChat]);
 
   const handleSendMessage = () => {
     // Ensure we have a valid chat ID (either _id or id)
@@ -246,9 +289,39 @@ export const Chat = ({ selectedChat, onBackClick }) => {
                 ? `${selectedChat.users?.length || 0} people`
                 : "Active now"}
               {Object.keys(socketContext.typingUsers).length > 0 && (
-                <span className="typing-indicator"> • typing...</span>
+                <span
+                  className="typing-indicator"
+                  style={{
+                    color: "#1DA1F2",
+                    fontWeight: "bold",
+                    animation: "pulse 1.5s infinite",
+                  }}
+                >
+                  {" • "}
+                  {Object.values(socketContext.typingUsers)
+                    .map((user) => user.username)
+                    .join(", ")}
+                  {Object.keys(socketContext.typingUsers).length === 1
+                    ? " is typing..."
+                    : " are typing..."}
+                </span>
               )}
             </div>
+
+            {/* Add a style for the typing animation */}
+            <style jsx="true">{`
+              @keyframes pulse {
+                0% {
+                  opacity: 0.6;
+                }
+                50% {
+                  opacity: 1;
+                }
+                100% {
+                  opacity: 0.6;
+                }
+              }
+            `}</style>
           </div>
         </div>
         <div className="chat-header-actions">
