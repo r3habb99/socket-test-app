@@ -19,6 +19,7 @@ import { FollowersList } from "./features/profile/components/FollowersList/Follo
 import { FollowingList } from "./features/profile/components/FollowingList/FollowingList";
 import ProfileEdit from "./features/profile/components/ProfileEdit";
 import ToastController from "./shared/components/ToastController/ToastController";
+import ToastTester from "./shared/components/ToastController/ToastTester";
 
 const App = () => {
   return (
@@ -52,6 +53,7 @@ const App = () => {
                 element={<FollowingList />}
               />
               <Route path="user/edit-profile" element={<ProfileEdit />} />
+              <Route path="toast-test" element={<ToastTester />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
 

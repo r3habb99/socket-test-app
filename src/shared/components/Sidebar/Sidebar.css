@@ -68,6 +68,15 @@
   color: #1d9bf0;
 }
 
+/* Icon styling */
+.nav-icon {
+  display: inline-block;
+  margin-right: 12px;
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
 /* Mobile responsive styles */
 @media (max-width: 768px) {
   .sidebar {

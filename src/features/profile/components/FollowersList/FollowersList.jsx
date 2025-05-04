@@ -165,20 +165,25 @@ export const FollowersList = () => {
 
   if (loading) {
     return (
-      <div className="modal">
-        <div className="modal-header">
-          <button className="back-button" onClick={() => navigate(-1)}>
+      <div className="following-modal">
+        <div className="following-header">
+          <button
+            className="following-back-button"
+            onClick={() => navigate(-1)}
+          >
             <FaArrowLeft />
           </button>
-          <div className="modal-header-info">
-            <h2 className="modal-header-title">
+          <div className="following-header-info">
+            <h2 className="following-header-title">
               {activeTab === "followers" ? "Followers" : "Following"}
             </h2>
           </div>
         </div>
-        <div className="tabs-container">
+        <div className="following-tabs-container">
           <div
-            className={`tab ${activeTab === "followers" ? "active" : ""}`}
+            className={`following-tab ${
+              activeTab === "followers" ? "active" : ""
+            }`}
             onClick={() => {
               setActiveTab("followers");
               navigate(`/profile/${userId}/followers`, { replace: true });
@@ -187,7 +192,9 @@ export const FollowersList = () => {
             Followers
           </div>
           <div
-            className={`tab ${activeTab === "following" ? "active" : ""}`}
+            className={`following-tab ${
+              activeTab === "following" ? "active" : ""
+            }`}
             onClick={() => {
               setActiveTab("following");
               navigate(`/profile/${userId}/following`, { replace: true });
@@ -196,10 +203,10 @@ export const FollowersList = () => {
             Following
           </div>
         </div>
-        <div className="modal-content">
-          <p>
+        <div className="following-content">
+          <div className="following-loading">
             Loading {activeTab === "followers" ? "followers" : "following"}...
-          </p>
+          </div>
         </div>
       </div>
     );
@@ -207,20 +214,25 @@ export const FollowersList = () => {
 
   if (error) {
     return (
-      <div className="modal">
-        <div className="modal-header">
-          <button className="back-button" onClick={() => navigate(-1)}>
+      <div className="following-modal">
+        <div className="following-header">
+          <button
+            className="following-back-button"
+            onClick={() => navigate(-1)}
+          >
             <FaArrowLeft />
           </button>
-          <div className="modal-header-info">
-            <h2 className="modal-header-title">
+          <div className="following-header-info">
+            <h2 className="following-header-title">
               {activeTab === "followers" ? "Followers" : "Following"}
             </h2>
           </div>
         </div>
-        <div className="tabs-container">
+        <div className="following-tabs-container">
           <div
-            className={`tab ${activeTab === "followers" ? "active" : ""}`}
+            className={`following-tab ${
+              activeTab === "followers" ? "active" : ""
+            }`}
             onClick={() => {
               setActiveTab("followers");
               navigate(`/profile/${userId}/followers`, { replace: true });
@@ -229,7 +241,9 @@ export const FollowersList = () => {
             Followers
           </div>
           <div
-            className={`tab ${activeTab === "following" ? "active" : ""}`}
+            className={`following-tab ${
+              activeTab === "following" ? "active" : ""
+            }`}
             onClick={() => {
               setActiveTab("following");
               navigate(`/profile/${userId}/following`, { replace: true });
@@ -238,21 +252,29 @@ export const FollowersList = () => {
             Following
           </div>
         </div>
-        <div className="modal-content">
-          <p className="error-message">{error}</p>
+        <div className="following-content">
+          <div className="following-error">
+            {error}
+            <button
+              className="following-retry-button"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="modal">
-      <div className="modal-header">
-        <button className="back-button" onClick={() => navigate(-1)}>
+    <div className="following-modal">
+      <div className="following-header">
+        <button className="following-back-button" onClick={() => navigate(-1)}>
           <FaArrowLeft />
         </button>
-        <div className="modal-header-info">
-          <h2 className="modal-header-title">
+        <div className="following-header-info">
+          <h2 className="following-header-title">
             {profileUser ? (
               <>
                 {activeTab === "followers"
@@ -267,9 +289,11 @@ export const FollowersList = () => {
           </h2>
         </div>
       </div>
-      <div className="tabs-container">
+      <div className="following-tabs-container">
         <div
-          className={`tab ${activeTab === "followers" ? "active" : ""}`}
+          className={`following-tab ${
+            activeTab === "followers" ? "active" : ""
+          }`}
           onClick={() => {
             setActiveTab("followers");
             navigate(`/profile/${userId}/followers`, { replace: true });
@@ -278,7 +302,9 @@ export const FollowersList = () => {
           Followers
         </div>
         <div
-          className={`tab ${activeTab === "following" ? "active" : ""}`}
+          className={`following-tab ${
+            activeTab === "following" ? "active" : ""
+          }`}
           onClick={() => {
             setActiveTab("following");
             navigate(`/profile/${userId}/following`, { replace: true });
@@ -287,39 +313,44 @@ export const FollowersList = () => {
           Following
         </div>
       </div>
-      <div className="modal-content">
+      <div className="following-content">
         {activeTab === "followers" ? (
-          <ul className="user-list">
+          <ul className="following-user-list">
             {followers.length > 0 ? (
               followers.map((follower) => (
-                <li className="user-item" key={follower.id}>
+                <li className="following-user-item" key={follower.id}>
                   <Link
                     to={`/profile/${follower.id}`}
-                    className="user-info-link"
+                    className="following-user-info-link"
                   >
-                    <div className="user-info">
+                    <div className="following-user-info">
                       <img
                         src={follower.profilePic || DEFAULT_PROFILE_PIC}
                         alt={follower.username}
-                        className="user-avatar"
+                        className="following-user-avatar"
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = DEFAULT_PROFILE_PIC;
                         }}
                       />
-                      <div className="user-details">
-                        <span className="user-name">
+                      <div className="following-user-details">
+                        <span className="following-user-name">
                           {follower.firstName} {follower.lastName}
                         </span>
-                        <span className="user-handle">
+                        <span className="following-user-handle">
                           @{follower.username}
                         </span>
+                        {follower.bio && (
+                          <span className="following-user-bio">
+                            {follower.bio}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </Link>
 
                   {follower.id !== loggedInUserId && (
-                    <div className="follow">
+                    <div className="following-follow">
                       <FollowButton
                         isFollowing={followingStates[follower.id]}
                         toggleFollow={() => toggleFollow(follower.id)}
@@ -329,36 +360,51 @@ export const FollowersList = () => {
                 </li>
               ))
             ) : (
-              <p>No followers yet.</p>
+              <div className="following-empty-state">
+                <h3 className="following-empty-state-title">
+                  No followers yet
+                </h3>
+                <p className="following-empty-state-text">
+                  When someone follows this account, they'll show up here.
+                </p>
+              </div>
             )}
           </ul>
         ) : (
-          <ul className="user-list">
+          <ul className="following-user-list">
             {following.length > 0 ? (
               following.map((user) => (
-                <li className="user-item" key={user.id}>
-                  <Link to={`/profile/${user.id}`} className="user-info-link">
-                    <div className="user-info">
+                <li className="following-user-item" key={user.id}>
+                  <Link
+                    to={`/profile/${user.id}`}
+                    className="following-user-info-link"
+                  >
+                    <div className="following-user-info">
                       <img
                         src={user.profilePic || DEFAULT_PROFILE_PIC}
                         alt={user.username}
-                        className="user-avatar"
+                        className="following-user-avatar"
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = DEFAULT_PROFILE_PIC;
                         }}
                       />
-                      <div className="user-details">
-                        <span className="user-name">
+                      <div className="following-user-details">
+                        <span className="following-user-name">
                           {user.firstName} {user.lastName}
                         </span>
-                        <span className="user-handle">@{user.username}</span>
+                        <span className="following-user-handle">
+                          @{user.username}
+                        </span>
+                        {user.bio && (
+                          <span className="following-user-bio">{user.bio}</span>
+                        )}
                       </div>
                     </div>
                   </Link>
 
                   {user.id !== loggedInUserId && (
-                    <div className="follow">
+                    <div className="following-follow">
                       <FollowButton
                         isFollowing={followingStates[user.id]}
                         toggleFollow={() => toggleFollow(user.id)}
@@ -368,7 +414,14 @@ export const FollowersList = () => {
                 </li>
               ))
             ) : (
-              <p>Not following anyone yet.</p>
+              <div className="following-empty-state">
+                <h3 className="following-empty-state-title">
+                  Not following anyone
+                </h3>
+                <p className="following-empty-state-text">
+                  When this account follows someone, they'll show up here.
+                </p>
+              </div>
             )}
           </ul>
         )}

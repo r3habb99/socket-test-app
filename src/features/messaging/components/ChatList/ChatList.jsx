@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useMessaging } from "../../hooks";
 import { searchUsers } from "../../../auth/api";
+import { customToast } from "../../../../shared/utils";
 import "./ChatList.css";
 
 export const ChatList = ({
@@ -86,11 +87,11 @@ export const ChatList = ({
         setNewUserId("");
         onSelectChat(result.chat);
       } else {
-        alert("Failed to create chat. Please try again.");
+        customToast.error("Failed to create chat. Please try again.");
       }
     } catch (error) {
       console.error("Failed to create chat:", error);
-      alert("Failed to create chat. Please try again.");
+      customToast.error("Failed to create chat. Please try again.");
     }
   };
 
@@ -110,11 +111,11 @@ export const ChatList = ({
         setGroupUsers("");
         onSelectChat(result.chat);
       } else {
-        alert("Failed to create group chat. Please try again.");
+        customToast.error("Failed to create group chat. Please try again.");
       }
     } catch (error) {
       console.error("Failed to create group chat", error);
-      alert("Failed to create group chat. Please try again.");
+      customToast.error("Failed to create group chat. Please try again.");
     }
   };
 
@@ -132,10 +133,28 @@ export const ChatList = ({
     try {
       const response = await searchUsers(query);
       console.log("Search results:", response);
-      const results = response.error ? [] : response.data;
+
+      // Handle nested data structure
+      let results = [];
+
+      if (!response.error) {
+        // Check if response.data contains a nested data property
+        if (response.data && response.data.data) {
+          // API returns { data: { data: [...] } }
+          results = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          // API returns { data: [...] }
+          results = response.data;
+        } else {
+          console.warn("Unexpected search results format:", response.data);
+        }
+      }
+
+      console.log("Processed search results:", results);
       setSearchResults(Array.isArray(results) ? results : []);
     } catch (error) {
       console.error("Error searching users:", error);
+      customToast.error("Error searching for users. Please try again.");
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -161,10 +180,24 @@ export const ChatList = ({
   // Function to start a chat with a user from search results
   const startChatWithUser = async (user) => {
     try {
+      // Ensure we have a valid user ID
+      if (!user) {
+        console.error("Invalid user object:", user);
+        customToast.error("Invalid user. Please try again.");
+        return;
+      }
+
       const userId = user._id || user.id;
+      if (!userId) {
+        console.error("User object has no ID:", user);
+        customToast.error("User has no ID. Please try again.");
+        return;
+      }
+
       console.log("Starting chat with user:", user.username, userId);
 
       const result = await createChat({ userId });
+      console.log("Chat creation result:", result);
 
       if (result.success) {
         // Select the new chat
@@ -174,12 +207,16 @@ export const ChatList = ({
         setSearchQuery("");
         setSearchResults([]);
         setShowSearchResults(false);
+
+        // Show success toast
+        customToast.success(`Chat started with ${user.username}`);
       } else {
-        alert("Failed to create chat. Please try again.");
+        console.error("Failed to create chat:", result);
+        customToast.error("Failed to create chat. Please try again.");
       }
     } catch (error) {
       console.error("Error creating chat:", error);
-      alert("Failed to create chat. Please try again.");
+      customToast.error("Failed to create chat. Please try again.");
     }
   };
 

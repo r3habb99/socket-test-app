@@ -1,2 +1,4 @@
-/* FollowersList.css */
-@import url("../shared/UserListStyles.css");
+/* FollowersList.css - Twitter-like design for followers list */
+@import url("../FollowingList/FollowingList.css");
+
+/* Override any specific styles for followers list if needed */

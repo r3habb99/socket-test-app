@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import { useAuthContext } from '../../../core/providers/AuthProvider';
-import { Sidebar } from '../Sidebar/Sidebar';
-import './Layout.css';
+import React, { useState } from "react";
+import { Outlet } from "react-router-dom";
+import { useAuthContext } from "../../../core/providers/AuthProvider";
+import { Sidebar } from "../Sidebar/Sidebar";
+import "./Layout.css";
 
 /**
  * Layout component
@@ -13,10 +13,11 @@ const Layout = () => {
   const { logout } = useAuthContext();
 
   const links = [
-    { name: "dashboard", label: "Feed" },
-    { name: "dashboard/messages", label: "Messages" },
-    { name: "profile", label: "Profile" },
-    { name: "logout", label: "Logout" },
+    { name: "dashboard", label: "Feed", icon: "📰" },
+    { name: "dashboard/messages", label: "Messages", icon: "✉️" },
+    { name: "profile", label: "Profile", icon: "👤" },
+    // { name: "toast-test", label: "Toast Tester", icon: "🔔" },
+    { name: "logout", label: "Logout", icon: "🚪" },
   ];
 
   const toggleSidebar = () => {
@@ -32,10 +33,10 @@ const Layout = () => {
       <div className="hamburger-icon" onClick={toggleSidebar}>
         &#9776;
       </div>
-      <Sidebar 
-        links={links} 
-        sidebarOpen={sidebarOpen} 
-        onLogout={handleLogout} 
+      <Sidebar
+        links={links}
+        sidebarOpen={sidebarOpen}
+        onLogout={handleLogout}
       />
       <div className="main-content">
         <Outlet />

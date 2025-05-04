@@ -1,39 +1,117 @@
 /* ToastController.css */
 .toast {
-  border-radius: 4px;
-  padding: 15px;
+  border-radius: 8px;
+  padding: 16px;
   color: #fff;
   font-size: 14px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-weight: 500;
+  min-height: 10px;
+  display: flex;
+  align-items: center;
+  line-height: 1.5;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Toast container styling */
+.Toastify__toast-container {
+  width: auto;
+  max-width: 350px;
+  padding: 0;
+}
+
+.Toastify__toast {
+  padding: 0;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
 }
 
 .toast-success {
   background-color: #4caf50;
+  border-left: 6px solid #2e7d32;
 }
 
 .toast-error {
   background-color: #f44336;
+  border-left: 6px solid #c62828;
 }
 
 .toast-default {
   background-color: #2196f3;
+  border-left: 6px solid #1565c0;
+}
+
+.toast-info {
+  background-color: #03a9f4;
+  border-left: 6px solid #0277bd;
+}
+
+.toast-warning {
+  background-color: #ff9800;
+  border-left: 6px solid #ef6c00;
 }
 
 .toast-body {
   padding: 0;
   margin: 0;
+  flex: 1;
 }
 
 .toast-close-button {
   background: none;
   border: none;
   color: white;
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
   opacity: 0.7;
   transition: opacity 0.2s;
+  margin-left: 8px;
+  height: 24px;
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 }
 
 .toast-close-button:hover {
   opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Progress bar styling */
+.Toastify__progress-bar {
+  height: 4px;
+  opacity: 0.7;
+  bottom: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  width: 100% !important;
+}
+
+/* Success toast progress bar */
+.toast-success .Toastify__progress-bar {
+  background-color: #2e7d32 !important;
+}
+
+/* Error toast progress bar */
+.toast-error .Toastify__progress-bar {
+  background-color: #c62828 !important;
+}
+
+/* Info toast progress bar */
+.toast-info .Toastify__progress-bar,
+.toast-default .Toastify__progress-bar {
+  background-color: #0277bd !important;
+}
+
+/* Warning toast progress bar */
+.toast-warning .Toastify__progress-bar {
+  background-color: #ef6c00 !important;
 }

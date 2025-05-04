@@ -1,5 +1,5 @@
 import React from "react";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./ToastController.css"; // Make sure this file includes the improved CSS
 
@@ -22,20 +22,26 @@ const ToastController = () => {
             ? "toast-success"
             : type === "error"
             ? "toast-error"
+            : type === "info"
+            ? "toast-info"
+            : type === "warning"
+            ? "toast-warning"
             : "toast-default"
         }`
       }
       bodyClassName="toast-body"
       closeButton={<CloseButton />}
       position="top-right"
-      autoClose={5000}
+      autoClose={3000}
       hideProgressBar={false}
-      newestOnTop={true}
+      newestOnTop={false}
       closeOnClick
       rtl={false}
       pauseOnFocusLoss
       draggable
       pauseOnHover
+      theme="light"
+      transition={Bounce}
       limit={3}
     />
   );
