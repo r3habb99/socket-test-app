@@ -15,15 +15,12 @@ let eventHandlers = {};
  */
 export const initializeSocket = (userId, username) => {
   if (!userId || !username) {
-    console.error("Cannot initialize socket: missing userId or username");
     return null;
   }
 
   try {
     // Disconnect existing socket if any
     disconnectSocket();
-
-    console.log(`Initializing socket for user: ${userId} (${username})`);
 
     // Create new socket connection with auth data
     socket = io(SOCKET_URL, {
@@ -41,24 +38,19 @@ export const initializeSocket = (userId, username) => {
 
     // Set up basic event handlers
     socket.on("connect", () => {
-      console.log(
-        `📡 Socket connected successfully for user: ${userId} (${username})`
-      );
+      // Connected
     });
 
-    socket.on("connect_error", (error) => {
-      console.error("Socket connection error:", error);
-      toast.error(`Connection error: ${error.message || error}`);
+    socket.on("connect_error", () => {
+      // Connection error
     });
 
-    socket.on("disconnect", (reason) => {
-      console.log("Socket disconnected:", reason);
+    socket.on("disconnect", () => {
+      // Disconnected
     });
 
     return socket;
   } catch (error) {
-    console.error("Failed to initialize socket:", error);
-    toast.error(`Failed to connect: ${error.message}`);
     return null;
   }
 };
@@ -75,16 +67,13 @@ export const getSocket = () => socket;
  */
 export const joinChatRoom = (roomId) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return;
   }
 
   if (!roomId) {
-    console.warn("Cannot join chat room: invalid chat ID");
     return;
   }
 
-  console.log("Joining chat room:", roomId);
   socket.emit("join room", roomId);
 };
 
@@ -94,7 +83,6 @@ export const joinChatRoom = (roomId) => {
  */
 export const leaveChatRoom = (roomId) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return;
   }
   socket.emit("leave room", roomId);
@@ -107,19 +95,16 @@ export const leaveChatRoom = (roomId) => {
  */
 export const sendSocketMessage = (message, callback) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     if (callback) callback({ success: false, error: "Socket not initialized" });
     return;
   }
 
   if (!socket.connected) {
-    console.warn("Socket is not connected. Attempting to reconnect...");
     socket.connect();
     if (callback) callback({ success: false, error: "Socket not connected" });
     return;
   }
 
-  console.log("📤 Sending message via socket:", message);
   socket.emit("new message", message, (acknowledgement) => {
     if (callback) callback(acknowledgement);
   });
@@ -132,7 +117,6 @@ export const sendSocketMessage = (message, callback) => {
  */
 export const sendTypingIndicator = (chatId, isTyping) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return;
   }
 
@@ -147,7 +131,6 @@ export const sendTypingIndicator = (chatId, isTyping) => {
  */
 export const markMessageReadViaSocket = (messageId, chatId) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return;
   }
   socket.emit("message read", { messageId, chatId });
@@ -159,7 +142,6 @@ export const markMessageReadViaSocket = (messageId, chatId) => {
  */
 export const markAllMessagesReadViaSocket = (chatId) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return;
   }
   socket.emit("mark messages read", { chatId });
@@ -170,7 +152,6 @@ export const markAllMessagesReadViaSocket = (chatId) => {
  */
 export const disconnectSocket = () => {
   if (socket) {
-    console.log("Disconnecting socket");
     socket.disconnect();
     socket = null;
     eventHandlers = {};
@@ -184,7 +165,6 @@ export const disconnectSocket = () => {
  */
 export const onMessageReceived = (callback) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return () => {};
   }
 
@@ -211,7 +191,6 @@ export const onMessageReceived = (callback) => {
  */
 export const onMessageDelivered = (callback) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return () => {};
   }
 
@@ -238,7 +217,6 @@ export const onMessageDelivered = (callback) => {
  */
 export const onUserTyping = (callback) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return () => {};
   }
 
@@ -265,7 +243,6 @@ export const onUserTyping = (callback) => {
  */
 export const onUserStoppedTyping = (callback) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return () => {};
   }
 
@@ -292,7 +269,6 @@ export const onUserStoppedTyping = (callback) => {
  */
 export const onMessageReadConfirmation = (callback) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return () => {};
   }
 
@@ -319,7 +295,6 @@ export const onMessageReadConfirmation = (callback) => {
  */
 export const onMessagesBulkRead = (callback) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return () => {};
   }
 
@@ -346,7 +321,6 @@ export const onMessagesBulkRead = (callback) => {
  */
 export const onUserJoined = (callback) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return () => {};
   }
 
@@ -373,7 +347,6 @@ export const onUserJoined = (callback) => {
  */
 export const onUserLeft = (callback) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return () => {};
   }
 
@@ -400,7 +373,6 @@ export const onUserLeft = (callback) => {
  */
 export const onUserOnline = (callback) => {
   if (!socket) {
-    console.warn("Socket not initialized. Call initializeSocket first.");
     return () => {};
   }
 

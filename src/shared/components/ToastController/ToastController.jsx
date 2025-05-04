@@ -1,13 +1,13 @@
 import React from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "./ToastController.css";
+import "./ToastController.css"; // Make sure this file includes the improved CSS
 
 const CloseButton = ({ closeToast }) => (
   <button
     className="toast-close-button"
     onClick={closeToast}
-    aria-label="close"
+    aria-label="Close toast"
   >
     ×
   </button>
@@ -30,12 +30,13 @@ const ToastController = () => {
       position="top-right"
       autoClose={5000}
       hideProgressBar={false}
-      newestOnTop={false}
+      newestOnTop={true}
       closeOnClick
       rtl={false}
       pauseOnFocusLoss
       draggable
       pauseOnHover
+      limit={3}
     />
   );
 };

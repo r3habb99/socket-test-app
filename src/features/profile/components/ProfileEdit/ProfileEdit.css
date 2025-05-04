@@ -1,74 +1,249 @@
 /* ProfileEdit.css */
 .edit-profile-container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
+  width: 100%;
   background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.edit-profile-container h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.tabs {
+  min-height: 100vh;
   display: flex;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #eee;
+  flex-direction: column;
 }
 
-.tabs button {
-  padding: 10px 20px;
+/* Header Bar Styling */
+.profile-header-bar {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eff3f4;
+  position: sticky;
+  top: 0;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
+  z-index: 10;
+  width: 100%;
+}
+
+.back-button {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 16px;
-  color: #657786;
+  color: #0f1419;
+  font-size: 20px;
+  padding: 8px;
+  border-radius: 50%;
+  margin-right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-button:hover {
+  background-color: rgba(29, 155, 240, 0.1);
+}
+
+.profile-header-info {
+  flex: 1;
+}
+
+.profile-header-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f1419;
+}
+
+/* Tab Navigation */
+.tabs {
+  display: flex;
+  width: 100%;
+  border-bottom: 1px solid #eff3f4;
+  margin-bottom: 0;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: #536471;
   border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
 }
 
 .tabs button.active {
-  color: #1da1f2;
-  border-bottom: 2px solid #1da1f2;
+  color: #0f1419;
+  font-weight: 700;
+  border-bottom: 2px solid #1d9bf0;
 }
 
-.edit-profile-container input {
+.tabs button:hover:not(.active) {
+  background-color: rgba(29, 155, 240, 0.1);
+  color: #1d9bf0;
+}
+
+/* Form Content */
+.form-content {
+  padding: 16px;
+  flex: 1;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.form-group .input-field {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 16px;
+  padding: 12px;
+  border: 1px solid #cfd9de;
+  border-radius: 4px;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  margin: 0;
+  background-color: #f7f9fa;
 }
 
-.edit-profile-container button {
+.form-group .input-field:focus {
+  border-color: #1d9bf0;
+  outline: none;
+  background-color: #fff;
+  box-shadow: 0 0 0 1px #1d9bf0;
+}
+
+.form-group .input-field:disabled {
+  background-color: #f7f9fa;
+  color: #536471;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Add a subtle animation when fields are filled */
+.form-group .input-field:not(:placeholder-shown) {
+  border-color: #aab8c2;
+  background-color: #fff;
+}
+
+.form-actions {
+  margin-top: 30px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primary-button {
   padding: 10px 20px;
-  background-color: #1da1f2;
+  background-color: #0f1419;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 9999px;
   cursor: pointer;
-  font-size: 16px;
-  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  min-width: 80px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.edit-profile-container button:hover {
-  background-color: #0c85d0;
+.primary-button:hover:not(:disabled) {
+  background-color: #272c30;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.reset-password-container {
-  margin-top: 20px;
+.primary-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.primary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Notifications */
+.error-message,
+.success-message {
+  padding: 12px 16px;
+  margin: 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 .error-message {
+  background-color: rgba(224, 36, 94, 0.1);
   color: #e0245e;
-  margin-bottom: 15px;
+  border: 1px solid rgba(224, 36, 94, 0.3);
+}
+
+.error-message::before {
+  content: "⚠️";
+  margin-right: 8px;
+  font-size: 16px;
 }
 
 .success-message {
+  background-color: rgba(23, 191, 99, 0.1);
   color: #17bf63;
-  margin-bottom: 15px;
+  border: 1px solid rgba(23, 191, 99, 0.3);
+}
+
+.success-message::before {
+  content: "✅";
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 16px;
+  color: #536471;
+  position: relative;
+}
+
+.loading-container::after {
+  content: "";
+  width: 24px;
+  height: 24px;
+  border: 2px solid #1d9bf0;
+  border-radius: 50%;
+  border-top-color: transparent;
+  margin-left: 10px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Adjustments */
+@media (min-width: 768px) {
+  .form-content {
+    padding: 20px 32px;
+  }
+
+  .tabs button {
+    font-size: 16px;
+  }
 }
