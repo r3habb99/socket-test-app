@@ -1,10 +1,11 @@
-import { io } from 'socket.io-client';
-import { toast } from 'react-toastify';
+import { io } from "socket.io-client";
+import { toast } from "react-toastify";
 
 // Socket.io connection URL - should match your backend
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:8080';
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "http://localhost:8080";
 
 let socket = null;
+let eventHandlers = {};
 
 /**
  * Initialize socket connection
@@ -14,75 +15,49 @@ let socket = null;
  */
 export const initializeSocket = (userId, username) => {
   if (!userId || !username) {
-    console.error('Cannot initialize socket: missing userId or username');
+    console.error("Cannot initialize socket: missing userId or username");
     return null;
   }
 
   try {
-    if (socket) {
-      // If socket already exists, disconnect it first
-      console.log('Disconnecting existing socket before creating a new one');
-      socket.disconnect();
-    }
+    // Disconnect existing socket if any
+    disconnectSocket();
 
-    console.log(`Creating new socket connection for user: ${userId} (${username})`);
+    console.log(`Initializing socket for user: ${userId} (${username})`);
 
     // Create new socket connection with auth data
     socket = io(SOCKET_URL, {
       auth: {
         userId,
         username,
+        token: localStorage.getItem("token"),
       },
       reconnection: true,
-      reconnectionAttempts: 10,
+      reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       timeout: 10000,
-      transports: ['websocket', 'polling'], // Try WebSocket first, then fall back to polling
+      // Removed transports and withCredentials to avoid connection issues
     });
 
-    if (!socket) {
-      console.error('Failed to create socket: io() returned null');
-      return null;
-    }
-
-    // Set up event handlers
-    socket.on('connect', () => {
-      console.log('Socket connected successfully');
+    // Set up basic event handlers
+    socket.on("connect", () => {
+      console.log(
+        `📡 Socket connected successfully for user: ${userId} (${username})`
+      );
     });
 
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-      toast.error(`Connection error: ${error.message}`);
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+      toast.error(`Connection error: ${error.message || error}`);
     });
 
-    socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
-
-      // Try to reconnect for any disconnect reason
-      if (reason === 'io server disconnect' || reason === 'transport close') {
-        console.log('Attempting to reconnect after disconnect...');
-        setTimeout(() => {
-          socket.connect();
-        }, 1000);
-      }
-    });
-
-    socket.on('reconnect', (attemptNumber) => {
-      console.log(`Socket reconnected after ${attemptNumber} attempts`);
-      toast.success('Reconnected to chat server');
-    });
-
-    socket.on('reconnect_attempt', (attemptNumber) => {
-      console.log(`Socket reconnection attempt #${attemptNumber}`);
-    });
-
-    socket.on('reconnect_error', (error) => {
-      console.error('Socket reconnection error:', error);
+    socket.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
     });
 
     return socket;
   } catch (error) {
-    console.error('Error initializing socket:', error);
+    console.error("Failed to initialize socket:", error);
     toast.error(`Failed to connect: ${error.message}`);
     return null;
   }
@@ -92,21 +67,7 @@ export const initializeSocket = (userId, username) => {
  * Get the socket instance
  * @returns {Object|null} Socket instance or null if not initialized
  */
-export const getSocket = () => {
-  if (!socket) {
-    console.warn('Socket not initialized. Call initializeSocket first.');
-
-    // Try to initialize with stored user data
-    const userId = localStorage.getItem('userId');
-    const username = localStorage.getItem('username');
-
-    if (userId && username) {
-      console.log('Attempting to initialize socket with stored user data');
-      return initializeSocket(userId, username);
-    }
-  }
-  return socket;
-};
+export const getSocket = () => socket;
 
 /**
  * Join a chat room
@@ -114,10 +75,17 @@ export const getSocket = () => {
  */
 export const joinChatRoom = (roomId) => {
   if (!socket) {
-    console.warn('Socket not initialized. Call initializeSocket first.');
+    console.warn("Socket not initialized. Call initializeSocket first.");
     return;
   }
-  socket.emit('join room', roomId);
+
+  if (!roomId) {
+    console.warn("Cannot join chat room: invalid chat ID");
+    return;
+  }
+
+  console.log("Joining chat room:", roomId);
+  socket.emit("join room", roomId);
 };
 
 /**
@@ -126,10 +94,10 @@ export const joinChatRoom = (roomId) => {
  */
 export const leaveChatRoom = (roomId) => {
   if (!socket) {
-    console.warn('Socket not initialized. Call initializeSocket first.');
+    console.warn("Socket not initialized. Call initializeSocket first.");
     return;
   }
-  socket.emit('leave room', roomId);
+  socket.emit("leave room", roomId);
 };
 
 /**
@@ -139,25 +107,21 @@ export const leaveChatRoom = (roomId) => {
  */
 export const sendSocketMessage = (message, callback) => {
   if (!socket) {
-    console.warn('Socket not initialized. Call initializeSocket first.');
-    if (callback) callback({ success: false, error: 'Socket not initialized' });
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    if (callback) callback({ success: false, error: "Socket not initialized" });
     return;
   }
 
   if (!socket.connected) {
-    console.warn('Socket is not connected. Attempting to reconnect...');
+    console.warn("Socket is not connected. Attempting to reconnect...");
     socket.connect();
-    if (callback) callback({ success: false, error: 'Socket not connected' });
+    if (callback) callback({ success: false, error: "Socket not connected" });
     return;
   }
 
-  // Ensure the message has a senderUsername field if username is provided
-  if (message.username && !message.senderUsername) {
-    message.senderUsername = message.username;
-  }
-
-  socket.emit('new message', message, (response) => {
-    if (callback) callback(response);
+  console.log("📤 Sending message via socket:", message);
+  socket.emit("new message", message, (acknowledgement) => {
+    if (callback) callback(acknowledgement);
   });
 };
 
@@ -168,11 +132,11 @@ export const sendSocketMessage = (message, callback) => {
  */
 export const sendTypingIndicator = (chatId, isTyping) => {
   if (!socket) {
-    console.warn('Socket not initialized. Call initializeSocket first.');
+    console.warn("Socket not initialized. Call initializeSocket first.");
     return;
   }
-  
-  const eventName = isTyping ? 'typing' : 'stop typing';
+
+  const eventName = isTyping ? "typing" : "stop typing";
   socket.emit(eventName, { chatId });
 };
 
@@ -183,10 +147,10 @@ export const sendTypingIndicator = (chatId, isTyping) => {
  */
 export const markMessageReadViaSocket = (messageId, chatId) => {
   if (!socket) {
-    console.warn('Socket not initialized. Call initializeSocket first.');
+    console.warn("Socket not initialized. Call initializeSocket first.");
     return;
   }
-  socket.emit('message read', { messageId, chatId });
+  socket.emit("message read", { messageId, chatId });
 };
 
 /**
@@ -195,10 +159,10 @@ export const markMessageReadViaSocket = (messageId, chatId) => {
  */
 export const markAllMessagesReadViaSocket = (chatId) => {
   if (!socket) {
-    console.warn('Socket not initialized. Call initializeSocket first.');
+    console.warn("Socket not initialized. Call initializeSocket first.");
     return;
   }
-  socket.emit('mark messages read', { chatId });
+  socket.emit("mark messages read", { chatId });
 };
 
 /**
@@ -206,40 +170,387 @@ export const markAllMessagesReadViaSocket = (chatId) => {
  */
 export const disconnectSocket = () => {
   if (socket) {
+    console.log("Disconnecting socket");
     socket.disconnect();
     socket = null;
-    console.log('Socket disconnected');
+    eventHandlers = {};
   }
 };
 
 /**
- * Create a safe event handler
- * @param {string} event - Event name
+ * Register event handler for message received
  * @param {Function} callback - Callback function
  * @returns {Function} Unsubscribe function
  */
-const createSafeEventHandler = (event, callback) => {
+export const onMessageReceived = (callback) => {
   if (!socket) {
-    console.warn(`Cannot subscribe to ${event}: Socket not initialized`);
+    console.warn("Socket not initialized. Call initializeSocket first.");
     return () => {};
   }
 
-  socket.on(event, callback);
-  return () => socket.off(event, callback);
+  // Remove existing handler if any
+  if (eventHandlers["message received"]) {
+    socket.off("message received", eventHandlers["message received"]);
+  }
+
+  // Register new handler
+  socket.on("message received", callback);
+  eventHandlers["message received"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("message received", callback);
+    delete eventHandlers["message received"];
+  };
 };
 
-// Event handlers
-export const onMessageReceived = (callback) => createSafeEventHandler('message received', callback);
-export const onMessageDelivered = (callback) => createSafeEventHandler('message delivered', callback);
-export const onUserTyping = (callback) => createSafeEventHandler('user typing', callback);
-export const onUserStoppedTyping = (callback) => createSafeEventHandler('user stopped typing', callback);
-export const onMessageReadConfirmation = (callback) => createSafeEventHandler('message read confirmation', callback);
-export const onMessagesBulkRead = (callback) => createSafeEventHandler('messages bulk read', callback);
-export const onUserJoined = (callback) => createSafeEventHandler('user joined', callback);
-export const onUserLeft = (callback) => createSafeEventHandler('user left', callback);
-export const onUserOnline = (callback) => createSafeEventHandler('user online', callback);
-export const onUserOffline = (callback) => createSafeEventHandler('user offline', callback);
-export const onNewPost = (callback) => createSafeEventHandler('new post', callback);
-export const onPostLiked = (callback) => createSafeEventHandler('post liked', callback);
-export const onPostRetweeted = (callback) => createSafeEventHandler('post retweeted', callback);
-export const onPostDeleted = (callback) => createSafeEventHandler('post deleted', callback);
+/**
+ * Register event handler for message delivered
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onMessageDelivered = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["message delivered"]) {
+    socket.off("message delivered", eventHandlers["message delivered"]);
+  }
+
+  // Register new handler
+  socket.on("message delivered", callback);
+  eventHandlers["message delivered"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("message delivered", callback);
+    delete eventHandlers["message delivered"];
+  };
+};
+
+/**
+ * Register event handler for user typing
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onUserTyping = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["typing"]) {
+    socket.off("typing", eventHandlers["typing"]);
+  }
+
+  // Register new handler
+  socket.on("typing", callback);
+  eventHandlers["typing"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("typing", callback);
+    delete eventHandlers["typing"];
+  };
+};
+
+/**
+ * Register event handler for user stopped typing
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onUserStoppedTyping = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["stop typing"]) {
+    socket.off("stop typing", eventHandlers["stop typing"]);
+  }
+
+  // Register new handler
+  socket.on("stop typing", callback);
+  eventHandlers["stop typing"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("stop typing", callback);
+    delete eventHandlers["stop typing"];
+  };
+};
+
+/**
+ * Register event handler for message read confirmation
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onMessageReadConfirmation = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["message read"]) {
+    socket.off("message read", eventHandlers["message read"]);
+  }
+
+  // Register new handler
+  socket.on("message read", callback);
+  eventHandlers["message read"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("message read", callback);
+    delete eventHandlers["message read"];
+  };
+};
+
+/**
+ * Register event handler for messages bulk read
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onMessagesBulkRead = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["messages bulk read"]) {
+    socket.off("messages bulk read", eventHandlers["messages bulk read"]);
+  }
+
+  // Register new handler
+  socket.on("messages bulk read", callback);
+  eventHandlers["messages bulk read"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("messages bulk read", callback);
+    delete eventHandlers["messages bulk read"];
+  };
+};
+
+/**
+ * Register event handler for user joined
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onUserJoined = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["user joined"]) {
+    socket.off("user joined", eventHandlers["user joined"]);
+  }
+
+  // Register new handler
+  socket.on("user joined", callback);
+  eventHandlers["user joined"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("user joined", callback);
+    delete eventHandlers["user joined"];
+  };
+};
+
+/**
+ * Register event handler for user left
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onUserLeft = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["user left"]) {
+    socket.off("user left", eventHandlers["user left"]);
+  }
+
+  // Register new handler
+  socket.on("user left", callback);
+  eventHandlers["user left"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("user left", callback);
+    delete eventHandlers["user left"];
+  };
+};
+
+/**
+ * Register event handler for user online
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onUserOnline = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["user online"]) {
+    socket.off("user online", eventHandlers["user online"]);
+  }
+
+  // Register new handler
+  socket.on("user online", callback);
+  eventHandlers["user online"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("user online", callback);
+    delete eventHandlers["user online"];
+  };
+};
+
+/**
+ * Register event handler for user offline
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onUserOffline = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["user offline"]) {
+    socket.off("user offline", eventHandlers["user offline"]);
+  }
+
+  // Register new handler
+  socket.on("user offline", callback);
+  eventHandlers["user offline"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("user offline", callback);
+    delete eventHandlers["user offline"];
+  };
+};
+
+/**
+ * Register event handler for new post
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onNewPost = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["new post"]) {
+    socket.off("new post", eventHandlers["new post"]);
+  }
+
+  // Register new handler
+  socket.on("new post", callback);
+  eventHandlers["new post"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("new post", callback);
+    delete eventHandlers["new post"];
+  };
+};
+
+/**
+ * Register event handler for post liked
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onPostLiked = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["post liked"]) {
+    socket.off("post liked", eventHandlers["post liked"]);
+  }
+
+  // Register new handler
+  socket.on("post liked", callback);
+  eventHandlers["post liked"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("post liked", callback);
+    delete eventHandlers["post liked"];
+  };
+};
+
+/**
+ * Register event handler for post retweeted
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onPostRetweeted = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["post retweeted"]) {
+    socket.off("post retweeted", eventHandlers["post retweeted"]);
+  }
+
+  // Register new handler
+  socket.on("post retweeted", callback);
+  eventHandlers["post retweeted"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("post retweeted", callback);
+    delete eventHandlers["post retweeted"];
+  };
+};
+
+/**
+ * Register event handler for post deleted
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onPostDeleted = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized. Call initializeSocket first.");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["post deleted"]) {
+    socket.off("post deleted", eventHandlers["post deleted"]);
+  }
+
+  // Register new handler
+  socket.on("post deleted", callback);
+  eventHandlers["post deleted"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("post deleted", callback);
+    delete eventHandlers["post deleted"];
+  };
+};

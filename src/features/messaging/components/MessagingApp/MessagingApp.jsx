@@ -21,6 +21,17 @@ const MessagingApp = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Handle socket reconnection if needed - only on mount
+  useEffect(() => {
+    if (!socketContext.connected) {
+      console.log(
+        "MessagingApp: Socket not connected, attempting to reconnect"
+      );
+      socketContext.reconnect();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally omitting socketContext to prevent reconnection loops
+
   const prefillUserId = location.state?.prefillUserId || "";
   const prefillGroupName = location.state?.prefillGroupName || "";
   const prefillGroupUsers = location.state?.prefillGroupUsers || "";
@@ -73,19 +84,22 @@ const MessagingApp = () => {
     }
   }, [prefillUserId]);
 
-  // Keep track of the last joined chat to avoid duplicate joins
-  const [lastJoinedChatId, setLastJoinedChatId] = useState(null);
-
-  useEffect(() => {
-    // Get the chat ID (either _id or id)
-    const chatId = selectedChat?._id || selectedChat?.id;
-
-    if (socketContext.connected && chatId && chatId !== lastJoinedChatId) {
-      console.log("MessagingApp: joining chat room with ID:", chatId);
-      socketContext.joinChat(chatId);
-      setLastJoinedChatId(chatId);
+  // Handle chat selection
+  const handleSelectChat = (chat) => {
+    if (!chat) {
+      console.warn("Cannot select chat: invalid chat object");
+      return;
     }
-  }, [selectedChat, socketContext, lastJoinedChatId]);
+
+    // Normalize the chat object to ensure it has an _id property
+    const normalizedChat = {
+      ...chat,
+      _id: chat._id || chat.id, // Use _id if available, otherwise use id
+    };
+
+    console.log("Selecting chat:", normalizedChat);
+    setSelectedChat(normalizedChat);
+  };
 
   return (
     <div className="messaging-app-container">
@@ -94,73 +108,87 @@ const MessagingApp = () => {
           selectedChat && isMobile ? "chat-selected" : ""
         }`}
       >
-        {/* Chat list - always visible */}
-        <div className="chatlist-section">
-          <ChatList
-            onSelectChat={setSelectedChat}
-            prefillUserId={prefillUserId}
-            prefillGroupName={prefillGroupName}
-            prefillGroupUsers={prefillGroupUsers}
-            hideCreateInputs={!!(prefillUserId || prefillGroupName)}
-            selectedChatId={selectedChat?._id || selectedChat?.id}
-          />
-        </div>
+        {/* Connection status indicator */}
+        {!socketContext.connected && (
+          <div className="connection-status-banner">
+            <span>Disconnected from chat server</span>
+            <button onClick={() => socketContext.reconnect()}>Reconnect</button>
+          </div>
+        )}
 
-        {/* Chat window - shows when a chat is selected */}
-        <div className="chat-section">
-          {selectedChat ? (
-            <Chat
-              selectedChat={selectedChat}
-              onBackClick={() => {
-                // Always hide the chat view when back button is clicked
-                setSelectedChat(null);
-
-                // On mobile, we might want to add additional behavior
-                if (isMobile) {
-                  // For example, scroll to the top of the chat list
-                  const chatList = document.querySelector(".chatlist");
-                  if (chatList) {
-                    chatList.scrollTop = 0;
-                  }
-                }
-              }}
+        {/* Main content container */}
+        <div
+          className="messaging-content-container"
+          style={{ display: "flex", flex: 1, overflow: "hidden" }}
+        >
+          {/* Chat list - always visible */}
+          <div className="chatlist-section">
+            <ChatList
+              onSelectChat={handleSelectChat}
+              prefillUserId={prefillUserId}
+              prefillGroupName={prefillGroupName}
+              prefillGroupUsers={prefillGroupUsers}
+              hideCreateInputs={!!(prefillUserId || prefillGroupName)}
+              selectedChatId={selectedChat?._id || selectedChat?.id}
             />
-          ) : (
-            <div className="no-chat-selected">
-              <div className="no-chat-content">
-                <i className="fa-solid fa-envelope no-chat-icon"></i>
-                <h3>Select a message</h3>
-                <p>
-                  Choose an existing conversation or start a new one with
-                  someone on Twitter.
-                </p>
-                <button
-                  className="start-message-btn"
-                  onClick={() => {
-                    // Focus the search input in the ChatList component
-                    const searchInput = document.querySelector(
-                      ".chatlist-search input"
-                    );
-                    if (searchInput) {
-                      searchInput.focus();
-                      searchInput.scrollIntoView({ behavior: "smooth" });
+          </div>
 
-                      // Find the ChatList component's search functions
-                      // This is a bit of a hack, but it works for this case
-                      const chatListSearchInput =
-                        document.querySelector(".chatlist-search");
-                      if (chatListSearchInput) {
-                        // Trigger a click on the search input to show the search UI
-                        chatListSearchInput.click();
-                      }
+          {/* Chat window - shows when a chat is selected */}
+          <div className="chat-section">
+            {selectedChat ? (
+              <Chat
+                selectedChat={selectedChat}
+                onBackClick={() => {
+                  // Always hide the chat view when back button is clicked
+                  setSelectedChat(null);
+
+                  // On mobile, we might want to add additional behavior
+                  if (isMobile) {
+                    // For example, scroll to the top of the chat list
+                    const chatList = document.querySelector(".chatlist");
+                    if (chatList) {
+                      chatList.scrollTop = 0;
                     }
-                  }}
-                >
-                  New Message
-                </button>
+                  }
+                }}
+              />
+            ) : (
+              <div className="no-chat-selected">
+                <div className="no-chat-content">
+                  <i className="fa-solid fa-envelope no-chat-icon"></i>
+                  <h3>Select a message</h3>
+                  <p>
+                    Choose an existing conversation or start a new one with
+                    someone on Twitter.
+                  </p>
+                  <button
+                    className="start-message-btn"
+                    onClick={() => {
+                      // Focus the search input in the ChatList component
+                      const searchInput = document.querySelector(
+                        ".chatlist-search input"
+                      );
+                      if (searchInput) {
+                        searchInput.focus();
+                        searchInput.scrollIntoView({ behavior: "smooth" });
+
+                        // Find the ChatList component's search functions
+                        // This is a bit of a hack, but it works for this case
+                        const chatListSearchInput =
+                          document.querySelector(".chatlist-search");
+                        if (chatListSearchInput) {
+                          // Trigger a click on the search input to show the search UI
+                          chatListSearchInput.click();
+                        }
+                      }
+                    }}
+                  >
+                    New Message
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -114,6 +114,27 @@
   opacity: 0.8;
   line-height: 1.2;
   margin-top: 2px;
+  display: flex;
+  align-items: center;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  color: #1d9bf0;
+  font-weight: 500;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
 }
 
 .chat-header-actions {

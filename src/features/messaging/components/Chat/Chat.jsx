@@ -7,15 +7,15 @@ import "./Chat.css";
 export const Chat = ({ selectedChat, onBackClick }) => {
   const socketContext = useSocketContext();
 
-  const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState(null);
   const messagesEndRef = useRef(null);
 
   // Get current user ID from localStorage
   const userId = localStorage.getItem("userId");
-  const username = localStorage.getItem("username");
+  // We don't need username here as it's handled in the socket context
 
   // Get the chat partner for 1:1 chats
   const chatPartner =
@@ -31,14 +31,21 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
   // Load messages when chat is selected
   useEffect(() => {
-    // Ensure we have a valid chat ID (either _id or id)
+    // Extract chat ID to a variable for dependency array
     const chatId = selectedChat?._id || selectedChat?.id;
 
     if (chatId) {
       console.log("Chat component: Loading messages for chat:", chatId);
       setLoadingMessages(true);
+
+      // Create a flag to track if the component is still mounted
+      let isMounted = true;
+
       getMessagesForChat(chatId)
         .then((response) => {
+          // Only proceed if the component is still mounted
+          if (!isMounted) return;
+
           console.log("Messages response:", response);
 
           // Handle the nested API response structure
@@ -75,48 +82,76 @@ export const Chat = ({ selectedChat, onBackClick }) => {
             msgs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
           }
 
-          setMessages(msgs);
+          // Set messages in the socket context to maintain state across components
+          socketContext.setMessages(msgs);
         })
         .catch((err) => {
-          console.error("Failed to load messages:", err);
+          if (isMounted) {
+            console.error("Failed to load messages:", err);
+          }
         })
         .finally(() => {
-          setLoadingMessages(false);
+          if (isMounted) {
+            setLoadingMessages(false);
+          }
         });
+
+      // Cleanup function to set the flag when component unmounts
+      return () => {
+        isMounted = false;
+      };
     }
-  }, [selectedChat]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChat]); // Only depend on the selectedChat object
 
   // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [socketContext.messages]);
 
-  // Join chat room when selected chat changes
+  // Join chat room when selected chat changes - using a ref to prevent repeated joins
+  const previousChatIdRef = useRef(null);
+
   useEffect(() => {
+    // Extract chat ID to a variable for dependency array
     const chatId = selectedChat?._id || selectedChat?.id;
 
-    if (socketContext.connected && chatId) {
+    // Only join if the chat ID has actually changed
+    if (chatId && chatId !== previousChatIdRef.current) {
+      // Store the current chat ID in the ref
+      previousChatIdRef.current = chatId;
+
+      // Join the chat room via socket
+      console.log("Joining chat room:", chatId);
       socketContext.joinChat(chatId);
 
-      // Subscribe to new messages
-      const unsubscribe = socketContext.subscribe(
-        "new message",
-        (newMessage) => {
-          if (newMessage.chat === chatId) {
-            setMessages((prev) => [...prev, newMessage]);
-          }
-        }
-      );
-
-      // Clean up on unmount
+      // Clean up function will only run on unmount or when chat ID changes
       return () => {
-        unsubscribe();
-        if (chatId) {
-          socketContext.leaveChat(chatId);
-        }
+        console.log("Leaving chat room:", chatId);
+        socketContext.leaveChat(chatId);
+        // Don't reset previousChatIdRef here, it will be updated in the next effect run
       };
     }
-  }, [selectedChat, socketContext]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChat]); // Only depend on the selectedChat object
+
+  // Handle typing indicator with debounce
+  const handleTyping = (isTyping) => {
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    // Send typing indicator
+    socketContext.sendTyping(isTyping);
+
+    // If user is typing, set a timeout to automatically stop typing indicator
+    if (isTyping) {
+      const timeout = setTimeout(() => {
+        socketContext.sendTyping(false);
+      }, 3000); // 3 seconds
+      setTypingTimeout(timeout);
+    }
+  };
 
   const handleSendMessage = () => {
     // Ensure we have a valid chat ID (either _id or id)
@@ -130,30 +165,20 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     console.log(`Sending message to chat ${chatId}: "${message.trim()}"`);
 
     try {
-      // Add temporary message to UI
-      const tempMessage = {
-        _id: `temp-${Date.now()}`,
-        id: `temp-${Date.now()}`,
-        content: message.trim(),
-        sender: {
-          _id: userId,
-          id: userId,
-          username,
-        },
-        chat: chatId,
-        createdAt: new Date().toISOString(),
-        isTemp: true,
-      };
+      // Stop typing indicator
+      handleTyping(false);
 
-      setMessages((prev) => [...prev, tempMessage]);
-
-      // Send message via socket
+      // Send message via socket context
       socketContext.sendMessage({
         content: message.trim(),
         chatId: chatId,
       });
 
+      // Clear the input field
       setMessage("");
+
+      // Scroll to bottom after sending
+      setTimeout(scrollToBottom, 100);
     } catch (error) {
       console.error("Error sending message:", error);
       alert("Failed to send message. Please try again.");
@@ -165,6 +190,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     if (e.key === "Enter" && !e.shiftKey && message.trim()) {
       e.preventDefault(); // Prevent default Enter behavior (new line)
       handleSendMessage();
+    } else if (e.key !== "Enter") {
+      // Send typing indicator for any key except Enter
+      handleTyping(true);
     }
   };
 
@@ -217,6 +245,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
               {selectedChat.isGroupChat
                 ? `${selectedChat.users?.length || 0} people`
                 : "Active now"}
+              {Object.keys(socketContext.typingUsers).length > 0 && (
+                <span className="typing-indicator"> • typing...</span>
+              )}
             </div>
           </div>
         </div>
@@ -248,7 +279,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       <div className="messages-container">
         {loadingMessages ? (
           <div className="loading-messages">Loading messages...</div>
-        ) : messages?.length === 0 ? (
+        ) : socketContext.messages?.length === 0 ? (
           <div className="no-messages">
             <div className="no-messages-content">
               <i className="fa-solid fa-envelope no-messages-icon"></i>
@@ -270,12 +301,12 @@ export const Chat = ({ selectedChat, onBackClick }) => {
             </div>
 
             {/* Group messages by date */}
-            {(messages || []).map((msg, index) => {
+            {(socketContext.messages || []).map((msg, index) => {
               // Show date divider for first message or when date changes
               const showDateDivider =
                 index === 0 ||
                 getMessageDate(msg.createdAt) !==
-                  getMessageDate(messages[index - 1]?.createdAt);
+                  getMessageDate(socketContext.messages[index - 1]?.createdAt);
 
               // Handle different sender ID formats
               const senderId = msg.sender?._id || msg.sender?.id || msg.sender;
@@ -290,7 +321,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
               const messageClass = isSender ? "sender" : "receiver";
 
               return (
-                <React.Fragment key={index}>
+                <React.Fragment key={msg._id || msg.id || index}>
                   {showDateDivider && msg.createdAt && (
                     <div className="date-divider">
                       <span>
@@ -339,7 +370,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         <button
           className="send-btn"
           onClick={handleSendMessage}
-          disabled={!message.trim()}
+          disabled={!message.trim() || !socketContext.connected}
         >
           <i className="fa-solid fa-paper-plane"></i>
         </button>

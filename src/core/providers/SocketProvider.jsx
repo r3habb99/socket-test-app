@@ -1,6 +1,7 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import { useSocket } from "../../features/messaging/hooks";
 import { useAuthContext } from "./AuthProvider";
+import { toast } from "react-toastify";
 
 // Create context
 const SocketContext = createContext(null);
@@ -12,9 +13,37 @@ const SocketContext = createContext(null);
  */
 export const SocketProvider = ({ children }) => {
   const { isAuthenticated } = useAuthContext();
-  const socket = useSocket();
+  // Use a constant for the socket URL
+  const socketUrl = process.env.REACT_APP_SOCKET_URL || "http://localhost:8080";
+  const socket = useSocket(socketUrl);
 
-  // Only render children if authenticated
+  // Log socket connection status changes
+  useEffect(() => {
+    if (isAuthenticated()) {
+      console.log(
+        "Socket connection status:",
+        socket.connected ? "Connected" : "Disconnected"
+      );
+
+      if (socket.error) {
+        console.error("Socket connection error:", socket.error);
+        toast.error(`Socket error: ${socket.error}`);
+      }
+    }
+  }, [socket.connected, socket.error, isAuthenticated]);
+
+  // Attempt to reconnect socket when authentication changes - only once
+  useEffect(() => {
+    if (isAuthenticated() && !socket.connected) {
+      console.log(
+        "User is authenticated but socket is not connected. Attempting to reconnect..."
+      );
+      socket.reconnect();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]); // Intentionally omitting socket to prevent reconnection loops
+
+  // Only provide socket context if authenticated
   if (!isAuthenticated()) {
     return children;
   }
