@@ -16,6 +16,7 @@ import Feed from "./features/feed/components/Feed";
 import MessagingApp from "./features/messaging/components/MessagingApp";
 import { Profile } from "./features/profile/components/Profile/Profile";
 import { FollowersList } from "./features/profile/components/FollowersList/FollowersList";
+import { FollowingList } from "./features/profile/components/FollowingList/FollowingList";
 import ProfileEdit from "./features/profile/components/ProfileEdit";
 import ToastController from "./shared/components/ToastController/ToastController";
 
@@ -48,7 +49,7 @@ const App = () => {
               />
               <Route
                 path="profile/:userId/following"
-                element={<FollowersList />}
+                element={<FollowingList />}
               />
               <Route path="user/edit-profile" element={<ProfileEdit />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -215,7 +215,7 @@ export const Profile = () => {
 
           <p className="username">@{user.username}</p>
           <div className="bio">
-            <p>Bio: {user.bio || "Coming soon!"}</p>
+            <p>{user.bio || "Coming soon!"}</p>
           </div>
 
           <div className="stats">

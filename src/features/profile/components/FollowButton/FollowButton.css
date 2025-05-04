@@ -1,15 +1,19 @@
 .follow-btn {
   background-color: #0f1419;
   color: white;
-  padding: 8px 16px;
+  padding: 0 16px;
   border: none;
   cursor: pointer;
   border-radius: 9999px;
   transition: background-color 0.2s ease;
   font-weight: 700;
   font-size: 14px;
-  min-width: 96px;
+  min-width: 80px;
   text-align: center;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .follow-btn:hover {
