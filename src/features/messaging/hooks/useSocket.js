@@ -168,7 +168,7 @@ export const useSocket = (
       }
     });
 
-    // Message received handlers - listen for both event names
+    // Message received handler - updated to match backend event
     const messageReceivedHandler = (newMessage) => {
       console.log("📥 Message received:", newMessage);
 
@@ -202,6 +202,29 @@ export const useSocket = (
       console.log(
         `Message for chat: ${messageChat}, current chat: ${currentChatIdRef.current}`
       );
+
+      // IMPORTANT: Make sure we're in the right chat room
+      // If this message is for a chat we're not currently in, join that chat room
+      if (
+        messageChat &&
+        messageChat !== currentChatIdRef.current &&
+        socketRef.current
+      ) {
+        console.log(
+          `Message is for chat ${messageChat} but we're in ${
+            currentChatIdRef.current || "no chat"
+          }`
+        );
+
+        // We don't want to automatically switch chats, but we do want to make sure
+        // we're joined to the chat room to receive future messages
+        if (socketRef.current.connected) {
+          console.log(
+            `Joining chat room ${messageChat} to receive future messages`
+          );
+          socketRef.current.emit("join room", messageChat);
+        }
+      }
 
       // Check if this is a message we just sent (to avoid duplicates)
       // Use the ref for recentlySentMessages to avoid dependency on state
@@ -255,8 +278,6 @@ export const useSocket = (
       }
 
       // Process messages for the current chat - use ref for currentChatId
-      // IMPORTANT: We're now processing ALL messages, even if they're not for the current chat
-      // This ensures we don't miss any messages when switching chats
       setMessages((prevMessages) => {
         // Check if message already exists to avoid duplicates
         const exists = prevMessages.some(
@@ -306,79 +327,85 @@ export const useSocket = (
           onClick: () => {
             // This will be handled by the component that uses this hook
             console.log("Notification clicked for chat:", messageChat);
+
+            // If we have a socket and the message is for a different chat,
+            // we could potentially switch to that chat here
+            if (socketRef.current && messageChat !== currentChatIdRef.current) {
+              console.log(`User clicked notification for chat ${messageChat}`);
+              // We don't automatically switch chats here, but we could expose
+              // this functionality to the component that uses this hook
+
+              // Make sure we're joined to the chat room
+              if (socketRef.current.connected) {
+                socketRef.current.emit("join room", messageChat);
+              }
+            }
           },
           autoClose: 5000,
         });
       }
     };
 
-    // Register the handler for both possible event names
+    // Register the handler for the backend event name
     socket.on("message received", messageReceivedHandler);
-    socket.on("new message", messageReceivedHandler);
 
-    // User typing handlers
-    const typingHandler = (data) => {
+    // User typing handlers - updated to match backend events
+    const userTypingHandler = (data) => {
       console.log("✍️ User typing:", data);
 
       // Enhanced logging to debug typing data
-      console.log("Typing data structure:", {
-        userId: data.userId,
-        username: data.username,
-        roomId: data.roomId,
-        isTyping: data.isTyping,
-        timestamp: data.timestamp,
-      });
+      console.log("Typing data structure:", data);
+
+      // Extract the chat/room ID from the data
+      // The backend sends roomId in the typing event
+      const roomId = data.roomId || data.chatId;
 
       // Only process typing events for the current chat
-      if (data.roomId === currentChatIdRef.current) {
-        if (data.isTyping) {
-          // User is typing
-          setTypingUsers((prev) => ({
+      if (roomId === currentChatIdRef.current) {
+        // User is typing
+        setTypingUsers((prev) => {
+          // Avoid unnecessary state updates if user already exists
+          if (prev[data.userId]) {
+            return prev;
+          }
+          return {
             ...prev,
             [data.userId]: {
               username: data.username || "User",
               timestamp: new Date(data.timestamp || Date.now()),
             },
-          }));
+          };
+        });
 
-          console.log(
-            `User ${data.username} (${data.userId}) is typing in room ${data.roomId}`
-          );
-        } else {
-          // User stopped typing
-          setTypingUsers((prev) => {
-            const newTypingUsers = { ...prev };
-            delete newTypingUsers[data.userId];
-            console.log(
-              `User ${data.username} (${data.userId}) stopped typing in room ${data.roomId}`
-            );
-            return newTypingUsers;
-          });
-        }
+        console.log(
+          `User ${data.username} (${data.userId}) is typing in room ${roomId}`
+        );
       }
     };
 
-    // Register for both possible event names
-    socket.on("user typing", typingHandler);
-    socket.on("typing", typingHandler);
+    // User stopped typing handler
+    const userStoppedTypingHandler = (data) => {
+      console.log("✋ User stopped typing:", data);
 
-    // We'll also handle the stop typing event separately for backward compatibility
-    const stoppedTypingHandler = (data) => {
-      console.log("✋ User stopped typing (legacy event):", data);
+      // Extract the chat/room ID from the data
+      const roomId = data.roomId || data.chatId;
 
       // Only process typing events for the current chat
-      if (data.roomId === currentChatIdRef.current) {
+      if (roomId === currentChatIdRef.current) {
         setTypingUsers((prev) => {
           const newTypingUsers = { ...prev };
           delete newTypingUsers[data.userId];
+          console.log(
+            `User ${data.username} (${data.userId}) stopped typing in room ${roomId}`
+          );
           return newTypingUsers;
         });
       }
     };
 
-    // Register for both possible event names for backward compatibility
-    socket.on("user stopped typing", stoppedTypingHandler);
-    socket.on("stop typing", stoppedTypingHandler);
+    // Register for the backend event names
+    socket.on("user typing", userTypingHandler);
+    socket.on("user stopped typing", userStoppedTypingHandler);
 
     // Store socket instance in ref
     socketRef.current = socket;
@@ -403,13 +430,10 @@ export const useSocket = (
 
       // Message events
       socket.off("message received", messageReceivedHandler);
-      socket.off("new message", messageReceivedHandler);
 
       // Typing events
-      socket.off("user typing", typingHandler);
-      socket.off("typing", typingHandler);
-      socket.off("user stopped typing", stoppedTypingHandler);
-      socket.off("stop typing", stoppedTypingHandler);
+      socket.off("user typing", userTypingHandler);
+      socket.off("user stopped typing", userStoppedTypingHandler);
 
       // Additional events
       socket.off("user joined");
@@ -635,11 +659,10 @@ export const useSocket = (
           });
         }, 10000);
 
-        // Prepare the message payload
+        // Prepare the message payload according to the backend's expected format
         const messagePayload = {
           content: messageData.content.trim(),
           chat: chatId, // This is what the backend expects
-          sender: userId,
         };
 
         // Check if socket exists
@@ -781,14 +804,17 @@ export const useSocket = (
         return;
       }
 
-      // Prepare the payload regardless of connection status
+      // Prepare the payload according to the backend's expected format
       const payload = {
         roomId: roomId, // Backend expects roomId
         isTyping: isTyping, // Backend expects isTyping boolean
-        userId,
-        username,
-        timestamp: Date.now(),
       };
+
+      console.log(
+        `Preparing to send typing indicator: ${
+          isTyping ? "typing" : "stopped typing"
+        } for room ${roomId}`
+      );
 
       // Check if socket exists
       if (!socketRef.current) {
@@ -862,10 +888,9 @@ export const useSocket = (
           isTyping ? "typing" : "stopped typing"
         } indicator for chat: ${roomId}`
       );
-
       console.log("Sending typing payload:", payload);
 
-      // Send typing event - use a single event name for both typing and stopped typing
+      // Send typing event using the backend's expected event name
       socketRef.current.emit("typing", payload);
 
       // Log confirmation

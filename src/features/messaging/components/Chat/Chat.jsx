@@ -135,7 +135,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChat]); // Only depend on the selectedChat object
 
-  // Handle typing indicator with debounce
+  // Handle typing indicator with debounce and improved timeout management
   const handleTyping = (isTyping) => {
     // Clear any existing timeout
     if (typingTimeout) {
@@ -172,12 +172,13 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       const timeout = setTimeout(() => {
         console.log("Typing timeout expired, sending stopped typing");
         socketContext.sendTyping(false, chatId);
+        setTypingTimeout(null);
       }, 3000); // 3 seconds
       setTypingTimeout(timeout);
     }
   };
 
-  // Clean up typing timeout on unmount
+  // Clean up typing timeout on unmount and leave chat room
   useEffect(() => {
     return () => {
       if (typingTimeout) {
@@ -192,9 +193,103 @@ export const Chat = ({ selectedChat, onBackClick }) => {
           socketContext.sendTyping(false, chatId);
         }
       }
+
+      // Leave chat room on component unmount
+      const chatId = selectedChat?._id || selectedChat?.id;
+      if (chatId) {
+        console.log(`Cleanup: leaving chat room ${chatId}`);
+        socketContext.leaveChat(chatId);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChat]);
+
+  // Effect to scroll to bottom when new messages are received
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    if (socketContext.messages && socketContext.messages.length > 0) {
+      console.log("Messages updated, scrolling to bottom");
+      scrollToBottom();
+    }
+  }, [socketContext.messages]);
+
+  // Effect to handle socket connection changes
+  useEffect(() => {
+    if (socketContext.connected) {
+      console.log("Socket connected, refreshing messages if needed");
+
+      // If we have a selected chat but no messages, try to load messages
+      const chatId = selectedChat?._id || selectedChat?.id;
+      if (
+        chatId &&
+        (!socketContext.messages || socketContext.messages.length === 0) &&
+        !loadingMessages
+      ) {
+        console.log(
+          "Socket connected and no messages, loading messages for chat:",
+          chatId
+        );
+        setLoadingMessages(true);
+
+        getMessagesForChat(chatId)
+          .then((response) => {
+            console.log("Messages response after reconnection:", response);
+
+            // Handle the nested API response structure
+            let msgs = [];
+
+            if (response.error) {
+              console.error("Error loading messages:", response.message);
+            } else {
+              // The API response has a nested structure with the actual data in the 'data' property
+              const responseData = response.data;
+
+              // Try to extract messages from various possible locations
+              if (responseData?.data && Array.isArray(responseData.data)) {
+                // Nested: { data: [...] }
+                msgs = responseData.data;
+                console.log(
+                  "Using nested messages data from response.data.data"
+                );
+              } else if (Array.isArray(responseData)) {
+                // Direct: [...]
+                msgs = responseData;
+                console.log("Using direct messages array from response.data");
+              } else {
+                console.error("Invalid messages data format:", responseData);
+              }
+            }
+
+            // Ensure we have an array of messages
+            if (!Array.isArray(msgs)) {
+              console.error("Messages data is not an array:", msgs);
+              msgs = [];
+            }
+
+            // Sort messages by createdAt timestamp if available
+            if (msgs.length > 0 && msgs[0].createdAt) {
+              msgs.sort(
+                (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+              );
+            }
+
+            // Set messages in the socket context to maintain state across components
+            socketContext.setMessages(msgs);
+
+            // Scroll to bottom after loading messages
+            setTimeout(scrollToBottom, 100);
+          })
+          .catch((err) => {
+            console.error("Failed to load messages after reconnection:", err);
+          })
+          .finally(() => {
+            setLoadingMessages(false);
+          });
+      }
+    } else {
+      console.log("Socket disconnected");
+    }
+  }, [socketContext.connected]);
 
   const handleSendMessage = () => {
     // Ensure we have a valid chat ID (either _id or id)
