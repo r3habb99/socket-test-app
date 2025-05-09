@@ -32,7 +32,6 @@
 /* Post Card Styles */
 .post-card {
   color: #000;
-  border-bottom: 1px solid #2f3336;
   padding: 12px 16px;
   transition: background-color 0.2s;
   cursor: pointer;

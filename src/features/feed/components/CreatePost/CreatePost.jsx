@@ -110,7 +110,7 @@ export const CreatePost = ({ onPostCreated }) => {
 
   return (
     <div className="create-post-container">
-      <h1 className="create-post-title">Create a New Post</h1>
+      <h1 className="create-post-title">Home</h1>
       {error && <p className="error">{error}</p>}
       <form className="create-post-form" onSubmit={handleSubmit}>
         <textarea
@@ -118,6 +118,7 @@ export const CreatePost = ({ onPostCreated }) => {
           onChange={(e) => setContent(e.target.value)}
           placeholder="What's happening?"
           disabled={isSubmitting}
+          rows={4}
         />
 
         {/* Media preview */}
@@ -128,6 +129,7 @@ export const CreatePost = ({ onPostCreated }) => {
               type="button"
               className="remove-media-btn"
               onClick={handleRemoveMedia}
+              aria-label="Remove media"
             >
               <FaTimes />
             </button>
@@ -152,6 +154,8 @@ export const CreatePost = ({ onPostCreated }) => {
               className="media-upload-btn"
               onClick={() => fileInputRef.current.click()}
               disabled={isSubmitting}
+              aria-label="Add image"
+              title="Add image"
             >
               <FaImage />
             </button>
@@ -162,9 +166,10 @@ export const CreatePost = ({ onPostCreated }) => {
               value={visibility}
               onChange={(e) => setVisibility(e.target.value)}
               disabled={isSubmitting}
+              aria-label="Post visibility"
             >
-              <option value="public">Public</option>
-              <option value="private">Private</option>
+              <option value="public">Everyone</option>
+              <option value="private">Only followers</option>
             </select>
           </div>
 
@@ -174,7 +179,7 @@ export const CreatePost = ({ onPostCreated }) => {
             className="post-btn"
             disabled={isSubmitting || (!content.trim() && !media)}
           >
-            {isSubmitting ? "Posting..." : "Post"}
+            {isSubmitting ? "Posting..." : "Tweet"}
           </button>
         </div>
       </form>

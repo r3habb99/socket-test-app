@@ -1,16 +1,15 @@
 /* CreatePost.css */
 .create-post-container {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 
 .create-post-title {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  color: #333;
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  color: #fff;
+  font-weight: bold;
 }
 
 .create-post-form {
@@ -21,49 +20,60 @@
 .create-post-form textarea {
   resize: none;
   min-height: 100px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
-  margin-bottom: 10px;
+  padding: 12px 0;
+  border: none;
+  background-color: transparent;
+  color: #2f3336;
+  font-size: 1.25rem;
+  margin-bottom: 16px;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.create-post-form textarea::placeholder {
+  color: #6e767d;
+  font-size: 1.25rem;
 }
 
 /* Media preview container */
 .media-preview-container {
   position: relative;
-  margin-bottom: 15px;
-  border-radius: 8px;
+  margin-bottom: 16px;
+  border-radius: 16px;
   overflow: hidden;
   max-height: 300px;
+  border: 1px solid #2f3336;
 }
 
 .media-preview {
   width: 100%;
   max-height: 300px;
   object-fit: contain;
-  border-radius: 8px;
-  border: 1px solid #ddd;
+  border-radius: 16px;
+  background-color: #000;
 }
 
 .remove-media-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: rgba(0, 0, 0, 0.6);
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.75);
   color: white;
   border: none;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: background-color 0.2s;
+  z-index: 2;
 }
 
 .remove-media-btn:hover {
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.9);
 }
 
 /* Post actions container */
@@ -72,68 +82,94 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 10px;
+  padding-top: 12px;
 }
 
 .post-actions-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
 }
 
 .visibility-selector {
-  padding: 5px 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background-color: #f8f9fa;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #2f3336;
+  background-color: transparent;
   font-size: 0.9rem;
-  color: #333;
+  color: #1d9bf0;
   cursor: pointer;
+  outline: none;
+}
+
+.visibility-selector option {
+  background-color: #000;
+  color: #fff;
 }
 
 .media-upload-btn {
-  background-color: transparent;
-  color: #007bff;
+  background-color: #9dd2f5;
+  color: #1d9bf0;
   border: none;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-size: 1.2rem;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.media-upload-btn::before {
+  content: "";
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: transparent;
   transition: background-color 0.2s;
 }
 
 .media-upload-btn:hover {
-  background-color: rgba(0, 123, 255, 0.1);
+  color: #1a8cd8;
+}
+
+.media-upload-btn:hover::before {
+  background-color: rgba(29, 155, 240, 0.1);
 }
 
 .media-upload-btn:disabled {
-  color: #cccccc;
+  color: #6e767d;
   cursor: not-allowed;
 }
 
 .post-btn {
-  padding: 8px 16px;
-  background-color: #007bff;
+  padding: 8px 20px;
+  background-color: #1d9bf0;
   border: none;
   color: white;
   font-weight: bold;
-  border-radius: 8px;
+  border-radius: 9999px;
   cursor: pointer;
+  font-size: 15px;
+  transition: background-color 0.2s;
+  width: 200px;
 }
 
 .post-btn:hover {
-  background-color: #0056b3;
+  background-color: #1a8cd8;
 }
 
 .post-btn:disabled {
-  background-color: #cccccc;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .error {
-  color: #d9534f;
+  color: #f4212e;
   margin-bottom: 1rem;
+  font-size: 14px;
 }
