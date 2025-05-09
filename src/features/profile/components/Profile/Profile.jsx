@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { FaEdit, FaRegCommentDots, FaArrowLeft } from "react-icons/fa";
 import { fetchUserProfileById, followUser } from "../../api/profileApi";
@@ -9,6 +9,7 @@ import {
 } from "../../../../constants";
 import { getImageUrl } from "../../../../shared/utils/imageUtils";
 import { ImageProxy } from "../../../../shared/components";
+import { useAutoRefresh } from "../../../../shared/hooks";
 import { CoverPhotoUploader } from "../CoverPhotoUploader";
 import { ProfilePicUploader } from "../ProfilePicUploader";
 import { FollowButton } from "../FollowButton";
@@ -26,57 +27,66 @@ export const Profile = () => {
   // If no userId is provided in the URL, use the logged-in user's ID
   const userId = urlUserId || loggedInUserId;
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!userId) {
-        setError("User ID not found. Please log in again.");
+  // Define the fetchProfile function as a callback so it can be used with useAutoRefresh
+  const fetchProfile = useCallback(async () => {
+    if (!userId) {
+      setError("User ID not found. Please log in again.");
+      return;
+    }
+
+    try {
+      const response = await fetchUserProfileById(userId);
+
+      if (response.error) {
+        setError(response.message || "Failed to fetch user profile");
         return;
       }
 
-      try {
-        const response = await fetchUserProfileById(userId);
+      // The API response has a nested structure with the actual user data in the 'data' property
+      const userData = response.data;
 
-        if (response.error) {
-          setError(response.message || "Failed to fetch user profile");
-          return;
-        }
+      // Check if we have valid user data
+      if (userData && userData.data) {
+        const userDataObj = userData.data;
 
-        // The API response has a nested structure with the actual user data in the 'data' property
-        const userData = response.data;
+        // Check if we have either id or _id
+        if (userDataObj.id || userDataObj._id) {
+          // Normalize the user object to ensure it has both id and _id properties
+          const normalizedUser = {
+            ...userDataObj,
+            id: userDataObj.id || userDataObj._id, // Ensure id is available
+            _id: userDataObj._id || userDataObj.id, // Ensure _id is available
+          };
 
-        // Check if we have valid user data
-        if (userData && userData.data) {
-          const userDataObj = userData.data;
-
-          // Check if we have either id or _id
-          if (userDataObj.id || userDataObj._id) {
-            // Normalize the user object to ensure it has both id and _id properties
-            const normalizedUser = {
-              ...userDataObj,
-              id: userDataObj.id || userDataObj._id, // Ensure id is available
-              _id: userDataObj._id || userDataObj.id, // Ensure _id is available
-            };
-
-            setUser(normalizedUser);
-            // Check if the logged-in user is in the followers array
-            const followersArray = normalizedUser.followers || [];
-            setIsFollowing(followersArray.includes(loggedInUserId));
-          } else {
-            console.error("User data missing id/_id:", userDataObj);
-            setError("User profile data missing ID.");
-          }
+          setUser(normalizedUser);
+          // Check if the logged-in user is in the followers array
+          const followersArray = normalizedUser.followers || [];
+          setIsFollowing(followersArray.includes(loggedInUserId));
         } else {
-          console.error("User data missing or invalid:", userData);
-          setError("User profile data not found.");
+          console.error("User data missing id/_id:", userDataObj);
+          setError("User profile data missing ID.");
         }
-      } catch (err) {
-        console.error("Error fetching user profile:", err);
-        setError("An error occurred while fetching the profile.");
+      } else {
+        console.error("User data missing or invalid:", userData);
+        setError("User profile data not found.");
       }
-    };
-
-    fetchProfile();
+    } catch (err) {
+      console.error("Error fetching user profile:", err);
+      setError("An error occurred while fetching the profile.");
+    }
   }, [userId, loggedInUserId]);
+
+  // Use our custom hook for auto-refreshing
+  const { triggerRefresh } = useAutoRefresh(
+    fetchProfile,
+    3000, // 3 seconds delay after toast
+    [userId, loggedInUserId] // Dependencies for the refresh function
+  );
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const toggleFollow = async () => {
     try {
@@ -135,7 +145,7 @@ export const Profile = () => {
             console.warn(`Failed to load cover photo: ${e.target.src}`);
           }}
         />
-        {isOwnProfile && <CoverPhotoUploader setUser={setUser} />}
+        {isOwnProfile && <CoverPhotoUploader setUser={setUser} refreshProfile={triggerRefresh} />}
       </div>
 
       <div className="profile-content">
@@ -150,7 +160,7 @@ export const Profile = () => {
               console.warn(`Failed to load profile image: ${e.target.src}`);
             }}
           />
-          {isOwnProfile && <ProfilePicUploader setUser={setUser} />}
+          {isOwnProfile && <ProfilePicUploader setUser={setUser} refreshProfile={triggerRefresh} />}
         </div>
 
         <div className="profile-right">
