@@ -74,6 +74,22 @@
   margin-top: 10px;
 }
 
+.post-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.visibility-selector {
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: #f8f9fa;
+  font-size: 0.9rem;
+  color: #333;
+  cursor: pointer;
+}
+
 .media-upload-btn {
   background-color: transparent;
   color: #007bff;

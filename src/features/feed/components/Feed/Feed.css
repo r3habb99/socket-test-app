@@ -27,8 +27,8 @@
   width: auto;
 }
 
-.feed-container button {
-  align-self: flex-end;
+/* .feed-container button { */
+/* align-self: flex-end;
   padding: 8px 16px;
   background-color: #007bff;
   border: none;
@@ -40,7 +40,7 @@
 
 .feed-container button:hover {
   background-color: #0056b3;
-}
+} */
 
 /* Loading and error states */
 .loading {

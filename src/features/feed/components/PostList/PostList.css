@@ -1,87 +1,309 @@
 /* PostList.css */
 .post-list-container {
   width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-.post-list-title {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  color: #333;
+.post-list-content {
+  width: 100%;
 }
 
-.post-card {
-  background-color: #fff;
-  border-radius: 12px;
+/* CORS warning message */
+.cors-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  color: #856404;
   padding: 1rem;
   margin-bottom: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  font-size: 0.9rem;
 }
 
+.cors-warning pre {
+  background-color: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+/* Post Card Styles */
+.post-card {
+  color: #000;
+  border-bottom: 1px solid #2f3336;
+  padding: 12px 16px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.post-card:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Post Header Styles */
 .post-header {
   display: flex;
-  align-items: center;
+  width: 100%;
   margin-bottom: 0.5rem;
+}
+
+.post-avatar {
+  margin-right: 12px;
+  flex-shrink: 0;
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  margin-right: 0.5rem;
+  object-fit: cover;
 }
 
-.username {
+.post-user-info {
+  flex: 1;
+}
+
+.post-user-name-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin-bottom: 2px;
+}
+
+.post-user-name {
   font-weight: bold;
-  color: #333;
+  color: #000000;
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  color: #fff;
+  background-color: #1d9bf0;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+
+.post-user-handle {
+  color: #6e767d;
+  margin-right: 4px;
+}
+
+.post-timestamp {
+  color: #6e767d;
+}
+
+.post-timestamp::before {
+  content: "·";
+  margin: 0 4px;
 }
 
 .post-content {
-  margin: 0.5rem 0;
-  line-height: 1.5;
+  color: #000;
+  margin: 4px 0 12px;
+  line-height: 1.3;
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
+.hashtag {
+  color: #1d9bf0;
+  cursor: pointer;
+}
+
+.hashtag:hover {
+  text-decoration: underline;
+}
+
+/* Retweet Label */
+.retweet-label {
+  display: flex;
+  align-items: center;
+  color: #6e767d;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.retweet-label svg {
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+/* Post Actions */
 .post-actions {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
+  justify-content: space-between;
+  /* max-width: 425px; */
+  margin-top: 12px;
+  padding: 0 8px;
 }
 
-.post-actions button {
-  padding: 0.5rem 1rem;
+.post-action-group {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: 60px;
+}
+
+.post-action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   border: none;
-  border-radius: 4px;
+  color: #6e767d;
+  font-size: 48px;
+  width: 80px;
+  height: 60px;
+  padding: 0;
   cursor: pointer;
-  background-color: #f8f9fa;
-  color: #333;
-  font-size: 0.9rem;
+  transition: color 0.2s;
+  position: relative;
+  z-index: 2;
+}
+
+.post-action-button::before {
+  content: "";
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: transparent;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
   transition: background-color 0.2s;
 }
 
-.post-actions button:hover {
-  background-color: #e9ecef;
+.post-action-button svg {
+  font-size: 18px;
+  position: relative;
+  z-index: 1;
 }
 
-.post-actions button:disabled {
+.post-action-count {
+  font-size: 13px;
+  margin-left: 4px;
+  color: #6e767d;
+  position: relative;
+  z-index: 2;
+}
+
+/* Comment Button */
+.post-action-group:hover .comment-button {
+  color: #1d9bf0;
+}
+
+.post-action-group:hover .comment-button::before {
+  background-color: rgba(29, 155, 240, 0.1);
+}
+
+.post-action-group:hover .post-action-count {
+  color: #1d9bf0;
+}
+
+/* Retweet Button */
+.post-action-group:hover .retweet-button {
+  color: #00ba7c;
+}
+
+.post-action-group:hover .retweet-button::before {
+  background-color: rgba(0, 186, 124, 0.1);
+}
+
+.retweet-button.retweeted {
+  color: #00ba7c;
+}
+
+.post-action-group:has(.retweet-button.retweeted) .post-action-count {
+  color: #00ba7c;
+}
+
+.post-action-group:hover:has(.retweet-button) .post-action-count {
+  color: #00ba7c;
+}
+
+/* Like Button */
+.post-action-group:hover .like-button {
+  color: #f91880;
+}
+
+.post-action-group:hover .like-button::before {
+  background-color: rgba(249, 24, 128, 0.1);
+}
+
+.like-button.liked {
+  color: #f91880;
+}
+
+.post-action-group:has(.like-button.liked) .post-action-count {
+  color: #f91880;
+}
+
+.post-action-group:hover:has(.like-button) .post-action-count {
+  color: #f91880;
+}
+
+/* Share Button */
+.post-action-group:hover .share-button {
+  color: #1d9bf0;
+}
+
+.post-action-group:hover .share-button::before {
+  background-color: rgba(29, 155, 240, 0.1);
+}
+
+/* Delete Button */
+.post-action-group:hover .delete-button {
+  color: #f4212e;
+}
+
+.post-action-group:hover .delete-button::before {
+  background-color: rgba(244, 33, 46, 0.1);
+}
+
+/* Disabled Button */
+.post-action-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.liked {
-  color: #e0245e !important;
-}
-
-.not-liked {
-  color: #333;
-}
-
-.retweet-label {
-  color: #657786;
-  font-size: 0.8rem;
-  margin-bottom: 0.5rem;
 }
 
 .no-post {
   text-align: center;
   padding: 2rem;
-  color: #657786;
+  color: #6e767d;
+  background-color: #000;
+}
+
+/* Post Media Styles */
+.post-media-container {
+  margin: 12px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  max-width: 100%;
+  border: 1px solid #2f3336;
+}
+
+.post-media {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.post-media-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  display: block;
 }

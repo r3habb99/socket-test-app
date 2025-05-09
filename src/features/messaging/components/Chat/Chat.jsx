@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { getMessagesForChat } from "../../api/messagingApi";
 import { UserProfileModal } from "../UserProfileModal";
@@ -25,9 +25,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     );
 
   // Function to scroll to the bottom of the messages
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
   // Load messages when chat is selected
   useEffect(() => {
@@ -107,7 +107,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
   // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
-  }, [socketContext.messages]);
+  }, [socketContext.messages, scrollToBottom]);
 
   // Join chat room when selected chat changes - using a ref to prevent repeated joins
   const previousChatIdRef = useRef(null);
@@ -211,7 +211,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       console.log("Messages updated, scrolling to bottom");
       scrollToBottom();
     }
-  }, [socketContext.messages]);
+  }, [socketContext.messages, scrollToBottom]);
 
   // Effect to handle socket connection changes
   useEffect(() => {
@@ -289,7 +289,14 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     } else {
       console.log("Socket disconnected");
     }
-  }, [socketContext.connected]);
+  }, [
+    socketContext.connected,
+    socketContext,
+    selectedChat?._id,
+    selectedChat?.id,
+    loadingMessages,
+    scrollToBottom
+  ]);
 
   const handleSendMessage = () => {
     // Ensure we have a valid chat ID (either _id or id)

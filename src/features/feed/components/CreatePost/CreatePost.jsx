@@ -135,25 +135,38 @@ export const CreatePost = ({ onPostCreated }) => {
         )}
 
         <div className="post-actions">
-          {/* Hidden file input */}
-          <input
-            type="file"
-            id="media-upload"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/*"
-            style={{ display: "none" }}
-          />
+          <div className="post-actions-left">
+            {/* Hidden file input */}
+            <input
+              type="file"
+              id="media-upload"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              style={{ display: "none" }}
+            />
 
-          {/* Media upload button */}
-          <button
-            type="button"
-            className="media-upload-btn"
-            onClick={() => fileInputRef.current.click()}
-            disabled={isSubmitting}
-          >
-            <FaImage />
-          </button>
+            {/* Media upload button */}
+            <button
+              type="button"
+              className="media-upload-btn"
+              onClick={() => fileInputRef.current.click()}
+              disabled={isSubmitting}
+            >
+              <FaImage />
+            </button>
+
+            {/* Visibility selector */}
+            <select
+              className="visibility-selector"
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value)}
+              disabled={isSubmitting}
+            >
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+            </select>
+          </div>
 
           {/* Post button */}
           <button

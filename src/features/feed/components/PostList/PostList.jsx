@@ -3,6 +3,7 @@ import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { deletePost, likePost, retweetPost } from "../../api/postApi";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
 import { getImageUrl } from "../../../../shared/utils/imageUtils";
+import { FaHeart, FaRegHeart, FaRetweet, FaTrash, FaRegComment, FaShare } from "react-icons/fa";
 import "./PostList.css";
 
 export const PostList = ({ posts, setPosts }) => {
@@ -25,7 +26,7 @@ export const PostList = ({ posts, setPosts }) => {
 
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
-          post.id === postId ? { ...post, ...updatedPost } : post
+          getPostId(post) === postId ? { ...post, ...updatedPost } : post
         )
       );
 
@@ -57,11 +58,12 @@ export const PostList = ({ posts, setPosts }) => {
       }
 
       const newRetweet = response.data;
+      const newRetweetId = getPostId(newRetweet);
 
       // Add new retweet at the top and remove duplicate if any
       setPosts((prevPosts) => {
         const filteredPosts = prevPosts.filter(
-          (post) => post.id !== newRetweet.id
+          (post) => getPostId(post) !== newRetweetId
         );
         return [newRetweet, ...filteredPosts];
       });
@@ -93,7 +95,7 @@ export const PostList = ({ posts, setPosts }) => {
         return;
       }
 
-      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+      setPosts((prevPosts) => prevPosts.filter((post) => getPostId(post) !== postId));
 
       // Emit socket event if connected
       if (connected && emit) {
@@ -116,77 +118,192 @@ export const PostList = ({ posts, setPosts }) => {
     // Use postedBy object directly from post
     const postedByUser = post.postedBy || {};
 
+    // Determine which post object to use for content and media
+    const postToRender = original || post;
+
+    // Check if the post has media
+    const hasMedia = postToRender.media && postToRender.media.length > 0;
+
+    // Format timestamp (assuming createdAt is available)
+    const formatTimestamp = (timestamp) => {
+      if (!timestamp) return "9h"; // Default fallback like in the example
+
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+
+      if (diffInHours < 24) {
+        return `${diffInHours}h`;
+      } else {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+    };
+
+    const timestamp = formatTimestamp(postToRender.createdAt);
+    const isVerified = postedByUser.isVerified;
+
     return (
       <>
-        {original && <div className="retweet-label">🔁 You retweeted</div>}
+        {original && <div className="retweet-label"><FaRetweet /> You retweeted</div>}
 
         <div className="post-header">
-          <img
-            src={
-              postedByUser.profilePic
-                ? getImageUrl(postedByUser.profilePic, DEFAULT_PROFILE_PIC)
-                : DEFAULT_PROFILE_PIC
-            }
-            alt={postedByUser.username || "User"}
-            className="avatar"
-            onError={(e) => {
-              e.target.onerror = null; // Prevent infinite loop
-              e.target.src = DEFAULT_PROFILE_PIC;
-            }}
-          />
-          <span className="username">
-            @
-            {original?.postedBy?.username || postedByUser.username || "Unknown"}
-          </span>
-        </div>
+          <div className="post-avatar">
+            <img
+              src={
+                postedByUser.profilePic
+                  ? getImageUrl(postedByUser.profilePic, DEFAULT_PROFILE_PIC)
+                  : DEFAULT_PROFILE_PIC
+              }
+              alt={postedByUser.username || "User"}
+              className="avatar"
+              onError={(e) => {
+                console.warn(`Failed to load profile image: ${e.target.src}`);
+                e.target.onerror = null; // Prevent infinite loop
+                e.target.src = DEFAULT_PROFILE_PIC;
+              }}
+            />
+          </div>
+          <div className="post-user-info">
+            <div className="post-user-name-container">
+              <span className="post-user-name">
+                {postedByUser.firstName} {postedByUser.lastName || "Name Lastname"}
+                {isVerified && <span className="verified-badge">✓</span>}
+              </span>
+              <span className="post-user-handle">
+                @{original?.postedBy?.username || postedByUser.username || "handlename"}
+              </span>
+              <span className="post-timestamp">{timestamp}</span>
+            </div>
+            <p className="post-content">
+              {postToRender.content && postToRender.content.split(/(\s+)/).map((word, i) => {
+                if (word.startsWith('#')) {
+                  return <span key={i} className="hashtag">{word}</span>;
+                }
+                return word;
+              })}
+            </p>
 
-        <p className="post-content">{original?.content || post.content}</p>
+            {/* Display media if available */}
+            {hasMedia && (
+              <div className="post-media-container">
+                {postToRender.media.map((mediaUrl, index) => {
+                  // Create a placeholder image URL (using a more relevant placeholder)
+                  const placeholderImage = "https://via.placeholder.com/400x300?text=Image+Loading...";
+
+                  return (
+                    <div key={index} className="post-media">
+                      <img
+                        src={mediaUrl}
+                        alt={`Post media ${index + 1}`}
+                        className="post-media-image"
+                        onError={(e) => {
+                          console.warn(`Failed to load image: ${mediaUrl}`);
+                          e.target.onerror = null; // Prevent infinite loop
+                          e.target.src = placeholderImage; // Use placeholder instead of hiding
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </>
     );
   };
 
+  // Helper function to get post ID (handles both id and _id)
+  const getPostId = (post) => post.id || post._id;
+
+  // Helper function to check if post is liked
+  const isPostLiked = (post) => {
+    // Check if post has a 'liked' property
+    if (post.liked !== undefined) {
+      return post.liked;
+    }
+
+    // Check if post has likes array and current user's ID is in it
+    const userId = localStorage.getItem('userId');
+    return post.likes && Array.isArray(post.likes) && post.likes.includes(userId);
+  };
+
   return (
     <div className="post-list-container">
-      <h1 className="post-list-title">Posts</h1>
-      <div>
+      <div className="post-list-content">
         {posts.length === 0 ? (
           <p className="no-post">No posts to show.</p>
         ) : (
-          posts.map((post) => (
-            <div key={post.id} className="post-card">
-              {renderPostContent(post)}
+          posts.map((post) => {
+            const postId = getPostId(post);
+            return (
+              <div key={postId} className="post-card">
+                {renderPostContent(post)}
 
-              <div className="post-actions">
-                <button
-                  onClick={() => handleLike(post.id)}
-                  className={post.liked ? "liked" : "not-liked"}
-                  disabled={actionInProgress[post.id]}
-                >
-                  {actionInProgress[post.id] === "like"
-                    ? "Processing..."
-                    : post.liked
-                    ? "❤️ Liked"
-                    : "🤍 Like"}
-                </button>
-                <button
-                  onClick={() => handleRetweet(post.id)}
-                  disabled={actionInProgress[post.id]}
-                >
-                  {actionInProgress[post.id] === "retweet"
-                    ? "Processing..."
-                    : "🔁 Retweet"}
-                </button>
-                <button
-                  onClick={() => handleDelete(post.id)}
-                  disabled={actionInProgress[post.id]}
-                >
-                  {actionInProgress[post.id] === "delete"
-                    ? "Deleting..."
-                    : "🗑️ Delete"}
-                </button>
+                <div className="post-actions">
+                  <div className="post-action-group">
+                    <button
+                      onClick={() => {}}
+                      className="post-action-button comment-button"
+                      disabled={actionInProgress[postId]}
+                      aria-label="Reply"
+                    >
+                      <FaRegComment />
+                    </button>
+                    <span className="post-action-count">{post.comments?.length || 185}</span>
+                  </div>
+
+                  <div className="post-action-group">
+                    <button
+                      onClick={() => handleRetweet(postId)}
+                      className={`post-action-button retweet-button ${post.retweeted ? 'retweeted' : ''}`}
+                      disabled={actionInProgress[postId]}
+                      aria-label="Retweet"
+                    >
+                      <FaRetweet />
+                    </button>
+                    <span className="post-action-count">{post.retweets?.length || 1}K</span>
+                  </div>
+
+                  <div className="post-action-group">
+                    <button
+                      onClick={() => handleLike(postId)}
+                      className={`post-action-button like-button ${isPostLiked(post) ? 'liked' : ''}`}
+                      disabled={actionInProgress[postId]}
+                      aria-label="Like"
+                    >
+                      {isPostLiked(post) ? <FaHeart /> : <FaRegHeart />}
+                    </button>
+                    <span className="post-action-count">{post.likes?.length || 10}K</span>
+                  </div>
+
+                  <div className="post-action-group">
+                    <button
+                      className="post-action-button share-button"
+                      disabled={actionInProgress[postId]}
+                      aria-label="Share"
+                    >
+                      <FaShare />
+                    </button>
+                  </div>
+
+                  {/* Only show delete button if it's the user's own post */}
+                  {post.postedBy?.id === localStorage.getItem('userId') && (
+                    <div className="post-action-group">
+                      <button
+                        onClick={() => handleDelete(postId)}
+                        className="post-action-button delete-button"
+                        disabled={actionInProgress[postId]}
+                        aria-label="Delete"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
