@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { ConfigProvider } from "antd";
 import { AuthProvider, SocketProvider } from "./core/providers";
 import { PrivateRoute } from "./core/router";
 
@@ -23,47 +24,58 @@ import ToastTester from "./shared/components/ToastController/ToastTester";
 
 const App = () => {
   return (
-    <AuthProvider>
-      <SocketProvider>
-        <Router>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#3b82f6', // Tailwind blue-500
+          borderRadius: 6,
+          colorLink: '#3b82f6',
+          colorLinkHover: '#2563eb', // Tailwind blue-600
+        },
+      }}
+    >
+      <AuthProvider>
+        <SocketProvider>
+          <Router>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-            {/* Private routes with children */}
-            <Route
-              path="/*"
-              element={
-                <PrivateRoute>
-                  <Layout />
-                </PrivateRoute>
-              }
-            >
-              <Route path="dashboard" element={<Feed />} />
-              <Route path="dashboard/messages" element={<MessagingApp />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="profile/:userId" element={<Profile />} />
+              {/* Private routes with children */}
               <Route
-                path="profile/:userId/followers"
-                element={<FollowersList />}
-              />
-              <Route
-                path="profile/:userId/following"
-                element={<FollowingList />}
-              />
-              <Route path="user/edit-profile" element={<ProfileEdit />} />
-              <Route path="toast-test" element={<ToastTester />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Route>
+                path="/*"
+                element={
+                  <PrivateRoute>
+                    <Layout />
+                  </PrivateRoute>
+                }
+              >
+                <Route path="dashboard" element={<Feed />} />
+                <Route path="dashboard/messages" element={<MessagingApp />} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="profile/:userId" element={<Profile />} />
+                <Route
+                  path="profile/:userId/followers"
+                  element={<FollowersList />}
+                />
+                <Route
+                  path="profile/:userId/following"
+                  element={<FollowingList />}
+                />
+                <Route path="user/edit-profile" element={<ProfileEdit />} />
+                <Route path="toast-test" element={<ToastTester />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Route>
 
-            {/* Default route */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-          <ToastController />
-        </Router>
-      </SocketProvider>
-    </AuthProvider>
+              {/* Default route */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+            <ToastController />
+          </Router>
+        </SocketProvider>
+      </AuthProvider>
+    </ConfigProvider>
   );
 };
 
