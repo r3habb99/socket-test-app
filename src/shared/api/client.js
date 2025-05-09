@@ -12,12 +12,21 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
+
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      // Ensure token is properly formatted
+      const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+      config.headers.Authorization = formattedToken;
+
+  
+    } else {
+      console.warn('No token found in localStorage for request to:', config.url);
     }
+
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -25,16 +34,54 @@ apiClient.interceptors.request.use(
 // Add a response interceptor
 apiClient.interceptors.response.use(
   (response) => {
+
+
     return response;
   },
-  (error) => {
+  async (error) => {
+    // Log the error for debugging
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      message: error.message,
+      responseData: error.response?.data
+    });
+
     // Handle common errors here (e.g., 401 Unauthorized)
     if (error.response && error.response.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem("token");
-      localStorage.removeItem("userId");
-      window.location.href = "/login";
+      console.warn('401 Unauthorized response received');
+
+      // Check if we should try to refresh the token
+      const shouldRefreshToken = true; // You can add logic here to determine if refresh should be attempted
+
+      if (shouldRefreshToken) {
+        try {
+          // Try to refresh the token (you'll need to implement this function)
+          console.log('Attempting to refresh token...');
+
+          // For now, just log out the user
+          console.warn('Token refresh not implemented, logging out user');
+          localStorage.removeItem("token");
+          localStorage.removeItem("userId");
+
+          // Redirect to login page
+          window.location.href = "/login?reason=session_expired";
+        } catch (refreshError) {
+          console.error('Error refreshing token:', refreshError);
+          localStorage.removeItem("token");
+          localStorage.removeItem("userId");
+          window.location.href = "/login?reason=refresh_failed";
+        }
+      } else {
+        // Just log out the user
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        window.location.href = "/login?reason=unauthorized";
+      }
     }
+
     return Promise.reject(error);
   }
 );

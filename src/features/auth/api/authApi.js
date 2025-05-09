@@ -169,10 +169,7 @@ export const searchUsers = async (query) => {
 export const getUserById = async (userId) => {
   try {
     if (typeof userId !== "string") {
-      console.log(
-        "Invalid userId type, expected a string but got:",
-        typeof userId
-      );
+      
       throw new Error("Invalid userId type. Expected a string.");
     }
 

@@ -35,7 +35,6 @@ export const useAuth = () => {
         return { success: false, message: response.message };
       }
 
-      console.log("Login response:", response);
 
       // Extract token and user data, handling different response structures
       const responseData = response.data;
@@ -57,11 +56,6 @@ export const useAuth = () => {
       // Try to extract user ID from user data
       userId = userData?.id || userData?._id;
 
-      console.log("Extracted auth data:", {
-        token: token ? "Token found" : "Token missing",
-        userId,
-        userData,
-      });
 
       if (!token) {
         console.error("Token is missing from the response:", responseData);

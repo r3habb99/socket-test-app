@@ -17,6 +17,7 @@ const Feed = () => {
 
   const fetchPosts = async () => {
     if (!isAuthenticated()) {
+      console.warn("User not authenticated, redirecting to login");
       navigate("/login");
       return;
     }
@@ -28,8 +29,15 @@ const Feed = () => {
       const response = await getPosts();
 
       if (response.error) {
+        console.error("Error in posts response:", response.message);
         setError(response.message || "Failed to load posts");
         setPosts([]);
+
+        // If it's an authentication error, redirect to login
+        if (response.status === 401) {
+          console.warn("Authentication error, redirecting to login");
+          navigate("/login?reason=session_expired");
+        }
         return;
       }
 
@@ -48,10 +56,12 @@ const Feed = () => {
       } else if (Array.isArray(responseData)) {
         // Direct: [...]
         postsData = responseData;
+      } else if (response.status === 204) {
+        // No content response
+        postsData = [];
       }
 
       if (postsData) {
-        console.log(`Found ${postsData.length} posts`);
         setPosts(postsData);
       } else {
         setPosts([]);
@@ -60,6 +70,13 @@ const Feed = () => {
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
+
+      // Check if it's an authentication error
+      if (error.response?.status === 401) {
+        console.warn("Authentication error, redirecting to login");
+        navigate("/login?reason=session_expired");
+      }
+
       setError("Failed to load posts. Please try again.");
     } finally {
       setLoading(false);
@@ -77,13 +94,11 @@ const Feed = () => {
 
     // Handle new posts
     const unsubscribeNewPost = subscribe("new post", (newPost) => {
-      console.log("New post received:", newPost);
       setPosts((prevPosts) => [newPost, ...prevPosts]);
     });
 
     // Handle post likes
     const unsubscribePostLiked = subscribe("post liked", (updatedPost) => {
-      console.log("Post liked:", updatedPost);
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === updatedPost.id ? updatedPost : post
@@ -95,7 +110,6 @@ const Feed = () => {
     const unsubscribePostRetweeted = subscribe(
       "post retweeted",
       (updatedPost) => {
-        console.log("Post retweeted:", updatedPost);
         setPosts((prevPosts) => {
           // Remove the post if it already exists
           const filteredPosts = prevPosts.filter(
@@ -111,7 +125,6 @@ const Feed = () => {
     const unsubscribePostDeleted = subscribe(
       "post deleted",
       (deletedPostId) => {
-        console.log("Post deleted:", deletedPostId);
         setPosts((prevPosts) =>
           prevPosts.filter((post) => post.id !== deletedPostId)
         );
@@ -140,7 +153,7 @@ const Feed = () => {
           </button>
         </div>
       ) : (
-        <PostList posts={posts} setPosts={setPosts} />
+        <PostList posts={posts} setPosts={setPosts} onPostsUpdated={fetchPosts} />
       )}
     </div>
   );

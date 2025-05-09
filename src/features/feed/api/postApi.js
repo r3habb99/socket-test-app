@@ -11,10 +11,39 @@ import {
  */
 export const getPosts = async () => {
   try {
-    const response = await apiClient.get(endpoints.post.getAll);
+    // Check if token exists
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No authentication token found in localStorage");
+      return {
+        error: true,
+        message: "Authentication token not found. Please log in again.",
+        status: 401,
+      };
+    }
+
+    // Add explicit headers to ensure token is sent
+    const response = await apiClient.get(endpoints.post.getAll, {
+      headers: {
+        Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`
+      }
+    });
     return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching posts:", error);
+
+    // Check if it's an authentication error
+    if (error.response?.status === 401) {
+      console.error("Authentication error. Token may be invalid or expired.");
+
+      // Show more details about the error
+      console.error("Error details:", {
+        message: error.response?.data?.message,
+        error: error.response?.data?.error,
+        headers: error.config?.headers
+      });
+    }
+
     return handleApiError(error);
   }
 };
@@ -93,9 +122,85 @@ export const unlikePost = async (postId) => {
  */
 export const retweetPost = async (postId) => {
   try {
-    const response = await apiClient.post(`/post/${postId}/retweet`);
-    return handleApiResponse(response);
+    // Check if token exists
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No authentication token found for retweet request");
+      return {
+        error: true,
+        message: "Authentication token not found. Please log in again.",
+        status: 401,
+      };
+    }
+
+    // Add explicit headers to ensure token is sent
+    const response = await apiClient.post(`/post/${postId}/retweet`, {}, {
+      headers: {
+        Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`
+      }
+    });
+
+
+    // Handle 204 No Content response
+    if (response.status === 204) {
+
+      // Get the original post to mark it as retweeted
+      try {
+        const originalPost = await getPostById(postId);
+        return {
+          success: true,
+          message: 'Post retweeted successfully',
+          data: {
+            ...originalPost.data,
+            retweeted: true,
+            // Add the current user to retweets array if it exists
+            retweets: originalPost.data?.retweets
+              ? [...originalPost.data.retweets, localStorage.getItem('userId')]
+              : [localStorage.getItem('userId')]
+          },
+          status: 204
+        };
+      } catch (getPostError) {
+        console.error('Error getting original post:', getPostError);
+        // Return success even if we couldn't get the original post
+        return {
+          success: true,
+          message: 'Post retweeted successfully',
+          data: null,
+          status: 204
+        };
+      }
+    }
+
+    const processedResponse = handleApiResponse(response);
+
+    // If we don't have data in the response, try to extract it from the raw response
+    if (!processedResponse.data && response.data) {
+      if (response.data.data) {
+        // Handle nested data structure
+        processedResponse.data = response.data.data;
+      } else if (typeof response.data === 'object') {
+        // Use the response data directly
+        processedResponse.data = response.data;
+      }
+      }
+
+    return processedResponse;
   } catch (error) {
+    console.error('Error in retweetPost:', error);
+
+    // Check if it's an authentication error
+    if (error.response?.status === 401) {
+      console.error("Authentication error in retweet. Token may be invalid or expired.");
+
+      // Show more details about the error
+      console.error("Error details:", {
+        message: error.response?.data?.message,
+        error: error.response?.data?.error,
+        headers: error.config?.headers
+      });
+    }
+
     return handleApiError(error);
   }
 };

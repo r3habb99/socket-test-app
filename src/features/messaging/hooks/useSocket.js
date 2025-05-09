@@ -56,7 +56,7 @@ export const useSocket = (
 
     if (!userId || !username) {
       setError("User information required");
-      toast.error("Missing user information. Please log in again.");
+      // Don't show toast error when not logged in - this prevents the error on login page
       return;
     }
 
@@ -125,10 +125,6 @@ export const useSocket = (
 
     // Message received handler - updated to match backend event
     const messageReceivedHandler = (newMessage) => {
-      console.log(
-        "🔔 Socket event 'message received' triggered in useSocket hook:",
-        newMessage
-      );
 
       // Normalize chat ID (might be an object or a string)
       const messageChat =
@@ -148,9 +144,6 @@ export const useSocket = (
           ? newMessage.sender._id || newMessage.sender.id
           : newMessage.sender;
 
-      console.log(
-        `Processing message: ID=${messageId}, Chat=${messageChat}, CurrentChat=${currentChatIdRef.current}`
-      );
 
       // IMPORTANT: Make sure we're in the right chat room
       // If this message is for a chat we're not currently in, join that chat room
@@ -159,9 +152,7 @@ export const useSocket = (
         messageChat !== currentChatIdRef.current &&
         socketRef.current
       ) {
-        console.log(
-          `Message is for a different chat (${messageChat}), joining that room`
-        );
+
         // We don't want to automatically switch chats, but we do want to make sure
         // we're joined to the chat room to receive future messages
         if (socketRef.current.connected) {
@@ -178,7 +169,6 @@ export const useSocket = (
         );
 
       if (isRecentlySentMessage) {
-        console.log("This is a message we just sent, replacing temp message");
         // Replace any temporary message with the real one
         setMessages((prevMessages) => {
           // Find any temporary messages that match this content
@@ -190,16 +180,12 @@ export const useSocket = (
           );
 
           if (tempMessage) {
-            console.log(
-              `Replacing temp message ${tempMessage._id} with real message ${messageId}`
-            );
+
             return prevMessages.map((msg) =>
               msg._id === tempMessage._id ? newMessage : msg
             );
           }
 
-          // If no temp message found, just add the message to avoid missing it
-          console.log("No temp message found, adding as new message");
           const updatedMessages = [...prevMessages, newMessage];
 
           // Sort messages by timestamp if available
@@ -215,10 +201,7 @@ export const useSocket = (
         return;
       }
 
-      // Process messages for the current chat - use ref for currentChatId
-      console.log(
-        `Processing message for chat ${messageChat}, current chat is ${currentChatIdRef.current}`
-      );
+
 
       setMessages((prevMessages) => {
         // Check if message already exists to avoid duplicates
@@ -227,17 +210,12 @@ export const useSocket = (
         );
 
         if (exists) {
-          console.log(
-            `Message ${messageId} already exists in the list, not adding again`
-          );
+
           return prevMessages;
         }
 
         // Only add the message if it's for the current chat
         if (messageChat === currentChatIdRef.current) {
-          console.log(
-            `Adding new message ${messageId} to the current chat ${currentChatIdRef.current}`
-          );
 
           // Add the new message and ensure it's at the end (newest messages at the bottom)
           const updatedMessages = [...prevMessages, newMessage];
@@ -252,10 +230,7 @@ export const useSocket = (
           return updatedMessages;
         }
 
-        // If the message is not for the current chat, don't add it to the messages list
-        console.log(
-          `Message ${messageId} is for chat ${messageChat}, not current chat ${currentChatIdRef.current}`
-        );
+
         return prevMessages;
       });
 
@@ -268,22 +243,24 @@ export const useSocket = (
             ? newMessage.sender.username
             : "User";
 
-        console.log(`Showing notification for message from ${senderUsername}`);
 
-        // Show a toast notification
-        toast.info(`New message from ${senderUsername}`, {
-          onClick: () => {
-            // If we have a socket and the message is for a different chat,
-            // we could potentially switch to that chat here
-            if (socketRef.current && messageChat !== currentChatIdRef.current) {
-              // Make sure we're joined to the chat room
-              if (socketRef.current.connected) {
-                socketRef.current.emit("join room", messageChat);
+        // Only show notification if we're in the messages section
+        if (window.location.pathname.includes('/messages')) {
+          // Show a toast notification
+          toast.info(`New message from ${senderUsername}`, {
+            onClick: () => {
+              // If we have a socket and the message is for a different chat,
+              // we could potentially switch to that chat here
+              if (socketRef.current && messageChat !== currentChatIdRef.current) {
+                // Make sure we're joined to the chat room
+                if (socketRef.current.connected) {
+                  socketRef.current.emit("join room", messageChat);
+                }
               }
-            }
-          },
-          autoClose: 5000,
-        });
+            },
+            autoClose: 5000,
+          });
+        }
       }
     };
 
@@ -293,9 +270,6 @@ export const useSocket = (
     // Also listen for 'new message' event as some backends use this name instead
     socket.on("new message", messageReceivedHandler);
 
-    console.log(
-      "✅ Message event handlers registered for both 'message received' and 'new message' events"
-    );
 
     // User typing handlers - updated to match backend events
     const userTypingHandler = (data) => {
@@ -360,7 +334,6 @@ export const useSocket = (
       // Message events
       socket.off("message received", messageReceivedHandler);
       socket.off("new message", messageReceivedHandler);
-      console.log("Removed message event handlers");
 
       // Typing events
       socket.off("user typing", userTypingHandler);
@@ -434,7 +407,10 @@ export const useSocket = (
         // Set up basic event handlers
         newSocket.on("connect", () => {
           setConnected(true);
-          toast.success("Connected to chat server");
+          // Only show success toast if we're in the chat section
+          if (window.location.pathname.includes('/messages')) {
+            toast.success("Connected to chat server");
+          }
 
           // Join the chat room now that we're connected
           newSocket.emit("join room", chatId);
@@ -484,7 +460,8 @@ export const useSocket = (
           setCurrentChatId(null);
           currentChatIdRef.current = null;
         }
-      } else if (!chatId) {
+      } else if (!chatId && window.location.pathname !== '/login') {
+        // Only show error if not on login page
         toast.error("Cannot leave chat: invalid chat ID");
       }
     },
@@ -505,7 +482,7 @@ export const useSocket = (
       const username = localStorage.getItem("username");
 
       if (!userId) {
-        toast.error("Cannot send message: user not logged in");
+        // Don't show error toast when not logged in
         return;
       }
 
@@ -599,7 +576,10 @@ export const useSocket = (
           // Set up basic event handlers
           newSocket.on("connect", () => {
             setConnected(true);
-            toast.success("Connected to chat server");
+            // Only show success toast if we're in the chat section
+            if (window.location.pathname.includes('/messages')) {
+              toast.success("Connected to chat server");
+            }
 
             // Join the chat room now that we're connected
             newSocket.emit("join room", chatId);
@@ -610,7 +590,8 @@ export const useSocket = (
                 toast.warning(
                   "Message may not have been delivered. Please check your connection."
                 );
-              } else {
+              } else if (window.location.pathname.includes('/messages')) {
+                // Only show success toast if we're in the chat section
                 toast.success("Message sent successfully");
               }
             });
@@ -640,7 +621,8 @@ export const useSocket = (
                   toast.warning(
                     "Message may not have been delivered. Please check your connection."
                   );
-                } else {
+                } else if (window.location.pathname.includes('/messages')) {
+                  // Only show success toast if we're in the chat section
                   toast.success("Message sent successfully");
                 }
               }
@@ -659,13 +641,17 @@ export const useSocket = (
             toast.warning(
               "Message may not have been delivered. Please check your connection."
             );
-          } else {
+          } else if (window.location.pathname.includes('/messages')) {
+            // Only show success toast if we're in the chat section
             toast.success("Message sent successfully");
           }
         });
       } catch (error) {
         console.error("Failed to send message:", error);
-        toast.error("Failed to send message");
+        // Only show error toast if we're in the chat section
+        if (window.location.pathname.includes('/messages')) {
+          toast.error("Failed to send message");
+        }
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -688,6 +674,7 @@ export const useSocket = (
       const username = localStorage.getItem("username");
 
       if (!userId || !username) {
+        // Don't show error toast when not logged in
         return;
       }
 
@@ -720,6 +707,10 @@ export const useSocket = (
         // Set up basic event handlers
         newSocket.on("connect", () => {
           setConnected(true);
+          // Only show success toast if we're in the chat section
+          if (window.location.pathname.includes('/messages')) {
+            toast.success("Connected to chat server");
+          }
 
           // Join the chat room now that we're connected
           newSocket.emit("join room", roomId);

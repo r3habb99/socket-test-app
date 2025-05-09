@@ -44,12 +44,15 @@ export const updateUserProfile = async (userData) => {
 
 /**
  * Upload profile picture
- * @param {FormData} formData - Form data with profile picture
+ * @param {File} imageFile - Profile picture file
  * @returns {Promise<Object>} Response object
  */
-export const uploadProfilePic = async (formData) => {
+export const uploadProfilePic = async (imageFile) => {
   try {
-    const response = await apiClient.post('/user/profile-pic', formData, {
+    const formData = new FormData();
+    formData.append("image", imageFile);
+
+    const response = await apiClient.post('/user/upload/profile-picture', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -62,12 +65,15 @@ export const uploadProfilePic = async (formData) => {
 
 /**
  * Upload cover photo
- * @param {FormData} formData - Form data with cover photo
+ * @param {File} imageFile - Cover photo file
  * @returns {Promise<Object>} Response object
  */
-export const uploadCoverPhoto = async (formData) => {
+export const uploadCoverPhoto = async (imageFile) => {
   try {
-    const response = await apiClient.post('/user/cover-photo', formData, {
+    const formData = new FormData();
+    formData.append("image", imageFile);
+
+    const response = await apiClient.post('/user/upload/cover-photo', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

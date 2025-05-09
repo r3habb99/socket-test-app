@@ -35,7 +35,6 @@ const ProfileEdit = () => {
       setLoading(true);
       try {
         const response = await fetchUserProfile();
-        console.log("Profile response:", response);
 
         if (response.error) {
           setError(response.message || "Failed to load profile");
@@ -44,7 +43,6 @@ const ProfileEdit = () => {
 
         // Handle the nested API response structure
         const responseData = response.data;
-        console.log("Response data:", responseData);
 
         // Try to extract user data from various possible locations
         let userData = null;
@@ -63,7 +61,6 @@ const ProfileEdit = () => {
           userData = responseData;
         }
 
-        console.log("Extracted user data:", userData);
 
         if (userData) {
           // Ensure we have all the required fields
@@ -74,12 +71,7 @@ const ProfileEdit = () => {
             email: userData.email || "",
           });
 
-          console.log("Form data set:", {
-            firstName: userData.firstName || "",
-            lastName: userData.lastName || "",
-            username: userData.username || "",
-            email: userData.email || "",
-          });
+       
         } else {
           console.error("Invalid user data format:", responseData);
           setError("Failed to parse user data");
@@ -112,9 +104,7 @@ const ProfileEdit = () => {
     setSuccess("");
 
     try {
-      console.log("Updating profile with data:", formData);
       const response = await updateUserProfile(formData);
-      console.log("Update profile response:", response);
 
       if (response.error) {
         setError(response.message || "Failed to update profile");
@@ -184,12 +174,10 @@ const ProfileEdit = () => {
     }
 
     try {
-      console.log("Resetting password...");
       const response = await resetPassword({
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
-      console.log("Reset password response:", response);
 
       if (response.error) {
         setError(response.message || "Failed to reset password");

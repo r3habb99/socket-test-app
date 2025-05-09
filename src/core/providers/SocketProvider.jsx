@@ -19,22 +19,17 @@ export const SocketProvider = ({ children }) => {
 
   // Log socket connection status changes
   useEffect(() => {
-    if (isAuthenticated()) {
-      console.log(
-        "Socket connection status:",
-        socket.connected ? "Connected" : "Disconnected"
-      );
-
-      if (socket.error) {
-        console.error("Socket connection error:", socket.error);
-        toast.error(`Socket error: ${socket.error}`);
-      }
+    // Only show socket errors if the user is authenticated and we're not on the login page
+    if (isAuthenticated() && socket.error && window.location.pathname !== '/login') {
+      console.error("Socket connection error:", socket.error);
+      toast.error(`Socket error: ${socket.error}`);
     }
   }, [socket.connected, socket.error, isAuthenticated]);
 
   // Attempt to reconnect socket when authentication changes - only once
   useEffect(() => {
-    if (isAuthenticated() && !socket.connected) {
+    // Only attempt reconnection if authenticated and not on login page
+    if (isAuthenticated() && !socket.connected && window.location.pathname !== '/login') {
       console.log(
         "User is authenticated but socket is not connected. Attempting to reconnect..."
       );

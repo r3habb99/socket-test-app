@@ -24,9 +24,7 @@ const MessagingApp = () => {
   // Handle socket reconnection if needed - only on mount
   useEffect(() => {
     if (!socketContext.connected) {
-      console.log(
-        "MessagingApp: Socket not connected, attempting to reconnect"
-      );
+ 
       socketContext.reconnect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,10 +36,7 @@ const MessagingApp = () => {
 
   useEffect(() => {
     if (location.state?.initialChat) {
-      console.log(
-        "Received initialChat in MessagingApp:",
-        location.state.initialChat
-      );
+
 
       // Check if we have a valid chat object
       const chatData = location.state.initialChat;
@@ -56,7 +51,6 @@ const MessagingApp = () => {
 
       // If the chat has a data property, use that
       if (normalizedChat.data) {
-        console.log("Using nested chat data:", normalizedChat.data);
         normalizedChat = normalizedChat.data;
       }
 
@@ -66,10 +60,8 @@ const MessagingApp = () => {
         _id: normalizedChat._id || normalizedChat.id, // Use _id if available, otherwise use id
       };
 
-      console.log("Setting normalized chat:", normalizedChat);
-
+      
       if (normalizedChat._id) {
-        console.log("Setting selected chat with ID:", normalizedChat._id);
         setSelectedChat(normalizedChat);
       } else {
         console.error("Invalid chat data structure (no id or _id):", chatData);
@@ -80,7 +72,6 @@ const MessagingApp = () => {
   // Log when prefillUserId changes
   useEffect(() => {
     if (prefillUserId) {
-      console.log("Received prefillUserId in MessagingApp:", prefillUserId);
     }
   }, [prefillUserId]);
 
@@ -97,7 +88,6 @@ const MessagingApp = () => {
       _id: chat._id || chat.id, // Use _id if available, otherwise use id
     };
 
-    console.log("Selecting chat:", normalizedChat);
     setSelectedChat(normalizedChat);
   };
 

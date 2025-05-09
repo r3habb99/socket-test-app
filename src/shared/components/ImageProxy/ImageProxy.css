@@ -1,0 +1,25 @@
+.image-proxy {
+  display: block;
+  object-fit: cover;
+}
+
+.image-proxy-loading {
+  background-color: #e1e8ed;
+  animation: pulse 1.5s infinite;
+}
+
+.image-proxy-error {
+  opacity: 0.8;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}

@@ -20,12 +20,22 @@ export const handleApiError = (error) => {
 
 // Helper function to handle API responses
 export const handleApiResponse = (response) => {
-  // Log the response structure for debugging
-  console.log("API Response structure:", response.data);
+
+  // Handle 204 No Content responses
+  if (response.status === 204) {
+    return {
+      error: false,
+      data: null,
+      message: "Operation successful",
+      status: 204,
+      success: true
+    };
+  }
 
   return {
     error: false,
     data: response.data,
     status: response.status,
+    success: true
   };
 };

@@ -35,7 +35,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     const chatId = selectedChat?._id || selectedChat?.id;
 
     if (chatId) {
-      console.log("Chat component: Loading messages for chat:", chatId);
+ 
       setLoadingMessages(true);
 
       // Create a flag to track if the component is still mounted
@@ -46,7 +46,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
           // Only proceed if the component is still mounted
           if (!isMounted) return;
 
-          console.log("Messages response:", response);
+
 
           // Handle the nested API response structure
           let msgs = [];
@@ -61,11 +61,11 @@ export const Chat = ({ selectedChat, onBackClick }) => {
             if (responseData?.data && Array.isArray(responseData.data)) {
               // Nested: { data: [...] }
               msgs = responseData.data;
-              console.log("Using nested messages data from response.data.data");
+       
             } else if (Array.isArray(responseData)) {
               // Direct: [...]
               msgs = responseData;
-              console.log("Using direct messages array from response.data");
+       
             } else {
               console.error("Invalid messages data format:", responseData);
             }
@@ -122,12 +122,12 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       previousChatIdRef.current = chatId;
 
       // Join the chat room via socket
-      console.log("Joining chat room:", chatId);
+  
       socketContext.joinChat(chatId);
 
       // Clean up function will only run on unmount or when chat ID changes
       return () => {
-        console.log("Leaving chat room:", chatId);
+     
         socketContext.leaveChat(chatId);
         // Don't reset previousChatIdRef here, it will be updated in the next effect run
       };
@@ -145,9 +145,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
     // Only send typing indicator if we're connected and have a selected chat
     if (!socketContext.connected || !selectedChat) {
-      console.log(
-        "Cannot send typing indicator: not connected or no chat selected"
-      );
+
       return;
     }
 
@@ -155,22 +153,16 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     const chatId = selectedChat?._id || selectedChat?.id;
 
     if (!chatId) {
-      console.log("Cannot send typing indicator: invalid chat ID");
       return;
     }
 
     // Send typing indicator with explicit chat ID
-    console.log(
-      `Sending typing indicator: ${
-        isTyping ? "typing" : "stopped typing"
-      } for chat ${chatId}`
-    );
+
     socketContext.sendTyping(isTyping, chatId);
 
     // If user is typing, set a timeout to automatically stop typing indicator
     if (isTyping) {
       const timeout = setTimeout(() => {
-        console.log("Typing timeout expired, sending stopped typing");
         socketContext.sendTyping(false, chatId);
         setTypingTimeout(null);
       }, 3000); // 3 seconds
@@ -189,7 +181,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
         if (chatId) {
           // Also send a stopped typing event when unmounting
-          console.log(`Cleanup: sending stopped typing for chat ${chatId}`);
           socketContext.sendTyping(false, chatId);
         }
       }
@@ -197,7 +188,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       // Leave chat room on component unmount
       const chatId = selectedChat?._id || selectedChat?.id;
       if (chatId) {
-        console.log(`Cleanup: leaving chat room ${chatId}`);
         socketContext.leaveChat(chatId);
       }
     };
@@ -208,7 +198,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
   useEffect(() => {
     // Scroll to bottom when messages change
     if (socketContext.messages && socketContext.messages.length > 0) {
-      console.log("Messages updated, scrolling to bottom");
       scrollToBottom();
     }
   }, [socketContext.messages, scrollToBottom]);
@@ -216,7 +205,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
   // Effect to handle socket connection changes
   useEffect(() => {
     if (socketContext.connected) {
-      console.log("Socket connected, refreshing messages if needed");
 
       // If we have a selected chat but no messages, try to load messages
       const chatId = selectedChat?._id || selectedChat?.id;
@@ -225,15 +213,11 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         (!socketContext.messages || socketContext.messages.length === 0) &&
         !loadingMessages
       ) {
-        console.log(
-          "Socket connected and no messages, loading messages for chat:",
-          chatId
-        );
+    
         setLoadingMessages(true);
 
         getMessagesForChat(chatId)
           .then((response) => {
-            console.log("Messages response after reconnection:", response);
 
             // Handle the nested API response structure
             let msgs = [];
@@ -248,13 +232,10 @@ export const Chat = ({ selectedChat, onBackClick }) => {
               if (responseData?.data && Array.isArray(responseData.data)) {
                 // Nested: { data: [...] }
                 msgs = responseData.data;
-                console.log(
-                  "Using nested messages data from response.data.data"
-                );
+           
               } else if (Array.isArray(responseData)) {
                 // Direct: [...]
                 msgs = responseData;
-                console.log("Using direct messages array from response.data");
               } else {
                 console.error("Invalid messages data format:", responseData);
               }
@@ -307,7 +288,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       return;
     }
 
-    console.log(`Sending message to chat ${chatId}: "${message.trim()}"`);
 
     try {
       // Stop typing indicator
@@ -437,11 +417,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
               // Show the profile modal with the chat partner's info
               if (selectedChat.isGroupChat) {
                 // For group chats, show group info
-                console.log("Show group info:", selectedChat);
                 // You could implement group info modal here
               } else {
                 // For 1:1 chats, show the chat partner's profile
-                console.log("Show user profile for:", chatPartner);
                 setShowProfileModal(true);
               }
             }}

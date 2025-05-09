@@ -19,14 +19,43 @@ export const getImageUrl = (imagePath, defaultImage) => {
 
   // If the image path already starts with http:// or https://, return it as is
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-    return imagePath;
+    // Fix the URL if it contains spaces (replace spaces with %20)
+    return imagePath.replace(/ /g, '%20');
   }
 
   // If the image path starts with a slash, append it to the API base URL
   if (imagePath.startsWith("/")) {
-    return `${API_BASE_URL}${imagePath}`;
+    // Special handling for profile pictures and other uploads
+    if (imagePath.startsWith("/uploads/")) {
+      return `${API_BASE_URL}${imagePath}`.replace(/ /g, '%20');
+    }
+    return `${API_BASE_URL}${imagePath}`.replace(/ /g, '%20');
   }
 
   // Otherwise, append the image path to the API base URL with a slash
-  return `${API_BASE_URL}/${imagePath}`;
+  return `${API_BASE_URL}/${imagePath}`.replace(/ /g, '%20');
+};
+
+/**
+ * Checks if a URL is an external URL (not from our domain)
+ * @param {string} url - URL to check
+ * @returns {boolean} True if the URL is external
+ */
+export const isExternalUrl = (url) => {
+  if (!url) return false;
+
+  // If it's a relative URL, it's not external
+  if (url.startsWith('/')) return false;
+
+  // If it doesn't have a protocol, it's not external
+  if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
+
+  // Check if the URL is from our domain
+  const currentDomain = window.location.hostname;
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname !== currentDomain;
+  } catch (e) {
+    return false;
+  }
 };

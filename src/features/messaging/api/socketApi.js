@@ -22,11 +22,9 @@ export const initializeSocket = (userId, username) => {
   try {
     // Disconnect existing socket if any
     if (socket) {
-      console.log("Disconnecting existing socket before creating a new one");
       disconnectSocket();
     }
 
-    console.log(`Initializing socket for user: ${userId} (${username})`);
 
     // Create new socket connection with auth data
     socket = io(SOCKET_URL, {

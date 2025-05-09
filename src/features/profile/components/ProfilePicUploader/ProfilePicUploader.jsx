@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { FaCamera } from "react-icons/fa";
 import { uploadProfilePic } from "../../api/profileApi";
+import { toast } from "react-toastify";
 import "./ProfilePicUploader.css";
 
 export const ProfilePicUploader = ({ setUser }) => {
   const [image, setImage] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (e) => {
     setImage(e.target.files[0]);
@@ -13,24 +15,46 @@ export const ProfilePicUploader = ({ setUser }) => {
   const handleUpload = async () => {
     if (image) {
       try {
-        const formData = new FormData();
-        formData.append('profilePic', image);
-        
-        const response = await uploadProfilePic(formData);
-        
+        setIsUploading(true);
+
+        const response = await uploadProfilePic(image);
+
         if (response.error) {
+          toast.error(`Failed to upload profile picture: ${response.message}`);
           console.error("Error uploading profile pic:", response.message);
           return;
         }
-        
-        setUser((prevUser) => ({
-          ...prevUser,
-          profilePic: response.data?.profilePic || prevUser.profilePic,
-        }));
-        
+
+        // Get the profile picture URL from the response
+        const profilePicUrl = response.data?.profilePic ||
+                             (response.data?.user?.profilePic) ||
+                             null;
+
+        if (profilePicUrl) {
+          // Add a timestamp to the URL to prevent caching
+          const timestamp = new Date().getTime();
+          const updatedUrl = profilePicUrl.includes('?')
+            ? `${profilePicUrl}&t=${timestamp}`
+            : `${profilePicUrl}?t=${timestamp}`;
+
+          // Update user state with new profile picture
+          setUser((prevUser) => ({
+            ...prevUser,
+            profilePic: updatedUrl,
+            // Store the original URL without timestamp as well
+            originalProfilePic: profilePicUrl,
+          }));
+        } else {
+          console.warn("No profile picture URL found in response:", response.data);
+        }
+
+        toast.success("Profile picture updated successfully!");
         setImage(null);
       } catch (error) {
+        toast.error("Failed to upload profile picture. Please try again.");
         console.error("Error uploading profile pic:", error);
+      } finally {
+        setIsUploading(false);
       }
     }
   };
@@ -50,11 +74,20 @@ export const ProfilePicUploader = ({ setUser }) => {
       <button
         className="upload-btn"
         onClick={() => document.getElementById("fileInput").click()}
+        disabled={isUploading}
       >
         <FaCamera />
       </button>
 
-      {image && <button onClick={handleUpload}>Upload</button>}
+      {image && (
+        <button
+          onClick={handleUpload}
+          disabled={isUploading}
+          className="upload-confirm-btn"
+        >
+          {isUploading ? "Uploading..." : "Upload"}
+        </button>
+      )}
     </div>
   );
 };

@@ -63,7 +63,6 @@ export const ChatList = ({
   // Handle prefilled user ID
   useEffect(() => {
     if (prefillUserId.trim()) {
-      console.log("ChatList: Creating chat with prefillUserId:", prefillUserId);
       handleCreateChat();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,7 +80,6 @@ export const ChatList = ({
     if (!newUserId.trim()) return;
 
     try {
-      console.log("Creating chat with user ID:", newUserId.trim());
       const result = await createChat({ userId: newUserId.trim() });
 
       if (result.success) {
@@ -133,7 +131,6 @@ export const ChatList = ({
 
     try {
       const response = await searchUsers(query);
-      console.log("Search results:", response);
 
       // Handle nested data structure
       let results = [];
@@ -151,7 +148,6 @@ export const ChatList = ({
         }
       }
 
-      console.log("Processed search results:", results);
       setSearchResults(Array.isArray(results) ? results : []);
     } catch (error) {
       console.error("Error searching users:", error);
@@ -195,10 +191,8 @@ export const ChatList = ({
         return;
       }
 
-      console.log("Starting chat with user:", user.username, userId);
 
       const result = await createChat({ userId });
-      console.log("Chat creation result:", result);
 
       if (result.success) {
         // Select the new chat

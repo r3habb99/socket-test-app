@@ -8,6 +8,7 @@ import {
   DEFAULT_PROFILE_PIC,
 } from "../../../../constants";
 import { getImageUrl } from "../../../../shared/utils/imageUtils";
+import { ImageProxy } from "../../../../shared/components";
 import { CoverPhotoUploader } from "../CoverPhotoUploader";
 import { ProfilePicUploader } from "../ProfilePicUploader";
 import { FollowButton } from "../FollowButton";
@@ -124,17 +125,14 @@ export const Profile = () => {
       </div>
 
       <div className="profile-header">
-        <img
-          src={
-            user.coverPhoto
-              ? getImageUrl(user.coverPhoto, DEFAULT_COVER_PHOTO)
-              : DEFAULT_COVER_PHOTO
-          }
+        <ImageProxy
+          src={user.coverPhoto ? getImageUrl(user.coverPhoto, DEFAULT_COVER_PHOTO) : DEFAULT_COVER_PHOTO}
           alt="Cover"
           className="cover-photo"
+          defaultSrc={DEFAULT_COVER_PHOTO}
+          noCache={true}
           onError={(e) => {
-            e.target.onerror = null; // Prevent infinite loop
-            e.target.src = DEFAULT_COVER_PHOTO;
+            console.warn(`Failed to load cover photo: ${e.target.src}`);
           }}
         />
         {isOwnProfile && <CoverPhotoUploader setUser={setUser} />}
@@ -142,17 +140,14 @@ export const Profile = () => {
 
       <div className="profile-content">
         <div className="profile-left">
-          <img
-            src={
-              user.profilePic
-                ? getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC)
-                : DEFAULT_PROFILE_PIC
-            }
+          <ImageProxy
+            src={user.profilePic ? getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC) : DEFAULT_PROFILE_PIC}
             alt="Profile"
             className="profile-pic"
+            defaultSrc={DEFAULT_PROFILE_PIC}
+            noCache={true}
             onError={(e) => {
-              e.target.onerror = null; // Prevent infinite loop
-              e.target.src = DEFAULT_PROFILE_PIC;
+              console.warn(`Failed to load profile image: ${e.target.src}`);
             }}
           />
           {isOwnProfile && <ProfilePicUploader setUser={setUser} />}
@@ -180,7 +175,6 @@ export const Profile = () => {
                       try {
                         // Get the user ID (either id or _id)
                         const userId = user.id || user._id;
-                        console.log("Creating chat with user ID:", userId);
 
                         const response = await createChat({ userId });
 
