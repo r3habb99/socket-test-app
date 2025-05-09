@@ -35,13 +35,23 @@ export const getPostById = async (postId) => {
 
 /**
  * Create a new post
- * @param {Object} postData - Post data
+ * @param {Object|FormData} postData - Post data or FormData containing post data and media
  * @param {string} postData.content - Post content
+ * @param {File} [postData.media] - Media file (image)
+ * @param {string} [postData.visibility] - Post visibility (public, private, etc.)
  * @returns {Promise<Object>} Response object
  */
 export const createPost = async (postData) => {
   try {
-    const response = await apiClient.post(endpoints.post.create, postData);
+    // Check if postData is FormData (for media uploads) or regular object
+    const isFormData = postData instanceof FormData;
+
+    const response = await apiClient.post(endpoints.post.create, postData, {
+      headers: isFormData ? {
+        'Content-Type': 'multipart/form-data'
+      } : undefined
+    });
+
     return handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);

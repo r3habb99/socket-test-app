@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { deletePost, likePost, retweetPost } from "../../api/postApi";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
+import { getImageUrl } from "../../../../shared/utils/imageUtils";
 import "./PostList.css";
 
 export const PostList = ({ posts, setPosts }) => {
@@ -14,12 +15,12 @@ export const PostList = ({ posts, setPosts }) => {
     setActionInProgress((prev) => ({ ...prev, [postId]: "like" }));
     try {
       const response = await likePost(postId);
-      
+
       if (response.error) {
         console.error("Error liking post:", response.message);
         return;
       }
-      
+
       const updatedPost = response.data;
 
       setPosts((prevPosts) =>
@@ -49,12 +50,12 @@ export const PostList = ({ posts, setPosts }) => {
     setActionInProgress((prev) => ({ ...prev, [postId]: "retweet" }));
     try {
       const response = await retweetPost(postId);
-      
+
       if (response.error) {
         console.error("Error retweeting post:", response.message);
         return;
       }
-      
+
       const newRetweet = response.data;
 
       // Add new retweet at the top and remove duplicate if any
@@ -86,12 +87,12 @@ export const PostList = ({ posts, setPosts }) => {
     setActionInProgress((prev) => ({ ...prev, [postId]: "delete" }));
     try {
       const response = await deletePost(postId);
-      
+
       if (response.error) {
         console.error("Error deleting post:", response.message);
         return;
       }
-      
+
       setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
 
       // Emit socket event if connected
@@ -121,9 +122,17 @@ export const PostList = ({ posts, setPosts }) => {
 
         <div className="post-header">
           <img
-            src={DEFAULT_PROFILE_PIC}
+            src={
+              postedByUser.profilePic
+                ? getImageUrl(postedByUser.profilePic, DEFAULT_PROFILE_PIC)
+                : DEFAULT_PROFILE_PIC
+            }
             alt={postedByUser.username || "User"}
             className="avatar"
+            onError={(e) => {
+              e.target.onerror = null; // Prevent infinite loop
+              e.target.src = DEFAULT_PROFILE_PIC;
+            }}
           />
           <span className="username">
             @

@@ -15,12 +15,18 @@ let eventHandlers = {};
  */
 export const initializeSocket = (userId, username) => {
   if (!userId || !username) {
+    console.error("Cannot initialize socket: missing userId or username");
     return null;
   }
 
   try {
     // Disconnect existing socket if any
-    disconnectSocket();
+    if (socket) {
+      console.log("Disconnecting existing socket before creating a new one");
+      disconnectSocket();
+    }
+
+    console.log(`Initializing socket for user: ${userId} (${username})`);
 
     // Create new socket connection with auth data
     socket = io(SOCKET_URL, {
@@ -32,25 +38,36 @@ export const initializeSocket = (userId, username) => {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      timeout: 10000,
-      // Removed transports and withCredentials to avoid connection issues
+      timeout: 20000, // Increased timeout
+      transports: ["websocket", "polling"], // Try websocket first, then polling
+      autoConnect: true,
+      forceNew: true, // Force a new connection to avoid reusing problematic connections
     });
 
     // Set up basic event handlers
     socket.on("connect", () => {
-      // Connected
+      console.log(`🔌 Socket connected successfully for user: ${userId}`);
     });
 
-    socket.on("connect_error", () => {
-      // Connection error
+    socket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err.message);
     });
 
-    socket.on("disconnect", () => {
-      // Disconnected
+    socket.on("disconnect", (reason) => {
+      console.log(`Socket disconnected: ${reason}`);
     });
+
+    // Add a debug handler for all events
+    const onevent = socket.onevent;
+    socket.onevent = function (packet) {
+      const args = packet.data || [];
+      console.log(`Socket event received: ${args[0]}`, args.slice(1));
+      onevent.call(this, packet);
+    };
 
     return socket;
   } catch (error) {
+    console.error("Error initializing socket:", error);
     return null;
   }
 };
@@ -64,17 +81,44 @@ export const getSocket = () => socket;
 /**
  * Join a chat room
  * @param {string} roomId - Room ID to join
+ * @returns {boolean} Success status
  */
 export const joinChatRoom = (roomId) => {
   if (!socket) {
-    return;
+    console.error("Cannot join chat room: socket not initialized");
+    return false;
   }
 
   if (!roomId) {
-    return;
+    console.error("Cannot join chat room: missing roomId");
+    return false;
   }
 
+  if (!socket.connected) {
+    console.warn(
+      "Socket not connected when trying to join room. Connecting..."
+    );
+    socket.connect();
+  }
+
+  console.log(`Joining chat room: ${roomId}`);
+
+  // First leave any existing rooms to avoid memory leaks
+  socket.emit("leave room", roomId);
+
+  // Then join the new room
   socket.emit("join room", roomId);
+
+  // Add acknowledgment callback
+  socket.emit("join room", roomId, (response) => {
+    if (response && response.success) {
+      console.log(`Successfully joined chat room: ${roomId}`);
+    } else {
+      console.error(`Failed to join chat room: ${roomId}`, response);
+    }
+  });
+
+  return true;
 };
 
 /**
@@ -92,22 +136,39 @@ export const leaveChatRoom = (roomId) => {
  * Send a message via socket
  * @param {Object} message - Message object
  * @param {Function} callback - Callback function
+ * @returns {boolean} Success status
  */
 export const sendSocketMessage = (message, callback) => {
   if (!socket) {
+    console.error("Cannot send message: socket not initialized");
     if (callback) callback({ success: false, error: "Socket not initialized" });
-    return;
+    return false;
   }
 
   if (!socket.connected) {
+    console.warn(
+      "Socket not connected when trying to send message. Connecting..."
+    );
     socket.connect();
-    if (callback) callback({ success: false, error: "Socket not connected" });
-    return;
+    // Don't return early, try to send the message anyway
   }
 
-  socket.emit("new message", message, (acknowledgement) => {
-    if (callback) callback(acknowledgement);
+  console.log("Sending message via socket:", message);
+
+  // Ensure we have the required fields
+  const payload = {
+    ...message,
+    sender: message.sender || localStorage.getItem("userId"),
+    timestamp: message.timestamp || new Date().toISOString(),
+  };
+
+  // Try both event names that might be used by the backend
+  socket.emit("new message", payload, (acknowledgement) => {
+    console.log("Message sent acknowledgment:", acknowledgement);
+    if (callback) callback(acknowledgement || { success: true });
   });
+
+  return true;
 };
 
 /**
@@ -165,6 +226,9 @@ export const disconnectSocket = () => {
  */
 export const onMessageReceived = (callback) => {
   if (!socket) {
+    console.warn(
+      "Socket not initialized when setting up message received handler"
+    );
     return () => {};
   }
 
@@ -173,14 +237,33 @@ export const onMessageReceived = (callback) => {
     socket.off("message received", eventHandlers["message received"]);
   }
 
-  // Register new handler
-  socket.on("message received", callback);
-  eventHandlers["message received"] = callback;
+  // Register new handler with debug logging
+  const wrappedCallback = (newMessage) => {
+    console.log("🔔 Socket event 'message received' triggered:", newMessage);
+    callback(newMessage);
+  };
+
+  socket.on("message received", wrappedCallback);
+  eventHandlers["message received"] = wrappedCallback;
+
+  // Also listen for 'new message' event as some backends use this name
+  if (eventHandlers["new message"]) {
+    socket.off("new message", eventHandlers["new message"]);
+  }
+  socket.on("new message", wrappedCallback);
+  eventHandlers["new message"] = wrappedCallback;
+
+  console.log("✅ Message received handler registered successfully");
 
   // Return unsubscribe function
   return () => {
-    socket.off("message received", callback);
-    delete eventHandlers["message received"];
+    if (socket) {
+      socket.off("message received", wrappedCallback);
+      socket.off("new message", wrappedCallback);
+      delete eventHandlers["message received"];
+      delete eventHandlers["new message"];
+      console.log("❌ Message received handler unregistered");
+    }
   };
 };
 

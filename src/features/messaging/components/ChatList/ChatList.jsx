@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useMessaging } from "../../hooks";
 import { searchUsers } from "../../../auth/api";
-import { customToast } from "../../../../shared/utils";
+import { customToast, getImageUrl } from "../../../../shared/utils";
+import { DEFAULT_PROFILE_PIC } from "../../../../constants";
 import "./ChatList.css";
 
 export const ChatList = ({
@@ -289,9 +290,21 @@ export const ChatList = ({
                     className="search-result-item"
                     onClick={() => startChatWithUser(user)}
                   >
-                    <div className="search-result-avatar">
-                      {user.username.charAt(0).toUpperCase()}
-                    </div>
+                    {user.profilePic ? (
+                      <img
+                        src={getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC)}
+                        alt={user.username}
+                        className="search-result-avatar-img"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = DEFAULT_PROFILE_PIC;
+                        }}
+                      />
+                    ) : (
+                      <div className="search-result-avatar">
+                        {user.username.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="search-result-details">
                       <div className="search-result-name">
                         {user.firstName} {user.lastName}
@@ -334,25 +347,48 @@ export const ChatList = ({
                 onClick={() => onSelectChat(chat)}
               >
                 <div className="chat-item-content">
-                  <div className="chat-avatar">
-                    {(() => {
-                      // For group chats, use the chat name
-                      if (chat.isGroupChat) {
-                        return (chat.chatName || "G").charAt(0).toUpperCase();
-                      }
-
-                      // For 1:1 chats, find the other user (not the current logged-in user)
-                      const currentUserId = localStorage.getItem("userId");
-                      const otherUser = chat.users?.find(
-                        (user) =>
-                          String(user._id || user.id) !== String(currentUserId)
+                  {(() => {
+                    // For group chats, use the chat name
+                    if (chat.isGroupChat) {
+                      return (
+                        <div className="chat-avatar">
+                          {(chat.chatName || "G").charAt(0).toUpperCase()}
+                        </div>
                       );
+                    }
 
-                      return otherUser
-                        ? otherUser.username.charAt(0).toUpperCase()
-                        : "?";
-                    })()}
-                  </div>
+                    // For 1:1 chats, find the other user (not the current logged-in user)
+                    const currentUserId = localStorage.getItem("userId");
+                    const otherUser = chat.users?.find(
+                      (user) =>
+                        String(user._id || user.id) !== String(currentUserId)
+                    );
+
+                    if (otherUser && otherUser.profilePic) {
+                      return (
+                        <img
+                          src={getImageUrl(
+                            otherUser.profilePic,
+                            DEFAULT_PROFILE_PIC
+                          )}
+                          alt={otherUser.username || "User"}
+                          className="chat-avatar-img"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = DEFAULT_PROFILE_PIC;
+                          }}
+                        />
+                      );
+                    } else {
+                      return (
+                        <div className="chat-avatar">
+                          {otherUser
+                            ? otherUser.username.charAt(0).toUpperCase()
+                            : "?"}
+                        </div>
+                      );
+                    }
+                  })()}
                   <div className="chat-details">
                     <div className="chat-header">
                       <div className="chat-name">

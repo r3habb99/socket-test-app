@@ -7,6 +7,7 @@ import {
   DEFAULT_COVER_PHOTO,
   DEFAULT_PROFILE_PIC,
 } from "../../../../constants";
+import { getImageUrl } from "../../../../shared/utils/imageUtils";
 import { CoverPhotoUploader } from "../CoverPhotoUploader";
 import { ProfilePicUploader } from "../ProfilePicUploader";
 import { FollowButton } from "../FollowButton";
@@ -124,7 +125,11 @@ export const Profile = () => {
 
       <div className="profile-header">
         <img
-          src={user.coverPhoto || DEFAULT_COVER_PHOTO}
+          src={
+            user.coverPhoto
+              ? getImageUrl(user.coverPhoto, DEFAULT_COVER_PHOTO)
+              : DEFAULT_COVER_PHOTO
+          }
           alt="Cover"
           className="cover-photo"
           onError={(e) => {
@@ -138,7 +143,11 @@ export const Profile = () => {
       <div className="profile-content">
         <div className="profile-left">
           <img
-            src={user.profilePic || DEFAULT_PROFILE_PIC}
+            src={
+              user.profilePic
+                ? getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC)
+                : DEFAULT_PROFILE_PIC
+            }
             alt="Profile"
             className="profile-pic"
             onError={(e) => {

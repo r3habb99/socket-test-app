@@ -28,8 +28,77 @@
   margin-bottom: 10px;
 }
 
-.create-post-form button {
-  align-self: flex-end;
+/* Media preview container */
+.media-preview-container {
+  position: relative;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 300px;
+}
+
+.media-preview {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.remove-media-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.remove-media-btn:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Post actions container */
+.post-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.media-upload-btn {
+  background-color: transparent;
+  color: #007bff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: background-color 0.2s;
+}
+
+.media-upload-btn:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.media-upload-btn:disabled {
+  color: #cccccc;
+  cursor: not-allowed;
+}
+
+.post-btn {
   padding: 8px 16px;
   background-color: #007bff;
   border: none;
@@ -39,11 +108,11 @@
   cursor: pointer;
 }
 
-.create-post-form button:hover {
+.post-btn:hover {
   background-color: #0056b3;
 }
 
-.create-post-form button:disabled {
+.post-btn:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
 }

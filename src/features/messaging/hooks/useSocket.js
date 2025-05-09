@@ -8,10 +8,10 @@ import { toast } from "react-toastify";
  * @returns {Object} Socket methods and state
  */
 export const useSocket = (
-  url = process.env.REACT_APP_SOCKET_URL || "http://localhost:8080"
+  url = process.env.REACT_APP_SOCKET_URL || "http://192.168.0.120:8080"
 ) => {
   // Use a consistent URL to prevent reconnection issues
-  url = "http://localhost:8080";
+  url = "http://192.168.0.120:8080";
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -125,6 +125,11 @@ export const useSocket = (
 
     // Message received handler - updated to match backend event
     const messageReceivedHandler = (newMessage) => {
+      console.log(
+        "🔔 Socket event 'message received' triggered in useSocket hook:",
+        newMessage
+      );
+
       // Normalize chat ID (might be an object or a string)
       const messageChat =
         typeof newMessage.chat === "object"
@@ -143,6 +148,10 @@ export const useSocket = (
           ? newMessage.sender._id || newMessage.sender.id
           : newMessage.sender;
 
+      console.log(
+        `Processing message: ID=${messageId}, Chat=${messageChat}, CurrentChat=${currentChatIdRef.current}`
+      );
+
       // IMPORTANT: Make sure we're in the right chat room
       // If this message is for a chat we're not currently in, join that chat room
       if (
@@ -150,6 +159,9 @@ export const useSocket = (
         messageChat !== currentChatIdRef.current &&
         socketRef.current
       ) {
+        console.log(
+          `Message is for a different chat (${messageChat}), joining that room`
+        );
         // We don't want to automatically switch chats, but we do want to make sure
         // we're joined to the chat room to receive future messages
         if (socketRef.current.connected) {
@@ -166,6 +178,7 @@ export const useSocket = (
         );
 
       if (isRecentlySentMessage) {
+        console.log("This is a message we just sent, replacing temp message");
         // Replace any temporary message with the real one
         setMessages((prevMessages) => {
           // Find any temporary messages that match this content
@@ -177,12 +190,16 @@ export const useSocket = (
           );
 
           if (tempMessage) {
+            console.log(
+              `Replacing temp message ${tempMessage._id} with real message ${messageId}`
+            );
             return prevMessages.map((msg) =>
               msg._id === tempMessage._id ? newMessage : msg
             );
           }
 
           // If no temp message found, just add the message to avoid missing it
+          console.log("No temp message found, adding as new message");
           const updatedMessages = [...prevMessages, newMessage];
 
           // Sort messages by timestamp if available
@@ -199,6 +216,10 @@ export const useSocket = (
       }
 
       // Process messages for the current chat - use ref for currentChatId
+      console.log(
+        `Processing message for chat ${messageChat}, current chat is ${currentChatIdRef.current}`
+      );
+
       setMessages((prevMessages) => {
         // Check if message already exists to avoid duplicates
         const exists = prevMessages.some(
@@ -206,11 +227,18 @@ export const useSocket = (
         );
 
         if (exists) {
+          console.log(
+            `Message ${messageId} already exists in the list, not adding again`
+          );
           return prevMessages;
         }
 
         // Only add the message if it's for the current chat
         if (messageChat === currentChatIdRef.current) {
+          console.log(
+            `Adding new message ${messageId} to the current chat ${currentChatIdRef.current}`
+          );
+
           // Add the new message and ensure it's at the end (newest messages at the bottom)
           const updatedMessages = [...prevMessages, newMessage];
 
@@ -225,6 +253,9 @@ export const useSocket = (
         }
 
         // If the message is not for the current chat, don't add it to the messages list
+        console.log(
+          `Message ${messageId} is for chat ${messageChat}, not current chat ${currentChatIdRef.current}`
+        );
         return prevMessages;
       });
 
@@ -236,6 +267,8 @@ export const useSocket = (
           typeof newMessage.sender === "object"
             ? newMessage.sender.username
             : "User";
+
+        console.log(`Showing notification for message from ${senderUsername}`);
 
         // Show a toast notification
         toast.info(`New message from ${senderUsername}`, {
@@ -254,8 +287,15 @@ export const useSocket = (
       }
     };
 
-    // Register the handler for the backend event name
+    // Register the handler for both possible backend event names
     socket.on("message received", messageReceivedHandler);
+
+    // Also listen for 'new message' event as some backends use this name instead
+    socket.on("new message", messageReceivedHandler);
+
+    console.log(
+      "✅ Message event handlers registered for both 'message received' and 'new message' events"
+    );
 
     // User typing handlers - updated to match backend events
     const userTypingHandler = (data) => {
@@ -319,6 +359,8 @@ export const useSocket = (
 
       // Message events
       socket.off("message received", messageReceivedHandler);
+      socket.off("new message", messageReceivedHandler);
+      console.log("Removed message event handlers");
 
       // Typing events
       socket.off("user typing", userTypingHandler);
