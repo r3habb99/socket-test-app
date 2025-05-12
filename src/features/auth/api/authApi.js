@@ -71,11 +71,38 @@ export const refreshToken = async () => {
  */
 export const login = async (credentials) => {
   try {
-    const response = await apiClient.post(endpoints.auth.login, credentials);
+    console.log("Attempting login with email:", credentials.email);
+
+    // Make sure we're not sending any auth headers for login
+    const response = await apiClient.post(endpoints.auth.login, credentials, {
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
+
+    console.log("Login response status:", response.status);
     toast.success("Login successful!");
     return handleApiResponse(response);
   } catch (error) {
     console.error("Login error:", error.response?.data || error.message);
+
+    // Provide more specific error messages based on the error type
+    if (!error.response) {
+      // Network error
+      console.error("Network error during login:", error);
+      toast.error("Unable to connect to the server. Please check your internet connection.");
+      return {
+        error: true,
+        message: "Network Error: Unable to connect to the server. Please check your internet connection.",
+      };
+    } else if (error.response.status === 401) {
+      toast.error("Invalid email or password");
+      return {
+        error: true,
+        message: "Invalid email or password",
+      };
+    }
+
     return handleApiError(error);
   }
 };
@@ -169,7 +196,7 @@ export const searchUsers = async (query) => {
 export const getUserById = async (userId) => {
   try {
     if (typeof userId !== "string") {
-      
+
       throw new Error("Invalid userId type. Expected a string.");
     }
 

@@ -69,12 +69,33 @@ export const registerUser = async (userData) => {
 // Login User API
 export const loginUser = async (userData) => {
   try {
-    const response = await api.post("/user/login", userData);
+    console.log("Attempting to login user with email:", userData.email);
+
+    // Make sure we're not sending any auth headers for login
+    const response = await api.post("/user/login", userData, {
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
+
+    console.log("Login response received:", response.status);
     toast.success("Login successful!");
     return response.data;
   } catch (error) {
     console.error("Login error:", error.response?.data || error.message);
-    handleApiError(error);
+
+    // Provide more user-friendly error messages for common issues
+    if (!error.response) {
+      // Network error
+      toast.error("Unable to connect to the server. Please check your internet connection.");
+      throw new Error("Network Error: Unable to connect to the server");
+    } else if (error.response.status === 401) {
+      toast.error("Invalid email or password");
+      throw new Error("Invalid email or password");
+    } else {
+      // Use the generic error handler for other cases
+      handleApiError(error);
+    }
   }
 };
 

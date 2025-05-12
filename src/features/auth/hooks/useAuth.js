@@ -28,19 +28,25 @@ export const useAuth = () => {
     setError(null);
 
     try {
+      // Log the login attempt for debugging
+      console.log("Attempting login with credentials:", { email: credentials.email, password: "********" });
+
       const response = await loginApi(credentials);
 
       if (response.error) {
+        console.error("Login API returned an error:", response.message);
         setError(response.message);
         return { success: false, message: response.message };
       }
 
+      // Log the successful response for debugging
+      console.log("Login API response received:", response);
 
       // Extract token and user data, handling different response structures
       const responseData = response.data;
 
       // Handle nested response structure based on the old Login.jsx component
-      let token, userId, userData;
+      let token, userId, userData, username;
 
       // Try to extract token from various possible locations
       token = responseData?.data?.token || responseData?.token;
@@ -56,6 +62,16 @@ export const useAuth = () => {
       // Try to extract user ID from user data
       userId = userData?.id || userData?._id;
 
+      // Try to extract username
+      username = userData?.username || userData?.name;
+
+      // Log the extracted data for debugging
+      console.log("Extracted login data:", {
+        hasToken: !!token,
+        hasUserId: !!userId,
+        hasUsername: !!username,
+        userData
+      });
 
       if (!token) {
         console.error("Token is missing from the response:", responseData);
@@ -79,12 +95,27 @@ export const useAuth = () => {
       localStorage.setItem("token", token);
       localStorage.setItem("userId", userId);
 
+      // Save username if available
+      if (username) {
+        localStorage.setItem("username", username);
+      }
+
       // Update state
       setUser({ id: userId });
 
+      console.log("Login successful, user data saved to localStorage");
+
       return { success: true };
     } catch (err) {
-      const message = err.message || "An error occurred during login";
+      // Enhanced error logging
+      console.error("Login error details:", err);
+
+      // Check for network errors specifically
+      const isNetworkError = err.message === 'Network Error';
+      const message = isNetworkError
+        ? "Unable to connect to the server. Please check your internet connection and try again."
+        : (err.message || "An error occurred during login");
+
       setError(message);
       return { success: false, message };
     } finally {

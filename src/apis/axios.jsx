@@ -15,9 +15,18 @@ export const api = axios.create({
 // Add a request interceptor to include Authorization header
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Don't add token for authentication endpoints
+    const isAuthEndpoint = config.url && (
+      config.url.includes('/login') ||
+      config.url.includes('/register') ||
+      config.url.includes('/refresh-token')
+    );
+
+    if (!isAuthEndpoint) {
+      const token = localStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
