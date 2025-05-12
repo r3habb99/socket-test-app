@@ -25,14 +25,6 @@ const Feed = React.lazy(() =>
   }))
 );
 
-// Import ToastTester
-const ToastTester = React.lazy(() =>
-  import("../../shared/components/ToastController/ToastTester").then(
-    (module) => ({
-      default: module.default || module,
-    })
-  )
-);
 const MessagingApp = React.lazy(() =>
   import("../../features/messaging/components/MessagingApp").then((module) => ({
     default: module.default || module,
@@ -110,10 +102,7 @@ export const routes = [
         path: "user/edit-profile",
         element: <ProfileEdit />,
       },
-      {
-        path: "toast-test",
-        element: <ToastTester />,
-      },
+
       {
         path: "*",
         element: <Navigate to="/dashboard" replace />,
