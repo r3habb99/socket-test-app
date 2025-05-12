@@ -17,7 +17,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
   // Get current user ID from localStorage
   const userId = localStorage.getItem("userId");
-  // We don't need username here as it's handled in the socket context
 
   // Get the chat partner for 1:1 chats
   const chatPartner =
@@ -280,6 +279,33 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     loadingMessages,
     scrollToBottom
   ]);
+
+  // Add this useEffect after other useEffects in the Chat component
+  useEffect(() => {
+    const handleMessageReceived = (newMessage) => {
+      // Check if the new message belongs to the currently selected chat
+      const chatId = selectedChat?._id || selectedChat?.id;
+      if (newMessage.chatId === chatId) {
+        // Append the new message to the existing messages
+        socketContext.setMessages((prevMessages) => [...prevMessages, newMessage]);
+        scrollToBottom(); // Scroll to the bottom when a new message is received
+      }
+    };
+
+    // Register the socket event listener
+    socketContext.socket?.on("message received", handleMessageReceived);
+
+    // Cleanup the listener on component unmount
+    return () => {
+      socketContext.socket?.off("message received", handleMessageReceived);
+    };
+  }, [selectedChat, socketContext, scrollToBottom]);
+
+  // Add a useEffect to listen for changes in the messages state
+  useEffect(() => {
+    // Scroll to the bottom whenever messages are updated
+    scrollToBottom();
+  }, [socketContext.messages, scrollToBottom]);
 
   const handleSendMessage = () => {
     // Ensure we have a valid chat ID (either _id or id)

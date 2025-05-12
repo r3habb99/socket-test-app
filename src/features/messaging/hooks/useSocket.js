@@ -270,6 +270,22 @@ export const useSocket = (
     // Also listen for 'new message' event as some backends use this name instead
     socket.on("new message", messageReceivedHandler);
 
+    // Ensure the messages state is updated when a new message is received
+    socket.on("message received", (newMessage) => {
+      setMessages((prevMessages) => {
+        // Avoid duplicates by checking if the message already exists
+        const exists = prevMessages.some(
+          (msg) => (msg._id || msg.id) === (newMessage._id || newMessage.id)
+        );
+
+        if (exists) {
+          return prevMessages;
+        }
+
+        // Add the new message to the state
+        return [...prevMessages, newMessage];
+      });
+    });
 
     // User typing handlers - updated to match backend events
     const userTypingHandler = (data) => {
