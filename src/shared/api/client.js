@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create an axios instance with default config
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://192.168.0.120:8080/api",
+  baseURL: process.env.REACT_APP_API_URL || "http://192.168.0.120:5050/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -18,7 +18,7 @@ apiClient.interceptors.request.use(
       const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
       config.headers.Authorization = formattedToken;
 
-  
+
     } else {
       console.warn('No token found in localStorage for request to:', config.url);
     }

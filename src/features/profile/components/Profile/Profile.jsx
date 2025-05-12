@@ -136,7 +136,7 @@ export const Profile = () => {
 
       <div className="profile-header">
         <ImageProxy
-          src={user.coverPhoto ? getImageUrl(user.coverPhoto, DEFAULT_COVER_PHOTO) : DEFAULT_COVER_PHOTO}
+          src={user.coverPhoto ? `${getImageUrl(user.coverPhoto, DEFAULT_COVER_PHOTO)}?t=${Date.now()}` : DEFAULT_COVER_PHOTO}
           alt="Cover"
           className="cover-photo"
           defaultSrc={DEFAULT_COVER_PHOTO}
@@ -151,7 +151,7 @@ export const Profile = () => {
       <div className="profile-content">
         <div className="profile-left">
           <ImageProxy
-            src={user.profilePic ? getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC) : DEFAULT_PROFILE_PIC}
+            src={user.profilePic ? `${getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC)}?t=${Date.now()}` : DEFAULT_PROFILE_PIC}
             alt="Profile"
             className="profile-pic"
             defaultSrc={DEFAULT_PROFILE_PIC}

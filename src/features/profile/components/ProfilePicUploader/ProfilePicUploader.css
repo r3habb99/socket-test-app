@@ -1,9 +1,8 @@
 .profile-pic-uploader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin-top: 20px;
+  position: absolute;
+  top: -5px;
+  left: 85px;
+  z-index: 15;
 }
 
 .profile-pic-uploader input[type="file"] {
@@ -35,26 +34,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #1da1f2;
+  background-color: rgba(0, 0, 0, 0.6);
   color: white;
-  padding: 12px;
-  border: none;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   cursor: pointer;
   transition: background-color 0.3s ease-in-out;
-  font-size: 24px;
-  width: 50px;
-  height: 50px;
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .upload-btn:hover {
-  background-color: #1991d0;
+  background-color: rgba(29, 161, 242, 0.9);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .upload-btn svg {
   margin: 0;
-  height: 24px;
-  width: 24px;
+  height: 18px;
+  width: 18px;
   fill: white;
   transition: fill 0.3s ease-in-out;
 }
@@ -73,4 +74,12 @@
 
 .profile-pic-uploader button:not(.upload-btn):hover {
   background-color: #1991d0;
+}
+
+.upload-confirm-btn {
+  position: absolute;
+  top: 45px;
+  left: 0;
+  width: 80px !important;
+  font-size: 12px !important;
 }

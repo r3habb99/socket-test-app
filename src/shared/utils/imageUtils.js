@@ -3,7 +3,7 @@
  */
 
 // Get the API base URL from environment or use default
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://192.168.0.120:8080";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://192.168.0.120:5050";
 
 /**
  * Get the full URL for an image path
@@ -27,7 +27,9 @@ export const getImageUrl = (imagePath, defaultImage) => {
   if (imagePath.startsWith("/")) {
     // Special handling for profile pictures and other uploads
     if (imagePath.startsWith("/uploads/")) {
-      return `${API_BASE_URL}${imagePath}`.replace(/ /g, '%20');
+      // Add /api prefix if it's not already there
+      const apiPath = imagePath.startsWith('/api/') ? imagePath : `/api${imagePath}`;
+      return `${API_BASE_URL}${apiPath}`.replace(/ /g, '%20');
     }
     return `${API_BASE_URL}${imagePath}`.replace(/ /g, '%20');
   }

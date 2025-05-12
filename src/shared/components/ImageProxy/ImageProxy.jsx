@@ -71,8 +71,10 @@ const ImageProxy = ({
     if (processedSrc.startsWith('/')) {
       // Check if it's an API path (like /uploads/) that needs the API base URL
       if (processedSrc.startsWith('/uploads/')) {
-        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://192.168.0.120:8080";
-        setImageSrc(`${API_BASE_URL}${processedSrc}`);
+        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://192.168.0.120:5050";
+        // Add /api prefix if it's not already there
+        const apiPath = processedSrc.startsWith('/api/') ? processedSrc : `/api${processedSrc}`;
+        setImageSrc(`${API_BASE_URL}${apiPath}`);
       } else {
         setImageSrc(processedSrc);
       }
@@ -80,7 +82,14 @@ const ImageProxy = ({
       return;
     }
 
-    // For external URLs that might have CORS issues, we'll handle them differently
+    // For external URLs that might have CORS/CORP issues, we'll handle them differently
+    // If the URL is from our API server, we'll use it directly but handle errors
+    if (processedSrc.includes('192.168.0.120:5050')) {
+      setImageSrc(processedSrc);
+      setLoading(false);
+      return;
+    }
+
     const img = new Image();
 
     img.onload = () => {

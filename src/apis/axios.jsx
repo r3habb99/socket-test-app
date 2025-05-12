@@ -2,7 +2,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 // Use environment variable or fallback to localhost
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
+const API_URL = process.env.REACT_APP_API_URL || "http://192.168.0.120:5050/api";
 
 export const api = axios.create({
   baseURL: API_URL, // Your base URL
