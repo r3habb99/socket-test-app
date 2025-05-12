@@ -3,6 +3,21 @@ import { useMessaging } from "../../hooks";
 import { searchUsers } from "../../../auth/api";
 import { customToast, getImageUrl } from "../../../../shared/utils";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
+import {
+  Input,
+  Typography,
+  List,
+  Avatar,
+  Spin,
+  Empty,
+  FloatButton
+} from "antd";
+import {
+  MailOutlined,
+  UserOutlined,
+  TeamOutlined,
+  SearchOutlined
+} from "@ant-design/icons";
 import "./ChatList.css";
 
 export const ChatList = ({
@@ -243,9 +258,82 @@ export const ChatList = ({
     });
   };
 
+  const { Title, Text } = Typography;
+  const { Search } = Input;
+
+  // Function to render chat avatar
+  const renderChatAvatar = (chat) => {
+    // For group chats, use the chat name
+    if (chat.isGroupChat) {
+      return (
+        <Avatar
+          className="chat-avatar"
+          icon={<TeamOutlined />}
+          style={{ backgroundColor: '#1d9bf0' }}
+        >
+          {(chat.chatName || "G").charAt(0).toUpperCase()}
+        </Avatar>
+      );
+    }
+
+    // For 1:1 chats, find the other user (not the current logged-in user)
+    const currentUserId = localStorage.getItem("userId");
+    const otherUser = chat.users?.find(
+      (user) => String(user._id || user.id) !== String(currentUserId)
+    );
+
+    return (
+      <Avatar
+        src={otherUser && otherUser.profilePic ? getImageUrl(otherUser.profilePic, DEFAULT_PROFILE_PIC) : null}
+        alt={otherUser?.username || "User"}
+        className={otherUser && otherUser.profilePic ? "chat-avatar-img" : "chat-avatar"}
+        icon={!otherUser || !otherUser.profilePic ? <UserOutlined /> : null}
+        style={(!otherUser || !otherUser.profilePic) ? { backgroundColor: '#1d9bf0' } : {}}
+      >
+        {otherUser && !otherUser.profilePic ? otherUser.username.charAt(0).toUpperCase() : null}
+        {!otherUser && "?"}
+      </Avatar>
+    );
+  };
+
+  // Function to get chat name
+  const getChatName = (chat) => {
+    // For group chats, use the chat name
+    if (chat.isGroupChat) {
+      return chat.chatName || "Group Chat";
+    }
+
+    // For 1:1 chats, find the other user (not the current logged-in user)
+    const currentUserId = localStorage.getItem("userId");
+    const otherUser = chat.users?.find(
+      (user) => String(user._id || user.id) !== String(currentUserId)
+    );
+
+    // Return the other user's name (first name + last name if available)
+    if (otherUser) {
+      if (otherUser.firstName && otherUser.lastName) {
+        return `${otherUser.firstName} ${otherUser.lastName}`;
+      }
+      return otherUser.username;
+    }
+    return "Unknown User";
+  };
+
+  // Function to get username for non-group chats
+  const getChatUsername = (chat) => {
+    if (chat.isGroupChat) return null;
+
+    const currentUserId = localStorage.getItem("userId");
+    const otherUser = chat.users?.find(
+      (user) => String(user._id || user.id) !== String(currentUserId)
+    );
+
+    return otherUser ? `@${otherUser.username || "user"}` : null;
+  };
+
   return (
     <div className="chatlist-container">
-      <h2>Messages</h2>
+      <Title level={4} className="chatlist-header">Messages</Title>
 
       <div
         className="chatlist-search"
@@ -255,8 +343,7 @@ export const ChatList = ({
           setShowSearchResults(true);
         }}
       >
-        <input
-          type="text"
+        <Search
           placeholder="Search for people and groups"
           value={searchQuery}
           onChange={handleSearchInputChange}
@@ -264,41 +351,44 @@ export const ChatList = ({
             // Always show search UI when input is focused
             setShowSearchResults(true);
           }}
+          className="chatlist-search-input"
+          allowClear
+          enterButton={<SearchOutlined />}
+          prefix={<SearchOutlined style={{ color: '#536471' }} />}
         />
 
         {/* Search Results */}
         {showSearchResults && (
           <div className="search-results">
             {isSearching ? (
-              <p className="loading-message">Searching...</p>
+              <div className="loading-message">
+                <Spin size="small" /> Searching...
+              </div>
             ) : searchQuery.trim() === "" ? (
               <div className="search-instructions">
                 <p>Type a username to find people</p>
                 <p className="search-hint">Start typing to search for users</p>
               </div>
             ) : searchResults.length > 0 ? (
-              <ul className="search-results-list">
-                {searchResults.map((user) => (
-                  <li
+              <List
+                className="search-results-list"
+                itemLayout="horizontal"
+                dataSource={searchResults}
+                renderItem={(user) => (
+                  <List.Item
                     key={user._id || user.id}
                     className="search-result-item"
                     onClick={() => startChatWithUser(user)}
                   >
-                    {user.profilePic ? (
-                      <img
-                        src={getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC)}
-                        alt={user.username}
-                        className="search-result-avatar-img"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = DEFAULT_PROFILE_PIC;
-                        }}
-                      />
-                    ) : (
-                      <div className="search-result-avatar">
-                        {user.username.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                    <Avatar
+                      src={user.profilePic ? getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC) : null}
+                      alt={user.username}
+                      className={user.profilePic ? "search-result-avatar-img" : "search-result-avatar"}
+                      icon={!user.profilePic ? <UserOutlined /> : null}
+                      style={!user.profilePic ? { backgroundColor: '#1d9bf0' } : {}}
+                    >
+                      {!user.profilePic ? user.username.charAt(0).toUpperCase() : null}
+                    </Avatar>
                     <div className="search-result-details">
                       <div className="search-result-name">
                         {user.firstName} {user.lastName}
@@ -307,21 +397,30 @@ export const ChatList = ({
                         @{user.username}
                       </div>
                     </div>
-                  </li>
-                ))}
-              </ul>
+                  </List.Item>
+                )}
+              />
             ) : (
-              <p className="no-results">No users found with "{searchQuery}"</p>
+              <Empty
+                description={<Text>No users found with "{searchQuery}"</Text>}
+                className="no-results"
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
             )}
           </div>
         )}
       </div>
 
       {loading ? (
-        <p className="loading-message">Loading chats...</p>
+        <div className="loading-message">
+          <Spin size="large" /> <Text>Loading chats...</Text>
+        </div>
       ) : (
-        <ul className="chatlist">
-          {(Array.isArray(chats) ? chats : []).map((chat) => {
+        <List
+          className="chatlist"
+          itemLayout="horizontal"
+          dataSource={Array.isArray(chats) ? chats : []}
+          renderItem={(chat) => {
             // Get timestamp from latest message or chat creation time
             const timestamp =
               chat.latestMessage?.createdAt || chat.createdAt || null;
@@ -329,7 +428,7 @@ export const ChatList = ({
             const timeDisplay = formatChatTime(timestamp);
 
             return (
-              <li
+              <List.Item
                 key={
                   chat._id ||
                   chat.id ||
@@ -341,114 +440,43 @@ export const ChatList = ({
                 onClick={() => onSelectChat(chat)}
               >
                 <div className="chat-item-content">
-                  {(() => {
-                    // For group chats, use the chat name
-                    if (chat.isGroupChat) {
-                      return (
-                        <div className="chat-avatar">
-                          {(chat.chatName || "G").charAt(0).toUpperCase()}
-                        </div>
-                      );
-                    }
-
-                    // For 1:1 chats, find the other user (not the current logged-in user)
-                    const currentUserId = localStorage.getItem("userId");
-                    const otherUser = chat.users?.find(
-                      (user) =>
-                        String(user._id || user.id) !== String(currentUserId)
-                    );
-
-                    if (otherUser && otherUser.profilePic) {
-                      return (
-                        <img
-                          src={getImageUrl(
-                            otherUser.profilePic,
-                            DEFAULT_PROFILE_PIC
-                          )}
-                          alt={otherUser.username || "User"}
-                          className="chat-avatar-img"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = DEFAULT_PROFILE_PIC;
-                          }}
-                        />
-                      );
-                    } else {
-                      return (
-                        <div className="chat-avatar">
-                          {otherUser
-                            ? otherUser.username.charAt(0).toUpperCase()
-                            : "?"}
-                        </div>
-                      );
-                    }
-                  })()}
+                  {renderChatAvatar(chat)}
                   <div className="chat-details">
                     <div className="chat-header">
                       <div className="chat-name">
-                        {(() => {
-                          // For group chats, use the chat name
-                          if (chat.isGroupChat) {
-                            return chat.chatName || "Group Chat";
-                          }
-
-                          // For 1:1 chats, find the other user (not the current logged-in user)
-                          const currentUserId = localStorage.getItem("userId");
-                          const otherUser = chat.users?.find(
-                            (user) =>
-                              String(user._id || user.id) !==
-                              String(currentUserId)
-                          );
-
-                          // Return the other user's name (first name + last name if available)
-                          if (otherUser) {
-                            if (otherUser.firstName && otherUser.lastName) {
-                              return `${otherUser.firstName} ${otherUser.lastName}`;
-                            }
-                            return otherUser.username;
-                          }
-                          return "Unknown User";
-                        })()}
+                        {getChatName(chat)}
                       </div>
                       <div className="chat-time">{timeDisplay}</div>
                     </div>
 
                     {/* Show username for non-group chats */}
-                    {!chat.isGroupChat &&
-                      (() => {
-                        const currentUserId = localStorage.getItem("userId");
-                        const otherUser = chat.users?.find(
-                          (user) =>
-                            String(user._id || user.id) !==
-                            String(currentUserId)
-                        );
-
-                        return otherUser ? (
-                          <div className="chat-username">
-                            @{otherUser.username || "user"}
-                          </div>
-                        ) : null;
-                      })()}
+                    {!chat.isGroupChat && getChatUsername(chat) && (
+                      <div className="chat-username">
+                        {getChatUsername(chat)}
+                      </div>
+                    )}
 
                     <div className="chat-preview">
                       {chat.latestMessage?.content || "No messages yet"}
                     </div>
                   </div>
                 </div>
-              </li>
+              </List.Item>
             );
-          })}
-        </ul>
+          }}
+        />
       )}
 
       {/* New Message Button - only show when no chat is selected */}
       {!selectedChatId && (
-        <div
+        <FloatButton
+          icon={<MailOutlined />}
+          type="primary"
           className="new-message-button"
           onClick={() => {
             // Focus the search input and show search UI
             const searchInput = document.querySelector(
-              ".chatlist-search input"
+              ".chatlist-search-input input"
             );
             if (searchInput) {
               searchInput.focus();
@@ -460,10 +488,8 @@ export const ChatList = ({
               setShowSearchResults(true);
             }
           }}
-          title="New Message"
-        >
-          ✉️
-        </div>
+          tooltip="New Message"
+        />
       )}
     </div>
   );

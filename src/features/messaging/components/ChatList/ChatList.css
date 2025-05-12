@@ -12,8 +12,8 @@
   flex-shrink: 0;
 }
 
-/* Header styling */
-.chatlist-container h2 {
+/* Header styling - Ant Design Typography customization */
+.chatlist-header.ant-typography {
   font-size: 20px;
   font-weight: 700;
   padding: 16px;
@@ -33,34 +33,99 @@
   border-bottom: 1px solid #eff3f4;
   z-index: 5;
   background-color: #ffffff;
+  display: flex;
+  align-items: center;
 }
 
-.chatlist-search input {
+/* Ant Design Input.Search customization */
+.chatlist-search-input {
   width: 100%;
-  padding: 10px 16px 10px 40px;
-  border-radius: 20px;
-  border: none;
+}
+
+.chatlist-search-input .ant-input-affix-wrapper {
   background-color: #eff3f4;
+  border: none;
+  border-radius: 20px 0 0 20px;
+  padding: 0 12px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.chatlist-search-input .ant-input-group-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.chatlist-search-input .ant-input {
+  background-color: transparent;
+  border: none;
   font-size: 15px;
   color: #0f1419;
   outline: none;
+  height: 40px;
+  padding: 0;
 }
 
-.chatlist-search::before {
-  content: "🔍";
-  position: absolute;
-  left: 28px;
-  top: 23px;
+.chatlist-search-input .ant-input-prefix {
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.chatlist-search-input .ant-input::placeholder {
+  color: #536471;
+}
+
+.chatlist-search-input .ant-input-clear-icon {
+  color: #536471;
   font-size: 14px;
-  color: #536471;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.chatlist-search input::placeholder {
-  color: #536471;
+/* Search button styles */
+.chatlist-search-input .ant-input-search-button {
+  height: 40px !important;
+  width: 40px !important;
+  border-radius: 0 20px 20px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-color: #eff3f4 !important;
+  background-color: #eff3f4 !important;
+  color: #536471 !important;
 }
 
-/* Chat list styling */
-.chatlist {
+.chatlist-search-input .ant-input-search-button:hover {
+  background-color: #e7e9ea !important;
+  border-color: #e7e9ea !important;
+  color: #1d9bf0 !important;
+}
+
+.chatlist-search-input .ant-input-group-addon {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.chatlist-search-input .ant-input-affix-wrapper:hover,
+.chatlist-search-input .ant-input-affix-wrapper:focus,
+.chatlist-search-input .ant-input-affix-wrapper-focused {
+  background-color: #e7e9ea;
+  box-shadow: none;
+  border: none;
+}
+
+/* Fix for the clear button hover state */
+.chatlist-search-input .ant-input-clear-icon:hover {
+  color: #1d9bf0;
+}
+
+/* Ant Design List customization for chat list */
+.chatlist.ant-list {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -79,7 +144,11 @@
   right: 0;
 }
 
-.chatlist-item {
+.chatlist .ant-list-empty-text {
+  display: none;
+}
+
+.chatlist-item.ant-list-item {
   width: 100%;
   padding: 16px;
   cursor: pointer;
@@ -91,11 +160,11 @@
   display: block;
 }
 
-.chatlist-item:hover {
+.chatlist-item.ant-list-item:hover {
   background-color: rgba(15, 20, 25, 0.03);
 }
 
-.chatlist-item.selected {
+.chatlist-item.ant-list-item.selected {
   background-color: rgba(15, 20, 25, 0.1);
   width: 100%;
   margin: 0;
@@ -107,10 +176,10 @@
   width: 100%;
 }
 
-.chat-avatar {
+/* Ant Design Avatar customization */
+.chat-avatar.ant-avatar {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
   background-color: #1d9bf0;
   color: white;
   display: flex;
@@ -122,10 +191,9 @@
   flex-shrink: 0;
 }
 
-.chat-avatar-img {
+.chat-avatar-img.ant-avatar {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
   object-fit: cover;
   margin-right: 12px;
   flex-shrink: 0;
@@ -204,13 +272,14 @@
   margin-top: -1px;
 }
 
-.search-results-list {
+/* Ant Design List customization for search results */
+.search-results-list.ant-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.search-result-item {
+.search-result-item.ant-list-item {
   display: flex;
   align-items: center;
   padding: 16px;
@@ -219,14 +288,14 @@
   transition: background-color 0.2s ease;
 }
 
-.search-result-item:hover {
+.search-result-item.ant-list-item:hover {
   background-color: #f7f9f9;
 }
 
-.search-result-avatar {
+/* Ant Design Avatar customization for search results */
+.search-result-avatar.ant-avatar {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
   background-color: #1d9bf0;
   color: white;
   display: flex;
@@ -238,10 +307,9 @@
   flex-shrink: 0;
 }
 
-.search-result-avatar-img {
+.search-result-avatar-img.ant-avatar {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
   object-fit: cover;
   margin-right: 12px;
   flex-shrink: 0;
@@ -264,12 +332,22 @@
   color: #536471;
 }
 
-.no-results,
+/* Ant Design Empty and Spin customization */
+.no-results.ant-empty,
 .loading-message {
   padding: 20px;
   text-align: center;
   color: #536471;
   font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.loading-message .ant-spin {
+  margin-right: 8px;
 }
 
 /* Search instructions */
@@ -291,33 +369,50 @@
   font-weight: normal !important;
 }
 
-/* New message button */
-.new-message-button {
+/* Ant Design FloatButton customization */
+.new-message-button.ant-float-btn {
   position: absolute;
   bottom: 20px;
   right: 20px;
   width: 56px;
   height: 56px;
-  border-radius: 50%;
   background-color: #1d9bf0;
   color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
   transition: all 0.2s ease;
   z-index: 10;
   animation: fadeIn 0.3s ease-in-out;
 }
 
-.new-message-button:hover {
+.new-message-button.ant-float-btn .ant-float-btn-body {
+  background-color: #1d9bf0;
+  width: 56px;
+  height: 56px;
+}
+
+.new-message-button.ant-float-btn .ant-float-btn-content {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.new-message-button.ant-float-btn .anticon {
+  font-size: 24px;
+  color: white;
+}
+
+.new-message-button.ant-float-btn:hover {
   background-color: #1a8cd8;
   transform: scale(1.05);
 }
 
-.new-message-button:active {
+.new-message-button.ant-float-btn:hover .ant-float-btn-body {
+  background-color: #1a8cd8;
+}
+
+.new-message-button.ant-float-btn:active {
   transform: scale(0.95);
 }
 
