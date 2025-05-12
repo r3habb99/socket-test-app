@@ -470,7 +470,10 @@ export const ChatList = ({
       {/* New Message Button - only show when no chat is selected */}
       {!selectedChatId && (
         <FloatButton
-          icon={<MailOutlined />}
+          icon={
+            
+              <MailOutlined style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
+          }
           type="primary"
           className="new-message-button"
           onClick={() => {

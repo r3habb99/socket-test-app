@@ -44,6 +44,7 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
         delete newState[postId];
         return newState;
       });
+      onPostsUpdated()
     }
   };
 
@@ -90,8 +91,9 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
 
       // Handle response with data (the server returned the new retweet)
       if (response.data) {
-        const newRetweet = response.data;
-
+        
+        const newRetweet = response.data.data.post;
+        console.log(newRetweet, "newRetweetId");
         // Ensure we have a valid post object
         if (!newRetweet || typeof newRetweet !== 'object') {
           toast.error("Failed to retweet post. Please try again.");
