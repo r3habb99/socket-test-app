@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { getMessagesForChat } from "../../api/messagingApi";
 import { UserProfileModal } from "../UserProfileModal";
+import { getImageUrl } from "../../../../shared/utils";
+import { DEFAULT_PROFILE_PIC } from "../../../../constants";
 import "./Chat.css";
 
 export const Chat = ({ selectedChat, onBackClick }) => {
@@ -35,7 +37,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     const chatId = selectedChat?._id || selectedChat?.id;
 
     if (chatId) {
- 
+
       setLoadingMessages(true);
 
       // Create a flag to track if the component is still mounted
@@ -61,11 +63,11 @@ export const Chat = ({ selectedChat, onBackClick }) => {
             if (responseData?.data && Array.isArray(responseData.data)) {
               // Nested: { data: [...] }
               msgs = responseData.data;
-       
+
             } else if (Array.isArray(responseData)) {
               // Direct: [...]
               msgs = responseData;
-       
+
             } else {
               console.error("Invalid messages data format:", responseData);
             }
@@ -122,12 +124,12 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       previousChatIdRef.current = chatId;
 
       // Join the chat room via socket
-  
+
       socketContext.joinChat(chatId);
 
       // Clean up function will only run on unmount or when chat ID changes
       return () => {
-     
+
         socketContext.leaveChat(chatId);
         // Don't reset previousChatIdRef here, it will be updated in the next effect run
       };
@@ -213,7 +215,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         (!socketContext.messages || socketContext.messages.length === 0) &&
         !loadingMessages
       ) {
-    
+
         setLoadingMessages(true);
 
         getMessagesForChat(chatId)
@@ -232,7 +234,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
               if (responseData?.data && Array.isArray(responseData.data)) {
                 // Nested: { data: [...] }
                 msgs = responseData.data;
-           
+
               } else if (Array.isArray(responseData)) {
                 // Direct: [...]
                 msgs = responseData;
@@ -356,15 +358,35 @@ export const Chat = ({ selectedChat, onBackClick }) => {
             <span>←</span>
           </div>
           <div className="chat-header-avatar">
-            {(selectedChat.chatName || selectedChat.users?.[0]?.username || "?")
-              .charAt(0)
-              .toUpperCase()}
+            {chatPartner && chatPartner.profilePic ? (
+              <img
+                src={chatPartner.profilePic.startsWith("http") ? chatPartner.profilePic : getImageUrl(chatPartner.profilePic, DEFAULT_PROFILE_PIC)}
+                alt={chatPartner.username || "User"}
+                className="chat-header-avatar-img"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = DEFAULT_PROFILE_PIC;
+                }}
+              />
+            ) : (
+              <div className="chat-header-avatar-text">
+                {selectedChat.isGroupChat
+                  ? (selectedChat.chatName || "G").charAt(0).toUpperCase()
+                  : chatPartner
+                    ? chatPartner.username.charAt(0).toUpperCase()
+                    : "?"}
+              </div>
+            )}
           </div>
           <div className="chat-header-details">
             <div className="chat-header-name">
-              {selectedChat.chatName ||
-                selectedChat.users?.map((u) => u.username).join(", ") ||
-                "Chat"}
+              {selectedChat.isGroupChat
+                ? selectedChat.chatName || "Group Chat"
+                : chatPartner
+                  ? chatPartner.firstName && chatPartner.lastName
+                    ? `${chatPartner.firstName} ${chatPartner.lastName}`
+                    : chatPartner.username
+                  : "Chat"}
             </div>
             <div className="chat-header-status">
               {selectedChat.isGroupChat
