@@ -14,15 +14,17 @@ const Feed = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
-  const [lastPostId, setLastPostId] = useState(null);
   const { connected, subscribe } = useSocketContext();
   const { isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
   const observerRef = useRef(null);
 
+  // Use refs instead of state for pagination to avoid re-renders
+  const pageRef = useRef(1);
+  const lastPostIdRef = useRef(null);
+
   // Define fetchPosts first, then loadMorePosts will reference it
-  const fetchPosts = async (resetPosts = true) => {
+  const fetchPosts = useCallback(async (resetPosts = true) => {
     if (!isAuthenticated()) {
       console.warn("User not authenticated, redirecting to login");
       navigate("/login");
@@ -32,8 +34,8 @@ const Feed = () => {
     if (resetPosts) {
       setLoading(true);
       setError(null);
-      setPage(1);
-      setLastPostId(null);
+      pageRef.current = 1;
+      lastPostIdRef.current = null;
       setHasMore(true);
     } else {
       setLoadingMore(true);
@@ -43,8 +45,8 @@ const Feed = () => {
       // Prepare pagination options
       const options = {};
       if (!resetPosts) {
-        options.page = page;
-        if (lastPostId) options.lastPostId = lastPostId;
+        options.page = pageRef.current;
+        if (lastPostIdRef.current) options.lastPostId = lastPostIdRef.current;
       }
 
       const response = await getPosts(options);
@@ -83,8 +85,8 @@ const Feed = () => {
         // Update pagination tracking
         if (newPosts.length > 0) {
           const lastPost = newPosts[newPosts.length - 1];
-          setLastPostId(lastPost._id);
-          setPage(prevPage => prevPage + 1);
+          lastPostIdRef.current = lastPost._id;
+          pageRef.current = pageRef.current + 1;
         }
       } else {
         console.error("Unexpected response structure:", response);
@@ -116,13 +118,21 @@ const Feed = () => {
         setLoadingMore(false);
       }
     }
-  };
+  }, [
+    isAuthenticated,
+    navigate,
+    setLoading,
+    setError,
+    setHasMore,
+    setLoadingMore,
+    setPosts
+  ]);
 
   // Function to load more posts when scrolling
-  const loadMorePosts = () => {
+  const loadMorePosts = useCallback(() => {
     if (loading || loadingMore || !hasMore) return;
     fetchPosts(false);
-  };
+  }, [loading, loadingMore, hasMore, fetchPosts]);
 
   // Set up the intersection observer for infinite scrolling
   const loadMoreTriggerRef = useCallback(node => {
@@ -136,8 +146,9 @@ const Feed = () => {
     });
 
     if (node) observerRef.current.observe(node);
-  }, [loading, loadingMore, hasMore]);
+  }, [loading, loadingMore, hasMore, loadMorePosts]);
 
+  // Only run once on mount
   useEffect(() => {
     fetchPosts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -152,11 +163,17 @@ const Feed = () => {
       setPosts((prevPosts) => [newPost, ...prevPosts]);
     });
 
+    // Helper function to get post ID (handles both id and _id)
+    const getPostId = (post) => post?.id || post?._id;
+
     // Handle post likes
     const unsubscribePostLiked = subscribe("post liked", (updatedPost) => {
+      const updatedId = getPostId(updatedPost);
+      if (!updatedId) return;
+
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
-          post.id === updatedPost.id ? updatedPost : post
+          getPostId(post) === updatedId ? updatedPost : post
         )
       );
     });
@@ -165,10 +182,13 @@ const Feed = () => {
     const unsubscribePostRetweeted = subscribe(
       "post retweeted",
       (updatedPost) => {
+        const updatedId = getPostId(updatedPost);
+        if (!updatedId) return;
+
         setPosts((prevPosts) => {
           // Remove the post if it already exists
           const filteredPosts = prevPosts.filter(
-            (post) => post.id !== updatedPost.id
+            (post) => getPostId(post) !== updatedId
           );
           // Add the updated post at the top
           return [updatedPost, ...filteredPosts];
@@ -180,8 +200,13 @@ const Feed = () => {
     const unsubscribePostDeleted = subscribe(
       "post deleted",
       (deletedPostId) => {
+        if (!deletedPostId) return;
+
         setPosts((prevPosts) =>
-          prevPosts.filter((post) => post.id !== deletedPostId)
+          prevPosts.filter((post) => {
+            const postId = getPostId(post);
+            return postId !== deletedPostId;
+          })
         );
       }
     );
