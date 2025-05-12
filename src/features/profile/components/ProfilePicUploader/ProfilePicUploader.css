@@ -1,8 +1,9 @@
 .profile-pic-uploader {
-  position: absolute;
-  top: -5px;
-  left: 85px;
+  position: relative;
+  top: 0px;
+  left: 60px;
   z-index: 15;
+  margin-top: 30px;
 }
 
 .profile-pic-uploader input[type="file"] {
@@ -61,6 +62,7 @@
 }
 
 .profile-pic-uploader button:not(.upload-btn) {
+  left: -15px;
   margin-top: 10px;
   padding: 8px 16px;
   background-color: #1da1f2;
