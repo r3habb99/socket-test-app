@@ -233,22 +233,22 @@ export const Profile = () => {
 
           <div className="stats">
             <div>
-              <Link
-                to={`/profile/${user.id || user._id}/followers`}
-                className="link"
+              <button
+                className="link-button"
+                onClick={() => navigate(`/user/${user.id || user._id}/followers`)}
               >
                 Followers{" "}
                 <strong className="count">{user.followers?.length || 0}</strong>
-              </Link>
+              </button>
             </div>
             <div>
-              <Link
-                to={`/profile/${user.id || user._id}/following`}
-                className="link"
+              <button
+                className="link-button"
+                onClick={() => navigate(`/user/${user.id || user._id}/following`)}
               >
                 Following{" "}
                 <strong className="count">{user.following?.length || 0}</strong>
-              </Link>
+              </button>
             </div>
           </div>
         </div>

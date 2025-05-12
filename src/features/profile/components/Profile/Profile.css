@@ -267,16 +267,48 @@
   gap: 25px;
   margin-top: 25px;
   text-decoration: none;
+  position: relative;
+  z-index: 10;
 }
 
 .stats div {
   cursor: pointer;
   font-weight: 600;
+  display: inline-block;
 }
 .link {
   text-decoration: none;
   color: #1da1f2;
   font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.link:hover {
+  background-color: rgba(29, 161, 242, 0.1);
+  text-decoration: none;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  text-decoration: none;
+  color: #1da1f2;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  display: inline-block;
+  cursor: pointer;
+  text-align: left;
+}
+
+.link-button:hover {
+  background-color: rgba(29, 161, 242, 0.1);
+  text-decoration: none;
 }
 .count {
   font-weight: 400;

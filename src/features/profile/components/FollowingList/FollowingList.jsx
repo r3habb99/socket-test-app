@@ -174,7 +174,7 @@ export const FollowingList = () => {
             }`}
             onClick={() => {
               setActiveTab("followers");
-              navigate(`/profile/${userId}/followers`, { replace: true });
+              navigate(`/user/${userId}/followers`, { replace: true });
             }}
           >
             Followers
@@ -185,7 +185,7 @@ export const FollowingList = () => {
             }`}
             onClick={() => {
               setActiveTab("following");
-              navigate(`/profile/${userId}/following`, { replace: true });
+              navigate(`/user/${userId}/following`, { replace: true });
             }}
           >
             Following
@@ -223,7 +223,7 @@ export const FollowingList = () => {
             }`}
             onClick={() => {
               setActiveTab("followers");
-              navigate(`/profile/${userId}/followers`, { replace: true });
+              navigate(`/user/${userId}/followers`, { replace: true });
             }}
           >
             Followers
@@ -234,7 +234,7 @@ export const FollowingList = () => {
             }`}
             onClick={() => {
               setActiveTab("following");
-              navigate(`/profile/${userId}/following`, { replace: true });
+              navigate(`/user/${userId}/following`, { replace: true });
             }}
           >
             Following
@@ -284,7 +284,7 @@ export const FollowingList = () => {
           }`}
           onClick={() => {
             setActiveTab("followers");
-            navigate(`/profile/${userId}/followers`, { replace: true });
+            navigate(`/user/${userId}/followers`, { replace: true });
           }}
         >
           Followers
@@ -295,7 +295,7 @@ export const FollowingList = () => {
           }`}
           onClick={() => {
             setActiveTab("following");
-            navigate(`/profile/${userId}/following`, { replace: true });
+            navigate(`/user/${userId}/following`, { replace: true });
           }}
         >
           Following

@@ -55,11 +55,11 @@ const App = () => {
                 <Route path="profile" element={<Profile />} />
                 <Route path="profile/:userId" element={<Profile />} />
                 <Route
-                  path="profile/:userId/followers"
+                  path="user/:userId/followers"
                   element={<FollowersList />}
                 />
                 <Route
-                  path="profile/:userId/following"
+                  path="user/:userId/following"
                   element={<FollowingList />}
                 />
                 <Route path="user/edit-profile" element={<ProfileEdit />} />
