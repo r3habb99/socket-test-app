@@ -8,10 +8,10 @@ import { toast } from "react-toastify";
  * @returns {Object} Socket methods and state
  */
 export const useSocket = (
-  url = process.env.REACT_APP_SOCKET_URL || "http://192.168.0.120:8080"
+  url = process.env.REACT_APP_SOCKET_URL || "http://192.168.0.120:5050"
 ) => {
   // Use a consistent URL to prevent reconnection issues
-  url = "http://192.168.0.120:8080";
+  url = "http://192.168.0.120:5050";
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
   const [messages, setMessages] = useState([]);

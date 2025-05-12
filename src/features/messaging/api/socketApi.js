@@ -2,7 +2,7 @@ import { io } from "socket.io-client";
 import { toast } from "react-toastify";
 
 // Socket.io connection URL - should match your backend
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "http://localhost:8080";
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "http://localhost:5050";
 
 let socket = null;
 let eventHandlers = {};
