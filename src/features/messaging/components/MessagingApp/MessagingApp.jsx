@@ -3,6 +3,8 @@ import { useLocation } from "react-router-dom";
 import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { ChatList } from "../ChatList";
 import { Chat } from "../Chat";
+import { Layout, Alert, Button } from "antd";
+import { MessageOutlined, ReloadOutlined } from "@ant-design/icons";
 import "./MessagingApp.css";
 
 const MessagingApp = () => {
@@ -24,7 +26,7 @@ const MessagingApp = () => {
   // Handle socket reconnection if needed - only on mount
   useEffect(() => {
     if (!socketContext.connected) {
- 
+
       socketContext.reconnect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -60,7 +62,7 @@ const MessagingApp = () => {
         _id: normalizedChat._id || normalizedChat.id, // Use _id if available, otherwise use id
       };
 
-      
+
       if (normalizedChat._id) {
         setSelectedChat(normalizedChat);
       } else {
@@ -91,8 +93,10 @@ const MessagingApp = () => {
     setSelectedChat(normalizedChat);
   };
 
+  const { Content } = Layout;
+
   return (
-    <div className="messaging-app-container">
+    <Layout className="messaging-app-container">
       <div
         className={`messaging-app-layout ${
           selectedChat && isMobile ? "chat-selected" : ""
@@ -100,14 +104,27 @@ const MessagingApp = () => {
       >
         {/* Connection status indicator */}
         {!socketContext.connected && (
-          <div className="connection-status-banner">
-            <span>Disconnected from chat server</span>
-            <button onClick={() => socketContext.reconnect()}>Reconnect</button>
-          </div>
+          <Alert
+            message="Disconnected from chat server"
+            type="error"
+            showIcon
+            action={
+              <Button
+                size="small"
+                type="primary"
+                danger
+                icon={<ReloadOutlined />}
+                onClick={() => socketContext.reconnect()}
+              >
+                Reconnect
+              </Button>
+            }
+            className="connection-status-banner"
+          />
         )}
 
         {/* Main content container */}
-        <div
+        <Content
           className="messaging-content-container"
           style={{ display: "flex", flex: 1, overflow: "hidden" }}
         >
@@ -145,14 +162,22 @@ const MessagingApp = () => {
             ) : (
               <div className="no-chat-selected">
                 <div className="no-chat-content">
-                  <i className="fa-solid fa-envelope no-chat-icon"></i>
+                  <MessageOutlined className="no-chat-icon" />
                   <h3>Select a message</h3>
                   <p>
                     Choose an existing conversation or start a new one with
                     someone on Twitter.
                   </p>
-                  <button
+                  <Button
+                    type="primary"
+                    shape="round"
+                    icon={<MessageOutlined />}
+                    size="large"
                     className="start-message-btn"
+                    style={{
+                      backgroundColor: '#1d9bf0',
+                      borderColor: '#1d9bf0'
+                    }}
                     onClick={() => {
                       // Focus the search input in the ChatList component
                       const searchInput = document.querySelector(
@@ -174,14 +199,14 @@ const MessagingApp = () => {
                     }}
                   >
                     New Message
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
           </div>
-        </div>
+        </Content>
       </div>
-    </div>
+    </Layout>
   );
 };
 
