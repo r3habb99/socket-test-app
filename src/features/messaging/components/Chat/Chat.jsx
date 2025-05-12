@@ -4,6 +4,23 @@ import { getMessagesForChat } from "../../api/messagingApi";
 import { UserProfileModal } from "../UserProfileModal";
 import { getImageUrl } from "../../../../shared/utils";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
+import {
+  Layout,
+  Button,
+  Avatar,
+  Input,
+  Spin,
+  Empty,
+  Typography
+} from "antd";
+import {
+  ArrowLeftOutlined,
+  SearchOutlined,
+  InfoCircleOutlined,
+  SendOutlined,
+  PictureOutlined,
+  MailOutlined
+} from "@ant-design/icons";
 import "./Chat.css";
 
 export const Chat = ({ selectedChat, onBackClick }) => {
@@ -378,34 +395,39 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
   return (
     <div className="chat-container">
-      <div className="chat-header-container">
+      <Layout.Header className="chat-header-container">
         <div className="chat-header-left">
-          <div className="back-button" onClick={onBackClick}>
-            <span>←</span>
-          </div>
-          <div className="chat-header-avatar">
-            {chatPartner && chatPartner.profilePic ? (
-              <img
-                src={chatPartner.profilePic.startsWith("http") ? chatPartner.profilePic : getImageUrl(chatPartner.profilePic, DEFAULT_PROFILE_PIC)}
-                alt={chatPartner.username || "User"}
-                className="chat-header-avatar-img"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = DEFAULT_PROFILE_PIC;
-                }}
-              />
-            ) : (
-              <div className="chat-header-avatar-text">
-                {selectedChat.isGroupChat
-                  ? (selectedChat.chatName || "G").charAt(0).toUpperCase()
-                  : chatPartner
-                    ? chatPartner.username.charAt(0).toUpperCase()
-                    : "?"}
-              </div>
-            )}
-          </div>
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
+            className="back-button"
+            onClick={onBackClick}
+          />
+
+          {chatPartner && chatPartner.profilePic ? (
+            <Avatar
+              src={chatPartner.profilePic.startsWith("http") ? chatPartner.profilePic : getImageUrl(chatPartner.profilePic, DEFAULT_PROFILE_PIC)}
+              alt={chatPartner.username || "User"}
+              className="chat-header-avatar"
+              size={40}
+              onError={() => true}
+            />
+          ) : (
+            <Avatar
+              className="chat-header-avatar"
+              size={40}
+              style={{ backgroundColor: '#1d9bf0' }}
+            >
+              {selectedChat.isGroupChat
+                ? (selectedChat.chatName || "G").charAt(0).toUpperCase()
+                : chatPartner
+                  ? chatPartner.username.charAt(0).toUpperCase()
+                  : "?"}
+            </Avatar>
+          )}
+
           <div className="chat-header-details">
-            <div className="chat-header-name">
+            <Typography.Text strong className="chat-header-name">
               {selectedChat.isGroupChat
                 ? selectedChat.chatName || "Group Chat"
                 : chatPartner
@@ -413,20 +435,13 @@ export const Chat = ({ selectedChat, onBackClick }) => {
                     ? `${chatPartner.firstName} ${chatPartner.lastName}`
                     : chatPartner.username
                   : "Chat"}
-            </div>
+            </Typography.Text>
             <div className="chat-header-status">
               {selectedChat.isGroupChat
                 ? `${selectedChat.users?.length || 0} people`
                 : "Active now"}
               {Object.keys(socketContext.typingUsers).length > 0 && (
-                <span
-                  className="typing-indicator"
-                  style={{
-                    color: "#1DA1F2",
-                    fontWeight: "bold",
-                    animation: "pulse 1.5s infinite",
-                  }}
-                >
+                <span className="typing-indicator">
                   {" • "}
                   {Object.values(socketContext.typingUsers)
                     .map((user) => user.username)
@@ -437,28 +452,18 @@ export const Chat = ({ selectedChat, onBackClick }) => {
                 </span>
               )}
             </div>
-
-            {/* Add a style for the typing animation */}
-            <style jsx="true">{`
-              @keyframes pulse {
-                0% {
-                  opacity: 0.6;
-                }
-                50% {
-                  opacity: 1;
-                }
-                100% {
-                  opacity: 0.6;
-                }
-              }
-            `}</style>
           </div>
         </div>
         <div className="chat-header-actions">
-          <div className="header-icon" title="Search">
-            <i className="fa-solid fa-search"></i>
-          </div>
-          <div
+          <Button
+            type="text"
+            icon={<SearchOutlined />}
+            className="header-icon"
+            title="Search"
+          />
+          <Button
+            type="text"
+            icon={<InfoCircleOutlined />}
             className="header-icon"
             title="Info"
             onClick={() => {
@@ -466,28 +471,37 @@ export const Chat = ({ selectedChat, onBackClick }) => {
               if (selectedChat.isGroupChat) {
                 // For group chats, show group info
                 // You could implement group info modal here
+                
               } else {
                 // For 1:1 chats, show the chat partner's profile
                 setShowProfileModal(true);
               }
             }}
-          >
-            <i className="fa-solid fa-info-circle"></i>
-          </div>
+          />
         </div>
-      </div>
+      </Layout.Header>
 
       <div className="messages-container">
         {loadingMessages ? (
-          <div className="loading-messages">Loading messages...</div>
+          <div className="loading-messages">
+            <Spin size="large" tip="Loading messages..." />
+          </div>
         ) : socketContext.messages?.length === 0 ? (
           <div className="no-messages">
             <div className="no-messages-content">
-              <i className="fa-solid fa-envelope no-messages-icon"></i>
-              <p>No messages yet</p>
-              <p className="no-messages-hint">
-                Send a message to start the conversation
-              </p>
+              <Empty
+                image={<MailOutlined className="no-messages-icon" />}
+                description={
+                  <div>
+                    <Typography.Text strong style={{ fontSize: '16px', display: 'block' }}>
+                      No messages yet
+                    </Typography.Text>
+                    <Typography.Text type="secondary" className="no-messages-hint">
+                      Send a message to start the conversation
+                    </Typography.Text>
+                  </div>
+                }
+              />
             </div>
           </div>
         ) : (
@@ -553,28 +567,36 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
       <div className="input-container">
         <div className="message-actions">
-          <button className="message-action-button" title="Add photo">
-            🖼️
-          </button>
-          <button className="message-action-button" title="Add GIF">
+          <Button
+            type="text"
+            className="message-action-button"
+            title="Add photo"
+            icon={<PictureOutlined />}
+          />
+          <Button
+            type="text"
+            className="message-action-button"
+            title="Add GIF"
+          >
             GIF
-          </button>
+          </Button>
         </div>
-        <input
-          type="text"
-          name="message"
+        <Input
           placeholder="Start a new message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyPress}
+          bordered={false}
+          className="message-input"
         />
-        <button
+        <Button
+          type="primary"
+          shape="circle"
+          icon={<SendOutlined />}
           className="send-btn"
           onClick={handleSendMessage}
           disabled={!message.trim() || !socketContext.connected}
-        >
-          <i className="fa-solid fa-paper-plane"></i>
-        </button>
+        />
       </div>
 
       {/* User Profile Modal */}

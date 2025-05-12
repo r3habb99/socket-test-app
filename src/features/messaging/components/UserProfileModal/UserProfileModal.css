@@ -80,6 +80,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 25px !important;
 }
 
 .profile-avatar-img.ant-avatar {
@@ -87,6 +88,17 @@
   flex-shrink: 0;
   border: 2px solid #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 25px !important;
+}
+
+/* Ensure avatar image has the same border-radius */
+.profile-avatar.ant-avatar > img,
+.profile-avatar-img.ant-avatar > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 25px !important;
 }
 
 .profile-details {
