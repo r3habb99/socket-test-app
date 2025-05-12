@@ -96,6 +96,33 @@
   margin-right: 4px;
 }
 
+/* Clickable elements */
+.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.clickable:hover {
+  opacity: 0.8;
+}
+
+.post-user-name.clickable:hover {
+  text-decoration: none;
+}
+
+.post-user-handle.clickable:hover {
+  text-decoration: none;
+  color: #1d9bf0;
+}
+
+.post-avatar.clickable {
+  transition: transform 0.2s ease;
+}
+
+.post-avatar.clickable:hover {
+  transform: scale(1.05);
+}
+
 .post-timestamp {
   color: #6e767d;
 }

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { deletePost, likePost, retweetPost } from "../../api/postApi";
+
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
 import { getImageUrl } from "../../../../shared/utils/imageUtils";
 import { ImageProxy } from "../../../../shared/components";
@@ -11,6 +13,7 @@ import "./PostList.css";
 export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
   const [actionInProgress, setActionInProgress] = useState({});
   const { connected, emit } = useSocketContext();
+  const navigate = useNavigate();
 
   const handleLike = async (postId) => {
     if (actionInProgress[postId]) return;
@@ -91,7 +94,7 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
 
       // Handle response with data (the server returned the new retweet)
       if (response.data) {
-        
+
         const newRetweet = response.data.data.post;
         console.log(newRetweet, "newRetweetId");
         // Ensure we have a valid post object
@@ -215,7 +218,11 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
         {original && <div className="retweet-label"><FaRetweet /> You retweeted</div>}
 
         <div className="post-header">
-          <div className="post-avatar">
+          <div
+            className="post-avatar clickable"
+            onClick={() => navigateToUserProfile(postedByUser)}
+            title={`View ${postedByUser.username}'s profile`}
+          >
             <ImageProxy
               src={postedByUser.profilePic ? getImageUrl(postedByUser.profilePic, DEFAULT_PROFILE_PIC) : DEFAULT_PROFILE_PIC}
               alt={postedByUser.username || "User"}
@@ -228,11 +235,19 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
           </div>
           <div className="post-user-info">
             <div className="post-user-name-container">
-              <span className="post-user-name">
+              <span
+                className="post-user-name clickable"
+                onClick={() => navigateToUserProfile(postedByUser)}
+                title={`View ${postedByUser.username}'s profile`}
+              >
                 {postedByUser.firstName} {postedByUser.lastName || "User"}
                 {isVerified && <span className="verified-badge">✓</span>}
               </span>
-              <span className="post-user-handle">
+              <span
+                className="post-user-handle clickable"
+                onClick={() => navigateToUserProfile(postedByUser)}
+                title={`View ${postedByUser.username}'s profile`}
+              >
                 @{original?.postedBy?.username || postedByUser.username || "user"}
               </span>
               <span className="post-timestamp">{timestamp}</span>
@@ -359,6 +374,22 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
     }
 
     return false;
+  };
+
+  // Function to navigate to user profile
+  const navigateToUserProfile = (user) => {
+    if (!user) return;
+
+    // Get the user ID (either id or _id)
+    const userId = user.id || user._id;
+
+    if (!userId) {
+      toast.error("Could not find user information");
+      return;
+    }
+
+    // Navigate to the profile page
+    navigate(`/profile/${userId}`);
   };
 
   return (
