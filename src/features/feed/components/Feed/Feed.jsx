@@ -1,37 +1,58 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { useAuthContext } from "../../../../core/providers/AuthProvider";
 import { getPosts } from "../../api/postApi";
 import { CreatePost } from "../CreatePost";
 import { PostList } from "../PostList";
+import { toast } from "react-toastify";
 import "./Feed.css";
 
 const Feed = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const [lastPostId, setLastPostId] = useState(null);
   const { connected, subscribe } = useSocketContext();
   const { isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
+  const observerRef = useRef(null);
 
-  const fetchPosts = async () => {
+  // Define fetchPosts first, then loadMorePosts will reference it
+  const fetchPosts = async (resetPosts = true) => {
     if (!isAuthenticated()) {
       console.warn("User not authenticated, redirecting to login");
       navigate("/login");
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    if (resetPosts) {
+      setLoading(true);
+      setError(null);
+      setPage(1);
+      setLastPostId(null);
+      setHasMore(true);
+    } else {
+      setLoadingMore(true);
+    }
 
     try {
-      const response = await getPosts();
+      // Prepare pagination options
+      const options = {};
+      if (!resetPosts) {
+        options.page = page;
+        if (lastPostId) options.lastPostId = lastPostId;
+      }
+
+      const response = await getPosts(options);
 
       if (response.error) {
         console.error("Error in posts response:", response.message);
         setError(response.message || "Failed to load posts");
-        setPosts([]);
+        if (resetPosts) setPosts([]);
 
         // If it's an authentication error, redirect to login
         if (response.status === 401) {
@@ -41,32 +62,38 @@ const Feed = () => {
         return;
       }
 
-      // Handle nested response structure
+      // Handle the new response structure
       const responseData = response.data;
 
-      // Try to extract posts from various possible locations
-      let postsData;
+      if (responseData && responseData.posts && Array.isArray(responseData.posts)) {
+        // We have posts in the expected format
+        const newPosts = responseData.posts;
 
-      if (responseData?.data?.data && Array.isArray(responseData.data.data)) {
-        // Deeply nested: { data: { data: [...] } }
-        postsData = responseData.data.data;
-      } else if (responseData?.data && Array.isArray(responseData.data)) {
-        // Nested: { data: [...] }
-        postsData = responseData.data;
-      } else if (Array.isArray(responseData)) {
-        // Direct: [...]
-        postsData = responseData;
-      } else if (response.status === 204) {
-        // No content response
-        postsData = [];
-      }
+        // Update pagination state
+        const pagination = responseData.pagination || { has_more: false };
+        setHasMore(pagination.has_more);
 
-      if (postsData) {
-        setPosts(postsData);
+        // Update posts state
+        if (resetPosts) {
+          setPosts(newPosts);
+        } else {
+          setPosts(prevPosts => [...prevPosts, ...newPosts]);
+        }
+
+        // Update pagination tracking
+        if (newPosts.length > 0) {
+          const lastPost = newPosts[newPosts.length - 1];
+          setLastPostId(lastPost._id);
+          setPage(prevPage => prevPage + 1);
+        }
       } else {
-        setPosts([]);
         console.error("Unexpected response structure:", response);
-        setError("Failed to load posts. Please try again.");
+        if (resetPosts) {
+          setPosts([]);
+          setError("Failed to load posts. Please try again.");
+        } else {
+          toast.error("Failed to load more posts. Please try again.");
+        }
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -77,11 +104,39 @@ const Feed = () => {
         navigate("/login?reason=session_expired");
       }
 
-      setError("Failed to load posts. Please try again.");
+      if (resetPosts) {
+        setError("Failed to load posts. Please try again.");
+      } else {
+        toast.error("Failed to load more posts. Please try again.");
+      }
     } finally {
-      setLoading(false);
+      if (resetPosts) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
     }
   };
+
+  // Function to load more posts when scrolling
+  const loadMorePosts = () => {
+    if (loading || loadingMore || !hasMore) return;
+    fetchPosts(false);
+  };
+
+  // Set up the intersection observer for infinite scrolling
+  const loadMoreTriggerRef = useCallback(node => {
+    if (loading || loadingMore) return;
+    if (observerRef.current) observerRef.current.disconnect();
+
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        loadMorePosts();
+      }
+    });
+
+    if (node) observerRef.current.observe(node);
+  }, [loading, loadingMore, hasMore]);
 
   useEffect(() => {
     fetchPosts();
@@ -142,18 +197,32 @@ const Feed = () => {
 
   return (
     <div className="feed-container">
-      <CreatePost onPostCreated={fetchPosts} />
+      <CreatePost onPostCreated={() => fetchPosts(true)} />
       {loading ? (
         <div className="loading">Loading posts...</div>
       ) : error ? (
         <div className="error-message">
           {error}
-          <button onClick={fetchPosts} className="retry-button">
+          <button onClick={() => fetchPosts(true)} className="retry-button">
             Retry
           </button>
         </div>
       ) : (
-        <PostList posts={posts} setPosts={setPosts} onPostsUpdated={fetchPosts} />
+        <>
+          <PostList posts={posts} setPosts={setPosts} onPostsUpdated={() => fetchPosts(true)} />
+
+          {/* Load more trigger element */}
+          {posts.length > 0 && (
+            <div ref={loadMoreTriggerRef} className="load-more-trigger">
+              {loadingMore && (
+                <div className="loading-more">Loading more posts...</div>
+              )}
+              {!hasMore && posts.length > 0 && (
+                <div className="no-more-posts">No more posts to load</div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

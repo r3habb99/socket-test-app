@@ -274,7 +274,10 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
   };
 
   // Helper function to get post ID (handles both id and _id)
-  const getPostId = (post) => post.id || post._id;
+  const getPostId = (post) => {
+    if (!post) return null;
+    return post.id || post._id;
+  };
 
   // Helper function to check if post is liked
   const isPostLiked = (post) => {

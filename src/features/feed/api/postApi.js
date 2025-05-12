@@ -6,10 +6,14 @@ import {
 } from "../../../shared/api";
 
 /**
- * Get all posts
- * @returns {Promise<Object>} Response object
+ * Get all posts with pagination support
+ * @param {Object} options - Options for fetching posts
+ * @param {number} [options.page=1] - Page number to fetch
+ * @param {number} [options.limit=10] - Number of posts per page
+ * @param {string} [options.lastPostId] - ID of the last post for cursor-based pagination
+ * @returns {Promise<Object>} Response object with posts and pagination info
  */
-export const getPosts = async () => {
+export const getPosts = async (options = {}) => {
   try {
     // Check if token exists
     const token = localStorage.getItem("token");
@@ -22,13 +26,39 @@ export const getPosts = async () => {
       };
     }
 
+    // Set up query parameters for pagination
+    const params = {};
+    if (options.page) params.page = options.page;
+    if (options.limit) params.limit = options.limit;
+    if (options.lastPostId) params.lastPostId = options.lastPostId;
+
     // Add explicit headers to ensure token is sent
     const response = await apiClient.get(endpoints.post.getAll, {
       headers: {
         Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`
-      }
+      },
+      params
     });
-    return handleApiResponse(response);
+
+    const apiResponse = handleApiResponse(response);
+
+    // Extract posts and pagination info from the new nested structure
+    if (!apiResponse.error && apiResponse.data && apiResponse.data.data) {
+      // Handle the new structure: { error: false, data: { statusCode, message, data: { posts, pagination } } }
+      const responseData = apiResponse.data.data;
+
+      if (responseData.posts && Array.isArray(responseData.posts)) {
+        return {
+          ...apiResponse,
+          data: {
+            posts: responseData.posts,
+            pagination: responseData.pagination || { has_more: false }
+          }
+        };
+      }
+    }
+
+    return apiResponse;
   } catch (error) {
     console.error("Error fetching posts:", error);
 
