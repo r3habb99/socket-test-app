@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { Search } from "../Search";
 import "./Sidebar.css";
 
 /**
@@ -24,6 +25,10 @@ export const Sidebar = ({ links, sidebarOpen, onLogout }) => {
       <div className="sidebar-header">
         <h2>Twitter Clone</h2>
       </div>
+
+      {/* Search Component */}
+      <Search />
+
       <nav className="sidebar-nav">
         <ul>
           {links.map((link) => (

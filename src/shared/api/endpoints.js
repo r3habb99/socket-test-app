@@ -13,6 +13,7 @@ const endpoints = {
     following: (id) => `/user/${id}/following`,
     follow: (id) => `/user/${id}/follow`,
     changePassword: "/user/change-password",
+    search: "/user/search",
   },
   post: {
     create: "/post",

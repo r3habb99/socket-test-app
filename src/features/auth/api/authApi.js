@@ -175,12 +175,16 @@ export const fetchUserProfile = async () => {
 
 /**
  * Search for users
- * @param {string} query - Search query
+ * @param {Object} searchParams - Search parameters
+ * @param {string} [searchParams.firstName] - First name to search for
+ * @param {string} [searchParams.lastName] - Last name to search for
+ * @param {string} [searchParams.username] - Username to search for
+ * @param {string} [searchParams.email] - Email to search for
  * @returns {Promise<Object>} Response object
  */
-export const searchUsers = async (query) => {
+export const searchUsers = async (searchParams) => {
   try {
-    const response = await apiClient.get("/user", { params: { query } });
+    const response = await apiClient.get(endpoints.user.search, { params: searchParams });
     return handleApiResponse(response);
   } catch (error) {
     console.error("Error searching users:", error);
