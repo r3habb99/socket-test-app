@@ -3,6 +3,7 @@ import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { createPost } from "../../api/postApi";
 import { toast } from "react-toastify";
 import { FaImage, FaTimes } from "react-icons/fa";
+import { Input, Button, Select, Alert } from "antd";
 import "./CreatePost.css";
 
 export const CreatePost = ({ onPostCreated }) => {
@@ -111,28 +112,28 @@ export const CreatePost = ({ onPostCreated }) => {
   return (
     <div className="create-post-container">
       <h1 className="create-post-title">Home</h1>
-      {error && <p className="error">{error}</p>}
+      {error && <Alert message={error} type="error" className="error" />}
       <form className="create-post-form" onSubmit={handleSubmit}>
-        <textarea
+        <Input.TextArea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="What's happening?"
           disabled={isSubmitting}
           rows={4}
+          className="create-post-form textarea"
         />
 
         {/* Media preview */}
         {mediaPreview && (
           <div className="media-preview-container">
             <img src={mediaPreview} alt="Preview" className="media-preview" />
-            <button
+            <Button
               type="button"
               className="remove-media-btn"
               onClick={handleRemoveMedia}
               aria-label="Remove media"
-            >
-              <FaTimes />
-            </button>
+              icon={<FaTimes />}
+            />
           </div>
         )}
 
@@ -149,16 +150,15 @@ export const CreatePost = ({ onPostCreated }) => {
             />
 
             {/* Media upload button */}
-            <button
-              type="button"
+            <Button
+              type="text"
               className="media-upload-btn"
               onClick={() => fileInputRef.current.click()}
               disabled={isSubmitting}
               aria-label="Add image"
               title="Add image"
-            >
-              <FaImage />
-            </button>
+              icon={<FaImage />}
+            />
 
             {/* Visibility selector */}
             <select
@@ -174,13 +174,13 @@ export const CreatePost = ({ onPostCreated }) => {
           </div>
 
           {/* Post button */}
-          <button
+          <Button
             type="submit"
             className="post-btn"
             disabled={isSubmitting || (!content.trim() && !media)}
           >
             {isSubmitting ? "Posting..." : "Tweet"}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

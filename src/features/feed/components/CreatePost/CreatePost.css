@@ -44,6 +44,10 @@
   overflow: hidden;
   max-height: 300px;
   border: 1px solid #2f3336;
+  -webkit-border-radius: 16px;
+  -moz-border-radius: 16px;
+  -ms-border-radius: 16px;
+  -o-border-radius: 16px;
 }
 
 .media-preview {
@@ -62,8 +66,8 @@
   color: white;
   border: none;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 45px;
+  height: 45px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -113,7 +117,7 @@
   border: none;
   border-radius: 50%;
   width: 36px;
-  height: 36px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -127,7 +131,7 @@
   content: "";
   position: absolute;
   width: 36px;
-  height: 36px;
+  height: 32px;
   border-radius: 50%;
   background-color: transparent;
   transition: background-color 0.2s;
