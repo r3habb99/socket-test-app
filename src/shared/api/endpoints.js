@@ -12,7 +12,6 @@ const endpoints = {
     followers: (id) => `/user/${id}/followers`,
     following: (id) => `/user/${id}/following`,
     follow: (id) => `/user/${id}/follow`,
-    unfollow: (id) => `/user/${id}/unfollow`,
     changePassword: "/user/change-password",
   },
   post: {

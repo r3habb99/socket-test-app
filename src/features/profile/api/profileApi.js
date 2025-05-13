@@ -21,7 +21,7 @@ export const fetchUserProfileById = async (userId) => {
  */
 export const followUser = async (userId) => {
   try {
-    const response = await apiClient.post(endpoints.user.follow(userId));
+    const response = await apiClient.put(endpoints.user.follow(userId), {});
     return handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);
