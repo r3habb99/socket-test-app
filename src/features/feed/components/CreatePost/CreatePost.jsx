@@ -3,7 +3,7 @@ import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { createPost } from "../../api/postApi";
 import { toast } from "react-toastify";
 import { FaImage, FaTimes } from "react-icons/fa";
-import { Input, Button, Select, Alert } from "antd";
+import { Input, Button, Alert } from "antd";
 import "./CreatePost.css";
 
 export const CreatePost = ({ onPostCreated }) => {
