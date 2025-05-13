@@ -1,0 +1,35 @@
+/* DeleteButton.css - Specific styles for the delete button component */
+
+/* Container for delete button */
+.delete-button-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: 40px;
+}
+
+/* Delete Button specific styles */
+.delete-button-container .delete-button {
+  color: #6e767d;
+}
+
+.delete-button-container:hover .delete-button {
+  color: #f4212e;
+}
+
+.delete-button-container .delete-button::before {
+  background-color: transparent;
+}
+
+.delete-button-container:hover .delete-button::before {
+  background-color: rgba(244, 33, 46, 0.1);
+}
+
+/* Count styles */
+.delete-button-container .post-action-count {
+  font-size: 13px;
+  margin-left: 4px;
+  color: #6e767d;
+  position: relative;
+  z-index: 2;
+}

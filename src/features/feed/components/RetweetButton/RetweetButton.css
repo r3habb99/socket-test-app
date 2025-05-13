@@ -1,0 +1,64 @@
+/* RetweetButton.css - Specific styles for the retweet button component */
+
+/* Container for retweet button and count */
+.retweet-button-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: 60px;
+}
+
+/* Retweet Button specific styles */
+.retweet-button-container .retweet-button {
+  color: #6e767d;
+}
+
+.retweet-button-container:hover .retweet-button {
+  color: #00ba7c;
+}
+
+.retweet-button-container .retweet-button::before {
+  background-color: transparent;
+}
+
+.retweet-button-container:hover .retweet-button::before {
+  background-color: rgba(0, 186, 124, 0.1);
+}
+
+/* Retweeted state */
+.retweet-button.retweeted {
+  color: #00ba7c !important;
+}
+
+/* Count color when retweeted */
+.retweet-button-container:has(.retweet-button.retweeted) .post-action-count {
+  color: #00ba7c;
+}
+
+/* Count color on hover */
+.retweet-button-container:hover .post-action-count {
+  color: #00ba7c;
+}
+
+/* Count styles */
+.retweet-button-container .post-action-count {
+  font-size: 13px;
+  margin-left: 4px;
+  color: #6e767d;
+  position: relative;
+  z-index: 2;
+}
+
+/* Retweet label in posts */
+.retweet-label {
+  display: flex;
+  align-items: center;
+  color: #6e767d;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.retweet-label svg {
+  margin-right: 8px;
+  font-size: 14px;
+}

@@ -1,4 +1,6 @@
-/* PostList.css */
+/* PostList.merged.css - Combined styles for PostList component */
+
+/* Container styles */
 .post-list-container {
   width: 100%;
   margin: 0 auto;
@@ -40,6 +42,19 @@
   background-color: rgba(255, 255, 255, 0.03);
 }
 
+/* Ant Design Card Override */
+.post-card.ant-card {
+  background-color: #fff;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s;
+}
+
+.post-card.ant-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 /* Post Header Styles */
 .post-header {
   display: flex;
@@ -57,6 +72,13 @@
   height: 48px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+/* Ant Design Avatar Override */
+.avatar.ant-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
 }
 
 .post-user-info {
@@ -132,7 +154,17 @@
   margin: 0 4px;
 }
 
+/* Post Content Styles */
 .post-content {
+  color: #000;
+  margin: 4px 0 12px;
+  line-height: 1.3;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* Typography styles for Ant Design */
+.post-content.ant-typography {
   color: #000;
   margin: 4px 0 12px;
   line-height: 1.3;
@@ -149,25 +181,19 @@
   text-decoration: underline;
 }
 
-/* Retweet Label */
-.retweet-label {
-  display: flex;
-  align-items: center;
-  color: #6e767d;
-  font-size: 13px;
-  margin-bottom: 8px;
+.hashtag.ant-typography {
+  color: #1d9bf0;
+  cursor: pointer;
 }
 
-.retweet-label svg {
-  margin-right: 8px;
-  font-size: 14px;
+.hashtag.ant-typography:hover {
+  text-decoration: underline;
 }
 
 /* Post Actions */
 .post-actions {
   display: flex;
   justify-content: space-between;
-  /* max-width: 425px; */
   margin-top: 12px;
   padding: 0 8px;
 }
@@ -179,6 +205,7 @@
   min-width: 60px;
 }
 
+/* Regular button styles */
 .post-action-button {
   display: flex;
   align-items: center;
@@ -186,14 +213,11 @@
   background: transparent;
   border: none;
   color: #6e767d;
-  font-size: 48px;
-  width: 80px;
-  height: 60px;
-  padding: 0;
+  font-size: 18px;
+  padding: 8px;
   cursor: pointer;
   transition: color 0.2s;
   position: relative;
-  z-index: 2;
 }
 
 .post-action-button::before {
@@ -211,6 +235,41 @@
 }
 
 .post-action-button svg {
+  font-size: 18px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ant Design button override */
+.post-action-button.ant-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #6e767d;
+  font-size: 18px;
+  padding: 8px;
+  cursor: pointer;
+  transition: color 0.2s;
+  position: relative;
+}
+
+.post-action-button.ant-btn::before {
+  content: "";
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: transparent;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  transition: background-color 0.2s;
+}
+
+.post-action-button.ant-btn svg {
   font-size: 18px;
   position: relative;
   z-index: 1;
@@ -237,48 +296,6 @@
   color: #1d9bf0;
 }
 
-/* Retweet Button */
-.post-action-group:hover .retweet-button {
-  color: #00ba7c;
-}
-
-.post-action-group:hover .retweet-button::before {
-  background-color: rgba(0, 186, 124, 0.1);
-}
-
-.retweet-button.retweeted {
-  color: #00ba7c;
-}
-
-.post-action-group:has(.retweet-button.retweeted) .post-action-count {
-  color: #00ba7c;
-}
-
-.post-action-group:hover:has(.retweet-button) .post-action-count {
-  color: #00ba7c;
-}
-
-/* Like Button */
-.post-action-group:hover .like-button {
-  color: #f91880;
-}
-
-.post-action-group:hover .like-button::before {
-  background-color: rgba(249, 24, 128, 0.1);
-}
-
-.like-button.liked {
-  color: #f91880;
-}
-
-.post-action-group:has(.like-button.liked) .post-action-count {
-  color: #f91880;
-}
-
-.post-action-group:hover:has(.like-button) .post-action-count {
-  color: #f91880;
-}
-
 /* Share Button */
 .post-action-group:hover .share-button {
   color: #1d9bf0;
@@ -288,17 +305,13 @@
   background-color: rgba(29, 155, 240, 0.1);
 }
 
-/* Delete Button */
-.post-action-group:hover .delete-button {
-  color: #f4212e;
-}
-
-.post-action-group:hover .delete-button::before {
-  background-color: rgba(244, 33, 46, 0.1);
-}
-
 /* Disabled Button */
 .post-action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.post-action-button.ant-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -320,11 +333,18 @@
   }
 }
 
+/* Empty state */
 .no-post {
   text-align: center;
   padding: 2rem;
   color: #6e767d;
   background-color: #000;
+}
+
+.no-post.ant-typography {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #6e767d;
 }
 
 /* Post Media Styles */
@@ -348,4 +368,14 @@
   max-height: 400px;
   object-fit: contain;
   display: block;
+}
+
+/* Ant Design List styles */
+.ant-list {
+  width: 100%;
+}
+
+.ant-list-item {
+  padding: 0;
+  margin-bottom: 12px;
 }
