@@ -1,8 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useMessaging } from "../../hooks";
-import { searchUsers } from "../../../auth/api";
-import { customToast, getImageUrl } from "../../../../shared/utils";
+import { getImageUrl, customToast } from "../../../../shared/utils";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
+import {
+  formatChatTime,
+  getChatName,
+  getChatUsername,
+  handleUserSearch,
+  startChatWithUser as startChat
+} from "./ChatListHelpers";
 import {
   Input,
   Typography,
@@ -145,25 +151,8 @@ export const ChatList = ({
     setShowSearchResults(true);
 
     try {
-      const response = await searchUsers(query);
-
-      // Handle nested data structure
-      let results = [];
-
-      if (!response.error) {
-        // Check if response.data contains a nested data property
-        if (response.data && response.data.data) {
-          // API returns { data: { data: [...] } }
-          results = response.data.data;
-        } else if (Array.isArray(response.data)) {
-          // API returns { data: [...] }
-          results = response.data;
-        } else {
-          console.warn("Unexpected search results format:", response.data);
-        }
-      }
-
-      setSearchResults(Array.isArray(results) ? results : []);
+      const results = await handleUserSearch(query);
+      setSearchResults(results);
     } catch (error) {
       console.error("Error searching users:", error);
       customToast.error("Error searching for users. Please try again.");
@@ -191,71 +180,15 @@ export const ChatList = ({
 
   // Function to start a chat with a user from search results
   const startChatWithUser = async (user) => {
-    try {
-      // Ensure we have a valid user ID
-      if (!user) {
-        console.error("Invalid user object:", user);
-        customToast.error("Invalid user. Please try again.");
-        return;
-      }
+    // Create a function to clear search state
+    const clearSearch = () => {
+      setSearchQuery("");
+      setSearchResults([]);
+      setShowSearchResults(false);
+    };
 
-      const userId = user._id || user.id;
-      if (!userId) {
-        console.error("User object has no ID:", user);
-        customToast.error("User has no ID. Please try again.");
-        return;
-      }
-
-
-      const result = await createChat({ userId });
-
-      if (result.success) {
-        // Select the new chat
-        onSelectChat(result.chat);
-
-        // Clear search
-        setSearchQuery("");
-        setSearchResults([]);
-        setShowSearchResults(false);
-
-        // Show success toast
-        customToast.success(`Chat started with ${user.username}`);
-      } else {
-        console.error("Failed to create chat:", result);
-        customToast.error("Failed to create chat. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error creating chat:", error);
-      customToast.error("Failed to create chat. Please try again.");
-    }
-  };
-
-  // Function to format date for chat list
-  const formatChatTime = (timestamp) => {
-    if (!timestamp) return "";
-
-    const date = new Date(timestamp);
-    const now = new Date();
-
-    // If today, show time
-    if (date.toDateString() === now.toDateString()) {
-      return date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
-
-    // If this year, show month/day
-    if (date.getFullYear() === now.getFullYear()) {
-      return date.toLocaleDateString([], { month: "numeric", day: "numeric" });
-    }
-
-    // Otherwise show month/day/year
-    return date.toLocaleDateString([], {
-      month: "numeric",
-      day: "numeric",
-      year: "2-digit",
-    });
+    // Use the helper function
+    await startChat(user, chats, createChat, onSelectChat, clearSearch);
   };
 
   const { Title, Text } = Typography;
@@ -296,41 +229,6 @@ export const ChatList = ({
     );
   };
 
-  // Function to get chat name
-  const getChatName = (chat) => {
-    // For group chats, use the chat name
-    if (chat.isGroupChat) {
-      return chat.chatName || "Group Chat";
-    }
-
-    // For 1:1 chats, find the other user (not the current logged-in user)
-    const currentUserId = localStorage.getItem("userId");
-    const otherUser = chat.users?.find(
-      (user) => String(user._id || user.id) !== String(currentUserId)
-    );
-
-    // Return the other user's name (first name + last name if available)
-    if (otherUser) {
-      if (otherUser.firstName && otherUser.lastName) {
-        return `${otherUser.firstName} ${otherUser.lastName}`;
-      }
-      return otherUser.username;
-    }
-    return "Unknown User";
-  };
-
-  // Function to get username for non-group chats
-  const getChatUsername = (chat) => {
-    if (chat.isGroupChat) return null;
-
-    const currentUserId = localStorage.getItem("userId");
-    const otherUser = chat.users?.find(
-      (user) => String(user._id || user.id) !== String(currentUserId)
-    );
-
-    return otherUser ? `@${otherUser.username || "user"}` : null;
-  };
-
   return (
     <div className="chatlist-container">
       <Title level={4} className="chatlist-header">Messages</Title>
@@ -362,7 +260,7 @@ export const ChatList = ({
           <div className="search-results">
             {isSearching ? (
               <div className="loading-message">
-                <Spin size="small" /> Searching...
+                <Spin size="small" /> <span>Searching...</span>
               </div>
             ) : searchQuery.trim() === "" ? (
               <div className="search-instructions">
@@ -382,19 +280,25 @@ export const ChatList = ({
                   >
                     <Avatar
                       src={user.profilePic ? getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC) : null}
-                      alt={user.username}
+                      alt={user.username || 'User'}
                       className={user.profilePic ? "search-result-avatar-img" : "search-result-avatar"}
                       icon={!user.profilePic ? <UserOutlined /> : null}
                       style={!user.profilePic ? { backgroundColor: '#1d9bf0' } : {}}
                     >
-                      {!user.profilePic ? user.username.charAt(0).toUpperCase() : null}
+                      {!user.profilePic && user.username ? user.username.charAt(0).toUpperCase() :
+                       !user.profilePic && user.firstName ? user.firstName.charAt(0).toUpperCase() :
+                       !user.profilePic ? <UserOutlined /> : null}
                     </Avatar>
                     <div className="search-result-details">
                       <div className="search-result-name">
-                        {user.firstName} {user.lastName}
+                        {user.firstName || ''} {user.lastName || ''}
+                        {!user.firstName && !user.lastName && user.username && (
+                          <span>{user.username}</span>
+                        )}
                       </div>
                       <div className="search-result-username">
-                        @{user.username}
+                        {user.username && `@${user.username}`}
+                        {!user.username && user.email && user.email}
                       </div>
                     </div>
                   </List.Item>
@@ -424,7 +328,7 @@ export const ChatList = ({
             // Get timestamp from latest message or chat creation time
             const timestamp =
               chat.latestMessage?.createdAt || chat.createdAt || null;
-            // Format the time for display
+            // Format the time for display using the imported helper function
             const timeDisplay = formatChatTime(timestamp);
 
             return (
@@ -471,7 +375,7 @@ export const ChatList = ({
       {!selectedChatId && (
         <FloatButton
           icon={
-            
+
               <MailOutlined style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
           }
           type="primary"
@@ -479,7 +383,7 @@ export const ChatList = ({
           onClick={() => {
             // Focus the search input and show search UI
             const searchInput = document.querySelector(
-              ".chatlist-search-input input"
+              ".chatlist-search .ant-input"
             );
             if (searchInput) {
               searchInput.focus();

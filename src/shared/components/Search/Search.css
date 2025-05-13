@@ -102,6 +102,18 @@
   border-bottom: 1px solid #eff3f4;
 }
 
+.sidebar-search-result-avatar-container {
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.sidebar-search-result-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .sidebar-search-result-item.ant-list-item:hover {
   background-color: #f7f9fa;
 }
@@ -126,18 +138,45 @@
 }
 
 .sidebar-search-result-item .ant-list-item-meta-title {
-  margin-bottom: 2px;
-  color: #0f1419;
-  font-weight: 700;
-  font-size: 15px;
-  line-height: 1.3;
-  margin: 0;
+  margin-bottom: 2px !important;
+  color: #0f1419 !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  display: block !important;
+}
+
+.sidebar-search-result-name {
+  display: block !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  color: #0f1419 !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
 }
 
 .sidebar-search-result-item .ant-list-item-meta-description {
-  color: #536471;
-  font-size: 13px;
-  line-height: 1.3;
+  color: #536471 !important;
+  font-size: 13px !important;
+  line-height: 1.3 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  display: block !important;
+}
+
+.sidebar-search-result-username {
+  display: block !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  color: #536471 !important;
+  font-size: 13px !important;
 }
 
 .sidebar-search-result-avatar {
@@ -163,24 +202,6 @@
 .sidebar-search-result-details {
   flex: 1;
   min-width: 0;
-}
-
-.sidebar-search-result-name {
-  font-weight: 700;
-  font-size: 15px;
-  color: #0f1419;
-  margin-bottom: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar-search-result-username {
-  font-size: 13px;
-  color: #536471;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Loading and empty states */

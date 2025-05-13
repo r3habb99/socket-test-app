@@ -75,12 +75,17 @@ export const Search = () => {
 
       const response = await searchUsers(searchParams);
 
+      // Log the full response to see its structure
+      console.log("Full search response:", response);
+
       // Handle nested data structure
       let results = [];
 
       if (!response.error) {
-        // Check if response.data contains a nested data property
-        if (response.data && response.data.data) {
+        if (response.data && response.data.statusCode === 200 && Array.isArray(response.data.data)) {
+          // API returns { statusCode: 200, message: "...", data: [...] }
+          results = response.data.data;
+        } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
           // API returns { data: { data: [...] } }
           results = response.data.data;
         } else if (Array.isArray(response.data)) {
@@ -91,8 +96,15 @@ export const Search = () => {
         }
       }
 
+      // Log the extracted results
+      console.log("Extracted search results:", results);
+
+      // Log the first result if available to see its structure
+      if (results.length > 0) {
+        console.log("First result structure:", results[0]);
+      }
+
       setSearchResults(Array.isArray(results) ? results : []);
-      console.log("Search results:", results);
     } catch (error) {
       console.error("Error searching users:", error);
       setSearchResults([]);
@@ -126,6 +138,12 @@ export const Search = () => {
    */
   const navigateToUserProfile = (user) => {
     const userId = user._id || user.id;
+
+    if (!userId) {
+      console.error('Cannot navigate to profile: User ID is missing', user);
+      return;
+    }
+
     navigate(`/profile/${userId}`);
     setShowSearchResults(false);
     setSearchQuery('');
@@ -169,35 +187,37 @@ export const Search = () => {
                   className="sidebar-search-result-item"
                   onClick={() => navigateToUserProfile(user)}
                 >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar
-                        src={user.profilePic ?
-                          <ImageProxy
-                            src={getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC)}
-                            alt={user.username}
-                            defaultSrc={DEFAULT_PROFILE_PIC}
-                          /> : null
-                        }
-                        alt={user.username}
-                        className={user.profilePic ? "sidebar-search-result-avatar-img" : "sidebar-search-result-avatar"}
-                        icon={!user.profilePic ? <UserOutlined /> : null}
-                        style={!user.profilePic ? { backgroundColor: '#1d9bf0' } : {}}
-                      >
-                        {!user.profilePic ? user.username.charAt(0).toUpperCase() : null}
-                      </Avatar>
-                    }
-                    title={
-                      <div className="sidebar-search-result-name">
-                        {user.firstName} {user.lastName}
-                      </div>
-                    }
-                    description={
-                      <div className="sidebar-search-result-username">
-                        @{user.username}
-                      </div>
-                    }
-                  />
+                  <div className="sidebar-search-result-avatar-container">
+                    <Avatar
+                      src={user.profilePic ?
+                        <ImageProxy
+                          src={getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC)}
+                          alt={user.username || 'User'}
+                          defaultSrc={DEFAULT_PROFILE_PIC}
+                        /> : null
+                      }
+                      alt={user.username || 'User'}
+                      className={user.profilePic ? "sidebar-search-result-avatar-img" : "sidebar-search-result-avatar"}
+                      icon={!user.profilePic ? <UserOutlined /> : null}
+                      style={!user.profilePic ? { backgroundColor: '#1d9bf0' } : {}}
+                    >
+                      {!user.profilePic && user.username ? user.username.charAt(0).toUpperCase() :
+                       !user.profilePic && user.firstName ? user.firstName.charAt(0).toUpperCase() :
+                       !user.profilePic ? <UserOutlined /> : null}
+                    </Avatar>
+                  </div>
+                  <div className="sidebar-search-result-content">
+                    <div className="sidebar-search-result-name">
+                      {user.firstName || ''} {user.lastName || ''}
+                      {!user.firstName && !user.lastName && user.username && (
+                        <span>{user.username}</span>
+                      )}
+                    </div>
+                    <div className="sidebar-search-result-username">
+                      {user.username && `@${user.username}`}
+                      {!user.username && user.email && user.email}
+                    </div>
+                  </div>
                 </List.Item>
               )}
             />
