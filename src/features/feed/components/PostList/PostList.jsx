@@ -19,11 +19,13 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
     // Check if post has retweetData (from the API response structure)
     const original = post.retweetData || post.retweetedFrom;
 
-    // Use postedBy object directly from post, ensuring we handle the API response structure
-    const postedByUser = post.postedBy || {};
-
     // Determine which post object to use for content and media
     const postToRender = original || post;
+
+    // Use postedBy object from the appropriate source
+    // For retweets, we need to show the original poster's info for the content
+    // but the retweeter's info for the "You retweeted" header
+    const postedByUser = original ? original.postedBy || {} : post.postedBy || {};
 
     // Check if the post has media
     const hasMedia = postToRender.media && postToRender.media.length > 0;
@@ -38,7 +40,7 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
       <>
         {original && (
           <div className="retweet-label">
-            <FaRetweet /> <Text type="secondary">You retweeted</Text>
+            <FaRetweet /> <Text type="secondary">{post.postedBy?.username || "You"} retweeted</Text>
           </div>
         )}
 
@@ -72,7 +74,7 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                 onClick={() => navigateToUserProfile(postedByUser, navigate)}
                 title={`View ${postedByUser.username}'s profile`}
               >
-                {postedByUser.firstName} {postedByUser.lastName || "User"}
+                {postedByUser.firstName || postedByUser.username || "User"} {postedByUser.lastName || ""}
                 {isVerified && <span className="verified-badge">✓</span>}
               </Text>
               <Text
@@ -81,7 +83,7 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                 onClick={() => navigateToUserProfile(postedByUser, navigate)}
                 title={`View ${postedByUser.username}'s profile`}
               >
-                @{original?.postedBy?.username || postedByUser.username || "user"}
+                @{postedByUser.username || "user"}
               </Text>
               <Text type="secondary" className="post-timestamp">
                 {timestamp}

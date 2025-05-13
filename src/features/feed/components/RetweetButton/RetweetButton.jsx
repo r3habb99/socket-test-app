@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FaRetweet } from "react-icons/fa";
 import { Button, Tooltip, Spin } from "antd";
 import { toast } from "react-toastify";
-import { retweetPost } from "../../api/postApi";
+import { retweetPost, undoRetweet } from "../../api/postApi";
 import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import "./RetweetButton.css";
 
@@ -15,11 +15,11 @@ import "./RetweetButton.css";
  * @param {Function} props.getPostId - Function to get post ID
  * @returns {JSX.Element} RetweetButton component
  */
-export const RetweetButton = ({ 
-  post, 
-  setPosts, 
+export const RetweetButton = ({
+  post,
+  setPosts,
   onPostsUpdated,
-  getPostId 
+  getPostId
 }) => {
   const [actionInProgress, setActionInProgress] = useState(false);
   const { connected, emit } = useSocketContext();
@@ -78,10 +78,17 @@ export const RetweetButton = ({
    * @returns {number} Retweet count
    */
   const getRetweetCount = (post) => {
+    // If the post has a retweetCount property, use it directly
+    if (typeof post.retweetCount === 'number') {
+      return post.retweetCount;
+    }
+
+    // Check retweetUsers array
     if (post.retweetUsers) {
       return post.retweetUsers.length;
     }
-    
+
+    // Check retweets array or object
     if (post.retweets) {
       if (Array.isArray(post.retweets)) {
         return post.retweets.length;
@@ -89,7 +96,8 @@ export const RetweetButton = ({
         return Object.keys(post.retweets).length;
       }
     }
-    
+
+    // If no retweet information is found, return 0
     return 0;
   };
 
@@ -101,6 +109,70 @@ export const RetweetButton = ({
 
     setActionInProgress(true);
     try {
+      // Check if the post is already retweeted by the current user
+      const alreadyRetweeted = isPostRetweeted(post);
+
+      // If already retweeted, we need to handle it as an "undo retweet" action
+      if (alreadyRetweeted) {
+        // Call the API to undo the retweet
+        const response = await undoRetweet(postId);
+
+        if (response.error) {
+          toast.error("Failed to undo retweet. Please try again.");
+          return;
+        }
+
+        // Find and remove the retweet from the posts list
+        const currentUserId = localStorage.getItem('userId');
+
+        // Update the posts state to remove the retweet
+        setPosts((prevPosts) => {
+          // First, find any retweets of this post by the current user
+          const userRetweets = prevPosts.filter(p =>
+            (p.retweetData && getPostId(p.retweetData) === postId &&
+             p.postedBy && (p.postedBy.id === currentUserId || p.postedBy._id === currentUserId))
+          );
+
+          // Remove those retweets
+          const postsWithoutUserRetweets = prevPosts.filter(p => !userRetweets.includes(p));
+
+          // Update the original post to mark it as not retweeted by the current user
+          return postsWithoutUserRetweets.map(p => {
+            if (getPostId(p) === postId) {
+              // Create a copy of the post with updated retweet information
+              const updatedRetweets = Array.isArray(p.retweets)
+                ? p.retweets.filter(id => id !== currentUserId && id?.userId !== currentUserId)
+                : [];
+
+              return {
+                ...p,
+                retweeted: false,
+                retweets: updatedRetweets
+              };
+            }
+            return p;
+          });
+        });
+
+        toast.success("Retweet removed successfully!");
+
+        // Emit socket event if connected
+        if (connected && emit) {
+          emit("post unretweeted", { postId });
+        }
+
+        // Refresh posts to get the updated data from the server
+        if (typeof onPostsUpdated === 'function') {
+          setTimeout(() => {
+            onPostsUpdated();
+          }, 500);
+        }
+
+        setActionInProgress(false);
+        return;
+      }
+
+      // If not already retweeted, proceed with the retweet action
       const response = await retweetPost(postId);
 
       if (response.error) {
@@ -112,18 +184,50 @@ export const RetweetButton = ({
       if (response.status === 204 || (response.success && !response.data)) {
         toast.success("Post retweeted successfully!");
 
+        // Get current user info to ensure we have proper user data in the retweet
+        const currentUserId = localStorage.getItem('userId');
+        const currentUsername = localStorage.getItem('username') || 'user';
+        const currentFirstName = localStorage.getItem('firstName') || '';
+        const currentLastName = localStorage.getItem('lastName') || '';
+        const currentProfilePic = localStorage.getItem('profilePic') || '';
+
         // Mark the post as retweeted in the current posts list
         setPosts((prevPosts) => {
           return prevPosts.map(p => {
             if (getPostId(p) === postId) {
-              // Create a copy of the post with retweeted flag
+              // Create a new retweet post with the original post as retweetData
+              const newRetweet = {
+                _id: `retweet_${Date.now()}`, // Temporary ID until refresh
+                id: `retweet_${Date.now()}`,
+                content: p.content,
+                retweetData: p,
+                retweeted: true,
+                postedBy: {
+                  _id: currentUserId,
+                  id: currentUserId,
+                  username: currentUsername,
+                  firstName: currentFirstName,
+                  lastName: currentLastName,
+                  profilePic: currentProfilePic
+                },
+                createdAt: new Date().toISOString(),
+                retweets: p.retweets
+                  ? [...p.retweets, currentUserId]
+                  : [currentUserId]
+              };
+
+              // Add the new retweet to the posts array
+              setTimeout(() => {
+                setPosts(prevPosts => [newRetweet, ...prevPosts.filter(post => getPostId(post) !== newRetweet._id)]);
+              }, 0);
+
+              // Also update the original post's retweet count
               return {
                 ...p,
                 retweeted: true,
-                // Increment retweet count if it exists
                 retweets: p.retweets
-                  ? [...p.retweets, localStorage.getItem('userId')]
-                  : [localStorage.getItem('userId')]
+                  ? [...p.retweets, currentUserId]
+                  : [currentUserId]
               };
             }
             return p;
@@ -132,7 +236,9 @@ export const RetweetButton = ({
 
         // Refresh posts to get the updated data from the server
         if (typeof onPostsUpdated === 'function') {
-          onPostsUpdated();
+          setTimeout(() => {
+            onPostsUpdated();
+          }, 500); // Small delay to ensure UI updates first
         }
         return;
       }
@@ -140,7 +246,7 @@ export const RetweetButton = ({
       // Handle response with data (the server returned the new retweet)
       if (response.data) {
         const newRetweet = response.data.data?.post;
-        
+
         // Ensure we have a valid post object
         if (!newRetweet || typeof newRetweet !== 'object') {
           toast.error("Failed to retweet post. Please try again.");
@@ -152,6 +258,25 @@ export const RetweetButton = ({
         if (!newRetweetId) {
           toast.error("Failed to retweet post. Please try again.");
           return;
+        }
+
+        // Get current user info to ensure we have proper user data in the retweet
+        const currentUserId = localStorage.getItem('userId');
+        const currentUsername = localStorage.getItem('username') || 'user';
+        const currentFirstName = localStorage.getItem('firstName') || '';
+        const currentLastName = localStorage.getItem('lastName') || '';
+        const currentProfilePic = localStorage.getItem('profilePic') || '';
+
+        // Ensure the retweet has proper user information
+        if (!newRetweet.postedBy || Object.keys(newRetweet.postedBy).length === 0) {
+          newRetweet.postedBy = {
+            _id: currentUserId,
+            id: currentUserId,
+            username: currentUsername,
+            firstName: currentFirstName,
+            lastName: currentLastName,
+            profilePic: currentProfilePic
+          };
         }
 
         // Add new retweet at the top and remove duplicate if any
@@ -190,13 +315,13 @@ export const RetweetButton = ({
 
   return (
     <div className="retweet-button-container post-action-group">
-      <Tooltip title="Retweet">
+      <Tooltip title={retweeted ? "Undo Retweet" : "Retweet"}>
         <Button
           type="text"
           onClick={handleRetweet}
           className={`post-action-button retweet-button ${retweeted ? 'retweeted' : ''}`}
           disabled={actionInProgress}
-          aria-label="Retweet"
+          aria-label={retweeted ? "Undo Retweet" : "Retweet"}
           icon={
             actionInProgress ? (
               <Spin size="small" />

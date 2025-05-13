@@ -236,6 +236,47 @@ export const retweetPost = async (postId) => {
 };
 
 /**
+ * Undo a retweet
+ * @param {string} postId - Post ID
+ * @returns {Promise<Object>} Response object
+ */
+export const undoRetweet = async (postId) => {
+  try {
+    // Check if token exists
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No authentication token found for undo retweet request");
+      return {
+        error: true,
+        message: "Authentication token not found. Please log in again.",
+        status: 401,
+      };
+    }
+
+    // Add explicit headers to ensure token is sent
+    const response = await apiClient.delete(`/post/${postId}/retweet`, {
+      headers: {
+        Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`
+      }
+    });
+
+    // Handle 204 No Content response
+    if (response.status === 204) {
+      return {
+        success: true,
+        message: 'Retweet removed successfully',
+        status: 204
+      };
+    }
+
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error in undoRetweet:', error);
+    return handleApiError(error);
+  }
+};
+
+/**
  * Delete a post
  * @param {string} postId - Post ID
  * @returns {Promise<Object>} Response object

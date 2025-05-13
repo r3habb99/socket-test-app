@@ -100,8 +100,29 @@ export const useAuth = () => {
         localStorage.setItem("username", username);
       }
 
+      // Save additional user information if available
+      if (userData.firstName) {
+        localStorage.setItem("firstName", userData.firstName);
+      }
+      if (userData.lastName) {
+        localStorage.setItem("lastName", userData.lastName);
+      }
+      if (userData.profilePic) {
+        localStorage.setItem("profilePic", userData.profilePic);
+      }
+      if (userData.email) {
+        localStorage.setItem("email", userData.email);
+      }
+
       // Update state
-      setUser({ id: userId });
+      setUser({
+        id: userId,
+        username,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        profilePic: userData.profilePic,
+        email: userData.email
+      });
 
       console.log("Login successful, user data saved to localStorage");
 
@@ -148,8 +169,15 @@ export const useAuth = () => {
 
   // Logout function
   const logout = useCallback(() => {
+    // Remove all user-related data from localStorage
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
+    localStorage.removeItem("username");
+    localStorage.removeItem("firstName");
+    localStorage.removeItem("lastName");
+    localStorage.removeItem("profilePic");
+    localStorage.removeItem("email");
+
     setUser(null);
   }, []);
 
