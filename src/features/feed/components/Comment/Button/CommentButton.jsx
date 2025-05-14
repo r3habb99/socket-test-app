@@ -23,8 +23,8 @@ export const CommentButton = ({
   // Handle comment button click
   const handleCommentClick = () => {
     setActionInProgress(true);
-    // Navigate to the comments page
-    navigate(`/comments/${postId}`);
+    // Navigate to the post detail page
+    navigate(`/post/${postId}`);
     // Reset action in progress after a short delay to show loading state
     setTimeout(() => {
       setActionInProgress(false);

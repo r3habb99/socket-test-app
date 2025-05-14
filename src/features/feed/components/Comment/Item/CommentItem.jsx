@@ -334,7 +334,32 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
             </div>
           </Form>
         ) : (
-          <Paragraph className="comment-text">{comment.content}</Paragraph>
+          <>
+            <Paragraph className="comment-text">{comment.content}</Paragraph>
+
+            {/* Display media if available */}
+            {comment.media && comment.media.length > 0 && (
+              <div className="comment-media-container">
+                {comment.media.map((mediaUrl, index) => {
+                  const placeholderImage = "https://via.placeholder.com/400x300?text=Image+Loading...";
+
+                  return (
+                    <div key={index} className="comment-media">
+                      <ImageProxy
+                        src={getImageUrl(mediaUrl, placeholderImage)}
+                        alt={`Comment media ${index + 1}`}
+                        className="comment-media-image"
+                        defaultSrc={placeholderImage}
+                        onError={() => {
+                          // Silent error handling - fallback to placeholder image
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
 

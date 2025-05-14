@@ -156,6 +156,15 @@ export const UserPostList = ({ userId, activeTab }) => {
         {isReply && replyToPost && (
           <div className="post-reply-label">
             <FaReply /> <span>Replying to @{replyToPost.postedBy?.username || "user"}</span>
+            
+            {/* Original post that was replied to */}
+            <div className="original-post-container">
+              <div className="original-post-content">
+                <span className="original-post-text">
+                  {replyToPost.content}
+                </span>
+              </div>
+            </div>
           </div>
         )}
 

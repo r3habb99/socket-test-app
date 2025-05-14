@@ -25,8 +25,6 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
     const postToRender = original || post;
 
     // Use postedBy object from the appropriate source
-    // For retweets, we need to show the original poster's info for the content
-    // but the retweeter's info for the "You retweeted" header
     const postedByUser = original ? original.postedBy || {} : post.postedBy || {};
 
     // Check if post is a reply
@@ -37,8 +35,6 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
 
     // Check if the post has media
     const hasMedia = postToRender.media && postToRender.media.length > 0;
-
-    // Using formatTimestamp from PostListHelpers.js
 
     const timestamp = formatTimestamp(postToRender.createdAt);
     const isVerified = postedByUser.isVerified;
@@ -55,6 +51,15 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
         {isReply && replyToPost && (
           <div className="reply-label">
             <FaReply /> <Text type="secondary">Replying to @{replyToPost.postedBy?.username || "user"}</Text>
+
+            {/* Original post that was replied to */}
+            <div className="original-post-container">
+              <div className="original-post-content">
+                <Text type="secondary" className="original-post-text">
+                  {replyToPost.content}
+                </Text>
+              </div>
+            </div>
           </div>
         )}
 
@@ -162,10 +167,11 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                   key={postId}
                   className="post-card"
                   style={{ padding: '12px 16px', border: 'none' }}
+                  onClick={() => navigate(`/post/${postId}`)}
                 >
                   {renderPostContent(post)}
 
-                  <div className="post-actions">
+                  <div className="post-actions" onClick={(e) => e.stopPropagation()}>
                     <CommentButton
                       post={post}
                       getPostId={getPostId}

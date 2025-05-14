@@ -73,6 +73,29 @@
   word-break: break-word;
 }
 
+/* Comment media styles */
+.comment-media-container {
+  margin: 8px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  max-width: 100%;
+}
+
+.comment-media {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: #f7f9fa;
+}
+
+.comment-media-image {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  display: block;
+}
+
 .comment-actions {
   display: flex;
   margin-left: 52px;
@@ -211,5 +234,14 @@
   .edit-actions {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .comment-media-container {
+    margin: 8px 0;
+    border-radius: 12px;
+  }
+
+  .comment-media-image {
+    max-height: 250px;
   }
 }

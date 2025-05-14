@@ -171,3 +171,24 @@
   background-color: #8ed0f9;
   color: white;
 }
+
+.original-post-container {
+  margin: 5px 0 10px 20px;
+  padding: 8px 12px;
+  border-left: 3px solid #e8e8e8;
+  background-color: #f9f9f9;
+  border-radius: 0 4px 4px 0;
+}
+
+.original-post-content {
+  font-size: 0.9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.original-post-text {
+  color: #666;
+}
