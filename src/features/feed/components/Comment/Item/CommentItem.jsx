@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, Typography, Button, Tooltip, Popconfirm, Form, Input, Spin } from "antd";
 import {
@@ -13,9 +13,11 @@ import { DEFAULT_PROFILE_PIC } from "../../../../../constants";
 import { getImageUrl } from "../../../../../shared/utils/imageUtils";
 import { ImageProxy } from "../../../../../shared/components";
 import { formatTimestamp } from "../../../components/PostList/PostListHelpers";
-import { toggleCommentLike, editComment, deleteComment, getCommentReplies } from "../../../api/commentApi";
+import { toggleCommentLike, editComment, deleteComment } from "../../../api/commentApi";
 import CommentForm from "../Form";
 import CommentList from "../List";
+import { getProcessedProfilePicUrl } from "../utils/commentHelpers";
+import { useReplies } from "../hooks";
 import "./CommentItem.css";
 
 const { Text, Paragraph } = Typography;
@@ -30,53 +32,30 @@ const { TextArea } = Input;
  * @param {Array} props.replies - Array of reply comments
  * @returns {JSX.Element} CommentItem component
  */
-export const CommentItem = ({ comment, postId, onCommentUpdated, replies: initialReplies = [] }) => {
+export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
   const navigate = useNavigate();
   const [isReplying, setIsReplying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [editCharCount, setEditCharCount] = useState(comment.content ? comment.content.length : 0);
-  const [showReplies, setShowReplies] = useState(false);
   const [actionInProgress, setActionInProgress] = useState(false);
-  const [replies, setReplies] = useState(initialReplies);
-  const [loadingReplies, setLoadingReplies] = useState(false);
-  const [hasLoadedReplies, setHasLoadedReplies] = useState(false);
-  const [replyPagination, setReplyPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: initialReplies.length,
-    hasMore: false
-  });
 
   const MAX_CHARS = 280; // Twitter-like character limit
 
   // Get current user ID from localStorage
   const currentUserId = localStorage.getItem("userId");
 
-  // Helper function to ensure profile picture URL is in the correct format
-  const getProcessedProfilePicUrl = (url) => {
-    if (!url) return DEFAULT_PROFILE_PIC;
-
-    // If it's already a full URL, return it
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-
-    // If it includes /uploads/ but doesn't start with it, extract the /uploads/ part
-    if (url.includes('/uploads/') && !url.startsWith('/uploads/')) {
-      const uploadsMatch = url.match(/\/uploads\/.*$/);
-      if (uploadsMatch) {
-        return uploadsMatch[0];
-      }
-    }
-
-    // If it's a relative path, make sure it starts with a slash
-    if (!url.startsWith('/') && !url.startsWith('http')) {
-      return '/' + url;
-    }
-
-    return url;
-  };
+  // Use our custom hook for replies
+  const commentId = comment._id || comment.id;
+  const {
+    replies,
+    loading: loadingReplies,
+    showReplies,
+    toggleReplies,
+    addReply,
+    loadMoreReplies,
+    pagination: replyPagination
+  } = useReplies(commentId, postId);
 
   // Get author information (handle both postedBy and author fields)
   const rawAuthor = comment.author || comment.postedBy || {};
@@ -104,84 +83,7 @@ export const CommentItem = ({ comment, postId, onCommentUpdated, replies: initia
     setHasLiked(userHasLiked || false);
   }, [comment.likes, currentUserId]);
 
-  // Fetch replies for the comment
-  const fetchReplies = useCallback(async () => {
-    const commentId = comment._id || comment.id;
-    if (!commentId) return;
 
-    setLoadingReplies(true);
-    try {
-      const response = await getCommentReplies(commentId, {
-        page: replyPagination.page,
-        limit: replyPagination.limit
-      });
-
-      if (!response.error && response.data) {
-        // Extract replies data from response
-        let repliesData = [];
-        let paginationData = {
-          total: 0,
-          page: 1,
-          limit: 10,
-          hasMore: false
-        };
-
-        // Check for different possible response structures
-        if (response.data.data?.replies) {
-          // Structure: { data: { replies: [...] } }
-          repliesData = response.data.data.replies;
-          paginationData = response.data.data.pagination || {
-            ...paginationData,
-            total: repliesData.length
-          };
-        } else if (response.data.replies) {
-          // Structure: { replies: [...] }
-          repliesData = response.data.replies;
-          paginationData = response.data.pagination || {
-            ...paginationData,
-            total: repliesData.length
-          };
-        } else if (Array.isArray(response.data.data)) {
-          // Structure: { data: [...] }
-          repliesData = response.data.data;
-          paginationData = {
-            ...paginationData,
-            total: repliesData.length
-          };
-        } else if (response.data.data?.data?.replies) {
-          // Structure: { data: { data: { replies: [...] } } }
-          repliesData = response.data.data.data.replies;
-          paginationData = response.data.data.data.pagination || {
-            ...paginationData,
-            total: repliesData.length
-          };
-        } else if (Array.isArray(response.data)) {
-          // Structure: [...] (direct array)
-          repliesData = response.data;
-          paginationData = {
-            ...paginationData,
-            total: repliesData.length
-          };
-        }
-
-        setReplies(repliesData);
-        setReplyPagination(paginationData);
-        setHasLoadedReplies(true);
-      }
-    } catch (error) {
-      console.error("Error fetching replies:", error);
-      toast.error("Failed to load replies");
-    } finally {
-      setLoadingReplies(false);
-    }
-  }, [comment._id, comment.id, replyPagination.page, replyPagination.limit]);
-
-  // Fetch replies when showReplies is toggled to true
-  useEffect(() => {
-    if (showReplies && !hasLoadedReplies) {
-      fetchReplies();
-    }
-  }, [showReplies, hasLoadedReplies, fetchReplies]);
 
   // Navigate to user profile
   const navigateToUserProfile = () => {
@@ -253,16 +155,9 @@ export const CommentItem = ({ comment, postId, onCommentUpdated, replies: initia
   // Handle reply added
   const handleReplyAdded = (newReply) => {
     setIsReplying(false);
-    setShowReplies(true);
 
-    // Add the new reply to the replies list
-    setReplies(prevReplies => [newReply, ...prevReplies]);
-
-    // Update the reply count in the pagination
-    setReplyPagination(prev => ({
-      ...prev,
-      total: prev.total + 1
-    }));
+    // Add the reply using our custom hook
+    addReply(newReply);
 
     // Update the comment in the parent component
     if (onCommentUpdated) {
@@ -356,78 +251,12 @@ export const CommentItem = ({ comment, postId, onCommentUpdated, replies: initia
     }
   };
 
-  // Toggle showing replies
-  const toggleReplies = () => {
-    setShowReplies(!showReplies);
-
-    // If we're showing replies and they haven't been loaded yet, fetch them
-    if (!showReplies && !hasLoadedReplies) {
-      // fetchReplies will be called by the useEffect
-    } else if (showReplies && replyPagination.hasMore) {
-      // If we're hiding replies and there are more to load, reset to page 1 for next time
-      setReplyPagination(prev => ({
-        ...prev,
-        page: 1
-      }));
-    }
+  // Handle toggle replies
+  const handleToggleReplies = () => {
+    toggleReplies();
   };
 
-  // Load more replies
-  const loadMoreReplies = async () => {
-    if (loadingReplies || !replyPagination.hasMore) return;
 
-    const nextPage = replyPagination.page + 1;
-    setLoadingReplies(true);
-
-    try {
-      const commentId = comment._id || comment.id;
-      const response = await getCommentReplies(commentId, {
-        page: nextPage,
-        limit: replyPagination.limit
-      });
-
-      if (!response.error && response.data) {
-        // Extract replies data from response
-        let newReplies = [];
-        let paginationData = {
-          total: replyPagination.total,
-          page: nextPage,
-          limit: replyPagination.limit,
-          hasMore: false
-        };
-
-        // Check for different possible response structures
-        if (response.data.data?.replies) {
-          // Structure: { data: { replies: [...] } }
-          newReplies = response.data.data.replies;
-          paginationData = response.data.data.pagination || paginationData;
-        } else if (response.data.replies) {
-          // Structure: { replies: [...] }
-          newReplies = response.data.replies;
-          paginationData = response.data.pagination || paginationData;
-        } else if (Array.isArray(response.data.data)) {
-          // Structure: { data: [...] }
-          newReplies = response.data.data;
-        } else if (response.data.data?.data?.replies) {
-          // Structure: { data: { data: { replies: [...] } } }
-          newReplies = response.data.data.data.replies;
-          paginationData = response.data.data.data.pagination || paginationData;
-        } else if (Array.isArray(response.data)) {
-          // Structure: [...] (direct array)
-          newReplies = response.data;
-        }
-
-        // Append new replies to existing ones
-        setReplies(prevReplies => [...prevReplies, ...newReplies]);
-        setReplyPagination(paginationData);
-      }
-    } catch (error) {
-      console.error("Error loading more replies:", error);
-      toast.error("Failed to load more replies");
-    } finally {
-      setLoadingReplies(false);
-    }
-  };
 
   return (
     <div className="comment-item">
@@ -597,7 +426,7 @@ export const CommentItem = ({ comment, postId, onCommentUpdated, replies: initia
         <div className="comment-replies-toggle">
           <Button
             type="link"
-            onClick={toggleReplies}
+            onClick={handleToggleReplies}
             className="toggle-replies-button"
           >
             {showReplies ? "Hide replies" : `Show ${replies.length || comment.replyCount} ${(replies.length === 1 || comment.replyCount === 1) ? 'reply' : 'replies'}`}

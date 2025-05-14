@@ -110,20 +110,42 @@
   margin: 16px 0;
 }
 
+.error-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 16px;
+  text-align: center;
+  background-color: #fff0f0;
+  border-radius: 8px;
+  margin: 16px 0;
+  border: 1px solid #ffccc7;
+}
+
+.error-container .ant-typography {
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.error-container .ant-btn {
+  margin-top: 8px;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 576px) {
   .comments-page-content {
     padding: 8px;
   }
-  
+
   .comment-post-content {
     padding: 12px;
   }
-  
+
   .comment-sort-options {
     flex-wrap: wrap;
   }
-  
+
   .comment-sort-options .ant-btn {
     margin-top: 8px;
   }
