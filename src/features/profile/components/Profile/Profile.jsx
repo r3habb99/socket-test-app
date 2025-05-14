@@ -88,7 +88,19 @@ export const Profile = () => {
   // Function to fetch user stats
   const fetchUserStatsData = async (userId) => {
     try {
-      const response = await fetchUserStats(userId, true);
+      // Use the content type based on the active tab
+      const contentType = activeTab === 'posts' ? 'posts' :
+                          activeTab === 'replies' ? 'replies' :
+                          activeTab === 'media' ? 'media' :
+                          activeTab === 'likes' ? 'likes' : 'posts';
+
+      const options = {
+        contentType,
+        limit: 10,
+        includeComments: true
+      };
+
+      const response = await fetchUserStats(userId, options);
 
       if (response.error) {
         console.error("Failed to fetch user stats:", response.message);

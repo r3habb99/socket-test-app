@@ -15,14 +15,19 @@ export const fetchUserProfileById = async (userId) => {
 };
 
 /**
- * Fetch user stats with recent posts
+ * Fetch user stats with content (posts, replies, likes, or media)
  * @param {string} userId - User ID
- * @param {boolean} includePosts - Whether to include recent posts in the response
- * @returns {Promise<Object>} Response object containing user stats and recent posts
+ * @param {Object} options - Options for the stats API
+ * @param {string} [options.contentType='posts'] - Type of content to retrieve (posts, replies, likes, media)
+ * @param {number} [options.limit=10] - Number of items to return per page
+ * @param {string} [options.maxId] - Get content older than this ID (for pagination)
+ * @param {string} [options.sinceId] - Get content newer than this ID (for pagination)
+ * @param {boolean} [options.includeComments=true] - Whether to include comment counts
+ * @returns {Promise<Object>} Response object containing user stats and content
  */
-export const fetchUserStats = async (userId, includePosts = true) => {
+export const fetchUserStats = async (userId, options = {}) => {
   try {
-    const response = await apiClient.get(endpoints.user.stats(userId, includePosts));
+    const response = await apiClient.get(endpoints.user.stats(userId, options));
     return handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);

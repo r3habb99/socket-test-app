@@ -9,7 +9,23 @@ const endpoints = {
     profile: "/user/profile",
     updateProfile: "/user/profile",
     getById: (id) => `/user/${id}`,
-    stats: (id, includePosts = true) => `/user/${id}/stats?includePosts=${includePosts}`,
+    stats: (id, options = {}) => {
+      const {
+        contentType = 'posts',
+        limit = 10,
+        maxId,
+        sinceId,
+        includeComments = true
+      } = options;
+
+      let url = `/user/${id}/stats?content_type=${contentType}&limit=${limit}`;
+
+      if (maxId) url += `&max_id=${maxId}`;
+      if (sinceId) url += `&since_id=${sinceId}`;
+      if (includeComments !== undefined) url += `&include_comments=${includeComments}`;
+
+      return url;
+    },
     followers: (id) => `/user/${id}/followers`,
     following: (id) => `/user/${id}/following`,
     follow: (id) => `/user/${id}/follow`,

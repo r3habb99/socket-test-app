@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Avatar, Typography, Button, List, Tooltip, Empty } from 'antd';
+import { Card, Avatar, Typography, Button, List, Tooltip, Empty, Spin } from 'antd';
 import { FaRetweet, FaShare } from 'react-icons/fa';
 import { DEFAULT_PROFILE_PIC } from '../../../../constants';
 import { getImageUrl } from '../../../../shared/utils/imageUtils';
@@ -10,7 +10,6 @@ import { RetweetButton } from '../../../feed/components/RetweetButton';
 import { DeleteButton } from '../../../feed/components/DeleteButton';
 import { CommentButton } from '../../../feed/components/Comment';
 import { getPostId, formatTimestamp, navigateToUserProfile } from '../../../feed/components/PostList/PostListHelpers';
-import { getPosts } from '../../../feed/api/postApi';
 import { fetchUserStats } from '../../api/profileApi';
 import './UserPostList.css';
 
@@ -18,75 +17,91 @@ export const UserPostList = ({ userId, activeTab }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextMaxId, setNextMaxId] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchUserPosts = async () => {
+  const fetchUserPosts = useCallback(async (maxId = null) => {
+    if (!maxId) {
       setLoading(true);
-      try {
-        // Use the new dedicated API endpoint for user stats with posts
-        const response = await fetchUserStats(userId, true);
+    } else {
+      setLoadingMore(true);
+    }
 
-        if (response.error) {
-          setError(response.message || 'Failed to fetch posts');
-          setLoading(false);
-          return;
-        }
+    try {
+      // Map activeTab to content_type parameter
+      const contentType = activeTab === 'posts' ? 'posts' :
+                          activeTab === 'replies' ? 'replies' :
+                          activeTab === 'media' ? 'media' :
+                          activeTab === 'likes' ? 'likes' : 'posts';
 
-        // Extract the data from the nested response structure
-        const userData = response.data?.data;
+      // Set up options for the stats API
+      const options = {
+        contentType,
+        limit: 10,
+        includeComments: true
+      };
 
-        if (!userData) {
-          setError('No user data found in response');
-          setLoading(false);
-          return;
-        }
-
-        let userPosts = [];
-
-        // Check if we have recent posts in the response
-        if (userData.recentPosts && Array.isArray(userData.recentPosts)) {
-          // Filter posts based on the active tab
-          if (activeTab === 'posts') {
-            // Show only original posts (not replies) by this user
-            userPosts = userData.recentPosts.filter(post => !post.replyTo);
-          } else if (activeTab === 'replies') {
-            // Show only replies by this user
-            userPosts = userData.recentPosts.filter(post => post.replyTo);
-          } else if (activeTab === 'media') {
-            // Show posts with media
-            userPosts = userData.recentPosts.filter(post =>
-              post.media && post.media.length > 0
-            );
-          } else if (activeTab === 'likes') {
-            // For likes tab, we still need to fetch all posts and filter
-            // This is because the stats API doesn't return liked posts
-            const allPostsResponse = await getPosts();
-            if (!allPostsResponse.error && allPostsResponse.data && Array.isArray(allPostsResponse.data)) {
-              // Get the user's likes array from the user data
-              const userLikes = userData.user?.likes || [];
-
-              // Filter posts that are liked by this user
-              userPosts = allPostsResponse.data.filter(post =>
-                post.likes && userLikes.includes(post._id || post.id)
-              );
-            }
-          }
-        } else {
-          console.warn('No recent posts found in user stats response');
-        }
-
-        setPosts(userPosts);
-      } catch (err) {
-        console.error('Error fetching user posts:', err);
-        setError('An error occurred while fetching posts');
-      } finally {
-        setLoading(false);
+      // Add maxId for pagination if provided
+      if (maxId) {
+        options.maxId = maxId;
       }
-    };
 
-    fetchUserPosts();
+      // Use the enhanced stats API
+      const response = await fetchUserStats(userId, options);
+
+      if (response.error) {
+        setError(response.message || 'Failed to fetch posts');
+        setLoading(false);
+        setLoadingMore(false);
+        return;
+      }
+
+      // Extract the data from the nested response structure
+      const statsData = response.data?.data;
+
+      if (!statsData) {
+        setError('No user data found in response');
+        setLoading(false);
+        setLoadingMore(false);
+        return;
+      }
+
+      // Get content items from the response
+      const contentItems = statsData.content?.items || [];
+
+      // Get pagination info
+      const pagination = statsData.content?.pagination || {};
+      setNextMaxId(pagination.next_max_id || null);
+      setHasMore(pagination.has_more || false);
+
+      // If loading more, append to existing posts, otherwise replace
+      if (maxId) {
+        setPosts(prevPosts => [...prevPosts, ...contentItems]);
+      } else {
+        setPosts(contentItems);
+      }
+    } catch (err) {
+      console.error('Error fetching user posts:', err);
+      setError('An error occurred while fetching posts');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   }, [userId, activeTab]);
+
+  useEffect(() => {
+    // Reset state when userId or activeTab changes
+    setPosts([]);
+    setNextMaxId(null);
+    setHasMore(false);
+
+    // Fetch initial posts
+    fetchUserPosts();
+  }, [userId, activeTab, fetchUserPosts]);
+
+
 
   const handlePostsUpdated = (updatedPosts) => {
     setPosts(updatedPosts);
@@ -170,6 +185,13 @@ export const UserPostList = ({ userId, activeTab }) => {
     );
   };
 
+  // Function to load more posts
+  const loadMorePosts = () => {
+    if (nextMaxId && !loadingMore) {
+      fetchUserPosts(nextMaxId);
+    }
+  };
+
   if (loading) return <div className="user-post-list-loading">Loading posts...</div>;
   if (error) return <div className="user-post-list-error">{error}</div>;
 
@@ -191,60 +213,75 @@ export const UserPostList = ({ userId, activeTab }) => {
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       ) : (
-        <List
-          itemLayout="vertical"
-          dataSource={posts}
-          renderItem={(post) => {
-            const postId = getPostId(post);
-            return (
-              <Card
-                key={postId}
-                className="post-card"
-                style={{ padding: '12px 16px', border: 'none', borderBottom: '1px solid #eee' }}
-              >
-                {renderPostContent(post)}
+        <>
+          <List
+            itemLayout="vertical"
+            dataSource={posts}
+            renderItem={(post) => {
+              const postId = getPostId(post);
+              return (
+                <Card
+                  key={postId}
+                  className="post-card"
+                  style={{ padding: '12px 16px', border: 'none', borderBottom: '1px solid #eee' }}
+                >
+                  {renderPostContent(post)}
 
-                <div className="post-actions">
-                  <CommentButton
-                    post={post}
-                    getPostId={getPostId}
-                  />
+                  <div className="post-actions">
+                    <CommentButton
+                      post={post}
+                      getPostId={getPostId}
+                    />
 
-                  <RetweetButton
-                    post={post}
-                    setPosts={setPosts}
-                    onPostsUpdated={handlePostsUpdated}
-                    getPostId={getPostId}
-                  />
+                    <RetweetButton
+                      post={post}
+                      setPosts={setPosts}
+                      onPostsUpdated={handlePostsUpdated}
+                      getPostId={getPostId}
+                    />
 
-                  <LikeButton
-                    post={post}
-                    setPosts={setPosts}
-                    onPostsUpdated={handlePostsUpdated}
-                    getPostId={getPostId}
-                  />
+                    <LikeButton
+                      post={post}
+                      setPosts={setPosts}
+                      onPostsUpdated={handlePostsUpdated}
+                      getPostId={getPostId}
+                    />
 
-                  <div className="post-action-group">
-                    <Tooltip title="Share">
-                      <Button
-                        type="text"
-                        className="post-action-button share-button"
-                        aria-label="Share"
-                        icon={<FaShare />}
-                      />
-                    </Tooltip>
+                    <div className="post-action-group">
+                      <Tooltip title="Share">
+                        <Button
+                          type="text"
+                          className="post-action-button share-button"
+                          aria-label="Share"
+                          icon={<FaShare />}
+                        />
+                      </Tooltip>
+                    </div>
+
+                    <DeleteButton
+                      post={post}
+                      setPosts={setPosts}
+                      getPostId={getPostId}
+                    />
                   </div>
+                </Card>
+              );
+            }}
+          />
 
-                  <DeleteButton
-                    post={post}
-                    setPosts={setPosts}
-                    getPostId={getPostId}
-                  />
-                </div>
-              </Card>
-            );
-          }}
-        />
+          {hasMore && (
+            <div className="load-more-container">
+              <Button
+                onClick={loadMorePosts}
+                loading={loadingMore}
+                disabled={loadingMore}
+                className="load-more-button"
+              >
+                Load More
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
