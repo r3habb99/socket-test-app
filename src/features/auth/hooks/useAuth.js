@@ -108,7 +108,29 @@ export const useAuth = () => {
         localStorage.setItem("lastName", userData.lastName);
       }
       if (userData.profilePic) {
-        localStorage.setItem("profilePic", userData.profilePic);
+        // Log the original profile picture URL
+        console.log('Original profile picture URL:', userData.profilePic);
+
+        // Process the profile picture URL to ensure it's in the correct format
+        let profilePicUrl = userData.profilePic;
+
+        // If the URL is a relative path starting with /uploads/, make sure it's stored as is
+        // without any protocol or domain, so it can be properly processed by getImageUrl
+        if (profilePicUrl.includes('/uploads/')) {
+          // Extract just the /uploads/... part if it's a full URL
+          const uploadsMatch = profilePicUrl.match(/\/uploads\/.*$/);
+          if (uploadsMatch) {
+            profilePicUrl = uploadsMatch[0];
+          }
+
+          // If it doesn't start with a slash, add one
+          if (!profilePicUrl.startsWith('/')) {
+            profilePicUrl = '/' + profilePicUrl;
+          }
+        }
+
+        console.log('Processed profile picture URL for localStorage:', profilePicUrl);
+        localStorage.setItem("profilePic", profilePicUrl);
       }
       if (userData.email) {
         localStorage.setItem("email", userData.email);

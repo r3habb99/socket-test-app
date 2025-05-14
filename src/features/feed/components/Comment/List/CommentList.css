@@ -1,0 +1,31 @@
+.comment-list {
+  margin-top: 16px;
+}
+
+.nested-comment-list {
+  margin-left: 40px;
+  margin-top: 8px;
+  border-left: 2px solid #eee;
+  padding-left: 16px;
+}
+
+.comment-list .ant-list-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.comment-list .ant-list-item:last-child {
+  border-bottom: none;
+}
+
+.comment-list .ant-empty {
+  margin: 24px 0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 576px) {
+  .nested-comment-list {
+    margin-left: 24px;
+    padding-left: 8px;
+  }
+}

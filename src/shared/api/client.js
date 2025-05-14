@@ -1,8 +1,12 @@
 import axios from "axios";
+import { getApiUrl } from "../utils/envUtils";
+
+// Get the API URL from environment
+const API_URL = getApiUrl();
 
 // Create an axios instance with default config
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://192.168.0.120:5050/api",
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },

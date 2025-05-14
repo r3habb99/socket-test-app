@@ -25,6 +25,16 @@ const endpoints = {
     unlike: (id) => `/post/${id}/unlike`,
     comment: (id) => `/post/${id}/comment`,
   },
+  comment: {
+    create: "/comment",
+    getById: (id) => `/comment/${id}`,
+    update: (id) => `/comment/${id}`,
+    delete: (id) => `/comment/${id}`,
+    like: (id) => `/comment/${id}/like`, // Used for both like and unlike
+    reply: (id) => `/comment/${id}/reply`,
+    getForPost: (postId) => `/comment/post/${postId}`,
+    getReplies: (commentId) => `/comment/replies/${commentId}`,
+  },
   chat: {
     getAll: "/chat",
     create: "/chat",

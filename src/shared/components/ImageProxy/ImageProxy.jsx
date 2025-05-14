@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { getApiUrl, getSocketUrl } from '../../utils/envUtils';
 import './ImageProxy.css';
 
 /**
@@ -40,6 +41,9 @@ const ImageProxy = ({
     // Update the previous src reference
     prevSrcRef.current = src;
 
+    // Debug log for image loading
+    console.log('ImageProxy loading image:', src);
+
     // Reset state when src changes
     setLoading(true);
     setError(false);
@@ -58,6 +62,19 @@ const ImageProxy = ({
       return;
     }
 
+    // Special case for URLs that might have the full path but are missing the protocol
+    // For example: 192.168.1.7:5050/uploads/profile-pictures/image.jpg
+    if (src.includes('192.168.1.7:5050') || src.includes('localhost:5050')) {
+      // Add http:// protocol if missing
+      if (!src.startsWith('http://') && !src.startsWith('https://')) {
+        const fullUrl = src.startsWith('//') ? `http:${src}` : `http://${src}`;
+        console.log('Fixed URL with protocol in ImageProxy:', fullUrl);
+        setImageSrc(fullUrl);
+        setLoading(false);
+        return;
+      }
+    }
+
     // Add cache-busting parameter if noCache is true
     let processedSrc = src;
     if (noCache && !src.includes('t=')) {
@@ -71,10 +88,17 @@ const ImageProxy = ({
     if (processedSrc.startsWith('/')) {
       // Check if it's an API path (like /uploads/) that needs the API base URL
       if (processedSrc.startsWith('/uploads/')) {
-        const API_BASE_URL = process.env.REACT_APP_API_URL || "http://192.168.0.120:5050";
-        // Add /api prefix if it's not already there
-        const apiPath = processedSrc.startsWith('/api/') ? processedSrc : `/api${processedSrc}`;
-        setImageSrc(`${API_BASE_URL}${apiPath}`);
+        const API_BASE_URL = getApiUrl();
+
+        // Remove /api prefix if it's already in the API_BASE_URL
+        const baseUrl = API_BASE_URL.endsWith('/api')
+          ? API_BASE_URL.substring(0, API_BASE_URL.length - 4)
+          : API_BASE_URL;
+
+        // Don't add /api prefix to /uploads/ paths
+        setImageSrc(`${baseUrl}${processedSrc}`);
+
+        console.log('Image URL for uploads:', `${baseUrl}${processedSrc}`);
       } else {
         setImageSrc(processedSrc);
       }
@@ -84,7 +108,8 @@ const ImageProxy = ({
 
     // For external URLs that might have CORS/CORP issues, we'll handle them differently
     // If the URL is from our API server, we'll use it directly but handle errors
-    if (processedSrc.includes('192.168.0.120:5050')) {
+    const serverUrl = getSocketUrl();
+    if (serverUrl && processedSrc.includes(new URL(serverUrl).hostname)) {
       setImageSrc(processedSrc);
       setLoading(false);
       return;
@@ -99,7 +124,12 @@ const ImageProxy = ({
     };
 
     img.onerror = (e) => {
-      console.warn(`Failed to load image: ${processedSrc}`);
+      console.warn(`Failed to load image: ${processedSrc}`, e);
+      console.error('Image load error details:', {
+        originalSrc: src,
+        processedSrc,
+        error: e
+      });
       setImageSrc(defaultSrc);
       setError(true);
       setLoading(false);

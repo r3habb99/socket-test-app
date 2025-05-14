@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import io from "socket.io-client";
 import { toast } from "react-toastify";
+import { getSocketUrl } from "../../../shared/utils/envUtils";
 
 /**
  * Custom hook for socket.io functionality
@@ -8,10 +9,9 @@ import { toast } from "react-toastify";
  * @returns {Object} Socket methods and state
  */
 export const useSocket = (
-  url = process.env.REACT_APP_SOCKET_URL || "http://192.168.0.120:5050"
+  url = getSocketUrl()
 ) => {
-  // Use a consistent URL to prevent reconnection issues
-  url = "http://192.168.0.120:5050";
+
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
   const [messages, setMessages] = useState([]);

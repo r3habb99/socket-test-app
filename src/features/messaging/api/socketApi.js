@@ -1,8 +1,8 @@
 import { io } from "socket.io-client";
-import { toast } from "react-toastify";
+import { getSocketUrl } from "../../../shared/utils/envUtils";
 
 // Socket.io connection URL - should match your backend
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "http://localhost:5050";
+const SOCKET_URL = getSocketUrl();
 
 let socket = null;
 let eventHandlers = {};

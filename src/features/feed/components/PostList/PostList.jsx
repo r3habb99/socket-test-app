@@ -4,11 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
 import { getImageUrl } from "../../../../shared/utils/imageUtils";
 import { ImageProxy } from "../../../../shared/components";
-import { FaRetweet, FaRegComment, FaShare } from "react-icons/fa";
+import { FaRetweet, FaShare } from "react-icons/fa";
 import { Card, Avatar, Typography, Button, List, Tooltip, Empty } from "antd";
 import { LikeButton } from "../LikeButton";
 import { RetweetButton } from "../RetweetButton";
 import { DeleteButton } from "../DeleteButton";
+import { CommentButton } from "../Comment";
 import { getPostId, formatTimestamp, navigateToUserProfile } from "./PostListHelpers";
 import "./PostList.css";
 
@@ -152,18 +153,10 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                   {renderPostContent(post)}
 
                   <div className="post-actions">
-                    <div className="post-action-group">
-                      <Tooltip title="Comment">
-                        <Button
-                          type="text"
-                          onClick={() => {}}
-                          className="post-action-button comment-button"
-                          aria-label="Reply"
-                          icon={<FaRegComment />}
-                        />
-                      </Tooltip>
-                      <span className="post-action-count">{post.comments?.length || 0}</span>
-                    </div>
+                    <CommentButton
+                      post={post}
+                      getPostId={getPostId}
+                    />
 
                     <RetweetButton
                       post={post}

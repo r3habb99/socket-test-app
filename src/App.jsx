@@ -19,6 +19,7 @@ import { Profile } from "./features/profile/components/Profile/Profile";
 import { FollowersList } from "./features/profile/components/FollowersList/FollowersList";
 import { FollowingList } from "./features/profile/components/FollowingList/FollowingList";
 import ProfileEdit from "./features/profile/components/ProfileEdit";
+import { CommentsPage } from "./features/feed/components/Comment";
 import ToastController from "./shared/components/ToastController/ToastController";
 
 const App = () => {
@@ -52,6 +53,7 @@ const App = () => {
               >
                 <Route path="dashboard" element={<Feed />} />
                 <Route path="dashboard/messages" element={<MessagingApp />} />
+                <Route path="comments/:postId" element={<CommentsPage />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="profile/:userId" element={<Profile />} />
                 <Route

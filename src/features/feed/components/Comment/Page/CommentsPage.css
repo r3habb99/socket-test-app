@@ -1,0 +1,130 @@
+.comments-page-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #fff;
+}
+
+.comments-page-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
+  border-bottom: 1px solid #eee;
+  padding: 0 16px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+}
+
+.comments-page-header .back-button {
+  margin-right: 16px;
+  font-size: 18px;
+}
+
+.comments-page-header .header-title {
+  margin: 0;
+}
+
+.comments-page-content {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.comment-post-content {
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 16px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.post-author-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.post-avatar {
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.post-author-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.post-author-name {
+  margin: 0 !important;
+  line-height: 1.2 !important;
+  display: flex;
+  align-items: center;
+}
+
+.post-author-username {
+  font-size: 14px;
+  color: #6e767d;
+}
+
+.post-content {
+  margin-top: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.comment-loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px;
+}
+
+.comment-sort-options {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.comment-sort-options .ant-btn {
+  margin-left: 8px;
+}
+
+.comment-sort-options .ant-typography {
+  margin-right: 8px;
+  color: #6e767d;
+}
+
+.no-comments-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 16px;
+  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 576px) {
+  .comments-page-content {
+    padding: 8px;
+  }
+  
+  .comment-post-content {
+    padding: 12px;
+  }
+  
+  .comment-sort-options {
+    flex-wrap: wrap;
+  }
+  
+  .comment-sort-options .ant-btn {
+    margin-top: 8px;
+  }
+}

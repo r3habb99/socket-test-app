@@ -2,15 +2,18 @@
  * Application constants
  */
 
+// Import environment utilities
+import { getApiUrl, getSocketUrl } from '../shared/utils/envUtils';
+
 // Default images
 export const DEFAULT_COVER_PHOTO = "/assets/backgroundWall.jpg";
 export const DEFAULT_PROFILE_PIC = "/assets/profilePic.jpeg";
 
 // API endpoints
-export const API_BASE_URL = process.env.REACT_APP_API_URL || "http://192.168.0.120:5050/api";
+export const API_BASE_URL = getApiUrl();
 
 // Socket
-export const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "http://192.168.0.120:5050";
+export const SOCKET_URL = getSocketUrl();
 
 // Pagination
 export const DEFAULT_PAGE_SIZE = 10;

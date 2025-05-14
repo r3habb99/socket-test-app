@@ -1,0 +1,649 @@
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Avatar, Typography, Button, Tooltip, Popconfirm, Form, Input, Spin } from "antd";
+import {
+  HeartOutlined,
+  HeartFilled,
+  MessageOutlined,
+  DeleteOutlined,
+  EditOutlined
+} from "@ant-design/icons";
+import { toast } from "react-toastify";
+import { DEFAULT_PROFILE_PIC } from "../../../../../constants";
+import { getImageUrl } from "../../../../../shared/utils/imageUtils";
+import { ImageProxy } from "../../../../../shared/components";
+import { formatTimestamp } from "../../../components/PostList/PostListHelpers";
+import { toggleCommentLike, editComment, deleteComment, getCommentReplies } from "../../../api/commentApi";
+import CommentForm from "../Form";
+import CommentList from "../List";
+import "./CommentItem.css";
+
+const { Text, Paragraph } = Typography;
+const { TextArea } = Input;
+
+/**
+ * Component to display a single comment with actions
+ * @param {Object} props - Component props
+ * @param {Object} props.comment - Comment object
+ * @param {string} props.postId - ID of the post this comment belongs to
+ * @param {Function} props.onCommentUpdated - Callback function when a comment is updated
+ * @param {Array} props.replies - Array of reply comments
+ * @returns {JSX.Element} CommentItem component
+ */
+export const CommentItem = ({ comment, postId, onCommentUpdated, replies: initialReplies = [] }) => {
+  const navigate = useNavigate();
+  const [isReplying, setIsReplying] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
+  const [editCharCount, setEditCharCount] = useState(comment.content ? comment.content.length : 0);
+  const [showReplies, setShowReplies] = useState(false);
+  const [actionInProgress, setActionInProgress] = useState(false);
+  const [replies, setReplies] = useState(initialReplies);
+  const [loadingReplies, setLoadingReplies] = useState(false);
+  const [hasLoadedReplies, setHasLoadedReplies] = useState(false);
+  const [replyPagination, setReplyPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: initialReplies.length,
+    hasMore: false
+  });
+
+  const MAX_CHARS = 280; // Twitter-like character limit
+
+  // Get current user ID from localStorage
+  const currentUserId = localStorage.getItem("userId");
+
+  // Helper function to ensure profile picture URL is in the correct format
+  const getProcessedProfilePicUrl = (url) => {
+    if (!url) return DEFAULT_PROFILE_PIC;
+
+    // If it's already a full URL, return it
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    // If it includes /uploads/ but doesn't start with it, extract the /uploads/ part
+    if (url.includes('/uploads/') && !url.startsWith('/uploads/')) {
+      const uploadsMatch = url.match(/\/uploads\/.*$/);
+      if (uploadsMatch) {
+        return uploadsMatch[0];
+      }
+    }
+
+    // If it's a relative path, make sure it starts with a slash
+    if (!url.startsWith('/') && !url.startsWith('http')) {
+      return '/' + url;
+    }
+
+    return url;
+  };
+
+  // Get author information (handle both postedBy and author fields)
+  const rawAuthor = comment.author || comment.postedBy || {};
+
+  // Process the author's profile picture URL
+  const authorProfilePic = getProcessedProfilePicUrl(rawAuthor.profilePic);
+
+  // Create a processed author object
+  const author = {
+    ...rawAuthor,
+    profilePic: authorProfilePic
+  };
+
+  // Check if the current user is the author of the comment
+  const isAuthor = currentUserId === (author._id || author.id);
+
+  // State to track if the current user has liked the comment
+  const [hasLiked, setHasLiked] = useState(false);
+
+  // Update hasLiked state when comment.likes changes
+  useEffect(() => {
+    const userHasLiked = comment.likes?.some(
+      like => like === currentUserId || like._id === currentUserId || like.id === currentUserId
+    );
+    setHasLiked(userHasLiked || false);
+  }, [comment.likes, currentUserId]);
+
+  // Fetch replies for the comment
+  const fetchReplies = useCallback(async () => {
+    const commentId = comment._id || comment.id;
+    if (!commentId) return;
+
+    setLoadingReplies(true);
+    try {
+      const response = await getCommentReplies(commentId, {
+        page: replyPagination.page,
+        limit: replyPagination.limit
+      });
+
+      if (!response.error && response.data) {
+        // Extract replies data from response
+        let repliesData = [];
+        let paginationData = {
+          total: 0,
+          page: 1,
+          limit: 10,
+          hasMore: false
+        };
+
+        // Check for different possible response structures
+        if (response.data.data?.replies) {
+          // Structure: { data: { replies: [...] } }
+          repliesData = response.data.data.replies;
+          paginationData = response.data.data.pagination || {
+            ...paginationData,
+            total: repliesData.length
+          };
+        } else if (response.data.replies) {
+          // Structure: { replies: [...] }
+          repliesData = response.data.replies;
+          paginationData = response.data.pagination || {
+            ...paginationData,
+            total: repliesData.length
+          };
+        } else if (Array.isArray(response.data.data)) {
+          // Structure: { data: [...] }
+          repliesData = response.data.data;
+          paginationData = {
+            ...paginationData,
+            total: repliesData.length
+          };
+        } else if (response.data.data?.data?.replies) {
+          // Structure: { data: { data: { replies: [...] } } }
+          repliesData = response.data.data.data.replies;
+          paginationData = response.data.data.data.pagination || {
+            ...paginationData,
+            total: repliesData.length
+          };
+        } else if (Array.isArray(response.data)) {
+          // Structure: [...] (direct array)
+          repliesData = response.data;
+          paginationData = {
+            ...paginationData,
+            total: repliesData.length
+          };
+        }
+
+        setReplies(repliesData);
+        setReplyPagination(paginationData);
+        setHasLoadedReplies(true);
+      }
+    } catch (error) {
+      console.error("Error fetching replies:", error);
+      toast.error("Failed to load replies");
+    } finally {
+      setLoadingReplies(false);
+    }
+  }, [comment._id, comment.id, replyPagination.page, replyPagination.limit]);
+
+  // Fetch replies when showReplies is toggled to true
+  useEffect(() => {
+    if (showReplies && !hasLoadedReplies) {
+      fetchReplies();
+    }
+  }, [showReplies, hasLoadedReplies, fetchReplies]);
+
+  // Navigate to user profile
+  const navigateToUserProfile = () => {
+    const userId = author._id || author.id;
+    if (userId) {
+      navigate(`/profile/${userId}`);
+    }
+  };
+
+  // Handle like/unlike comment
+  const handleLikeToggle = async () => {
+    if (actionInProgress) return;
+
+    // Optimistically update the UI for immediate feedback
+    const wasLiked = hasLiked;
+    setHasLiked(!wasLiked);
+
+    // If the user is liking the comment, optimistically increment the like count
+    // If the user is unliking the comment, optimistically decrement the like count
+    const likesCount = comment.likes?.length || 0;
+    const newLikesCount = wasLiked ? Math.max(0, likesCount - 1) : likesCount + 1;
+    comment.likes = Array(newLikesCount).fill(currentUserId);
+
+    setActionInProgress(true);
+    try {
+      const commentId = comment._id || comment.id;
+      const response = await toggleCommentLike(commentId);
+
+      if (!response.error) {
+        // Extract updated comment data from response
+        const updatedComment = response.data.data ? response.data.data : response.data;
+
+        // Update the local comment state with the updated likes from the server
+        comment.likes = updatedComment.likes;
+
+        // Update the comment in the parent component
+        if (onCommentUpdated) {
+          onCommentUpdated();
+        }
+      } else {
+        // Revert the optimistic update if there was an error
+        setHasLiked(wasLiked);
+        comment.likes = Array(likesCount).fill(currentUserId);
+
+        toast.error(response.message || `Failed to ${wasLiked ? 'unlike' : 'like'} comment`);
+      }
+    } catch (error) {
+      // Revert the optimistic update if there was an error
+      setHasLiked(wasLiked);
+      comment.likes = Array(likesCount).fill(currentUserId);
+
+      console.error(`Error toggling like on comment:`, error);
+      toast.error(`An error occurred while ${wasLiked ? 'unliking' : 'liking'} the comment`);
+    } finally {
+      setActionInProgress(false);
+    }
+  };
+
+  // Handle reply to comment
+  const handleReplyClick = () => {
+    setIsReplying(true);
+  };
+
+  // Handle cancel reply
+  const handleCancelReply = () => {
+    setIsReplying(false);
+  };
+
+  // Handle reply added
+  const handleReplyAdded = (newReply) => {
+    setIsReplying(false);
+    setShowReplies(true);
+
+    // Add the new reply to the replies list
+    setReplies(prevReplies => [newReply, ...prevReplies]);
+
+    // Update the reply count in the pagination
+    setReplyPagination(prev => ({
+      ...prev,
+      total: prev.total + 1
+    }));
+
+    // Update the comment in the parent component
+    if (onCommentUpdated) {
+      onCommentUpdated();
+    }
+  };
+
+  // Handle edit comment
+  const handleEditClick = () => {
+    setEditContent(comment.content);
+    setEditCharCount(comment.content ? comment.content.length : 0);
+    setIsEditing(true);
+  };
+
+  // Handle edit content change
+  const handleEditContentChange = (e) => {
+    const value = e.target.value;
+    setEditContent(value);
+    setEditCharCount(value.length);
+  };
+
+  // Handle edit submit
+  const handleEditSubmit = async () => {
+    if (actionInProgress) return;
+    if (!editContent.trim()) {
+      toast.warning("Comment cannot be empty");
+      return;
+    }
+
+    if (editContent.length > MAX_CHARS) {
+      toast.warning(`Comment is too long (maximum ${MAX_CHARS} characters)`);
+      return;
+    }
+
+    setActionInProgress(true);
+    try {
+      const commentId = comment._id || comment.id;
+      const response = await editComment(commentId, { content: editContent.trim() });
+
+      if (!response.error) {
+        // Extract updated comment data from response
+        const updatedComment = response.data.data ? response.data.data : response.data;
+
+        // Update the local comment state with the updated content
+        // This provides immediate feedback to the user
+        comment.content = updatedComment.content;
+
+        setIsEditing(false);
+
+        // Update the comment in the parent component
+        if (onCommentUpdated) {
+          onCommentUpdated();
+        }
+
+        toast.success("Comment updated successfully");
+      } else {
+        toast.error(response.message || "Failed to update comment");
+      }
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      toast.error("An error occurred while updating the comment");
+    } finally {
+      setActionInProgress(false);
+    }
+  };
+
+  // Handle delete comment
+  const handleDeleteComment = async () => {
+    if (actionInProgress) return;
+
+    setActionInProgress(true);
+    try {
+      const commentId = comment._id || comment.id;
+      const response = await deleteComment(commentId);
+
+      if (!response.error) {
+        // Update the comment in the parent component
+        if (onCommentUpdated) {
+          onCommentUpdated();
+        }
+
+        toast.success("Comment deleted successfully");
+      } else {
+        toast.error(response.message || "Failed to delete comment");
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      toast.error("An error occurred while deleting the comment");
+    } finally {
+      setActionInProgress(false);
+    }
+  };
+
+  // Toggle showing replies
+  const toggleReplies = () => {
+    setShowReplies(!showReplies);
+
+    // If we're showing replies and they haven't been loaded yet, fetch them
+    if (!showReplies && !hasLoadedReplies) {
+      // fetchReplies will be called by the useEffect
+    } else if (showReplies && replyPagination.hasMore) {
+      // If we're hiding replies and there are more to load, reset to page 1 for next time
+      setReplyPagination(prev => ({
+        ...prev,
+        page: 1
+      }));
+    }
+  };
+
+  // Load more replies
+  const loadMoreReplies = async () => {
+    if (loadingReplies || !replyPagination.hasMore) return;
+
+    const nextPage = replyPagination.page + 1;
+    setLoadingReplies(true);
+
+    try {
+      const commentId = comment._id || comment.id;
+      const response = await getCommentReplies(commentId, {
+        page: nextPage,
+        limit: replyPagination.limit
+      });
+
+      if (!response.error && response.data) {
+        // Extract replies data from response
+        let newReplies = [];
+        let paginationData = {
+          total: replyPagination.total,
+          page: nextPage,
+          limit: replyPagination.limit,
+          hasMore: false
+        };
+
+        // Check for different possible response structures
+        if (response.data.data?.replies) {
+          // Structure: { data: { replies: [...] } }
+          newReplies = response.data.data.replies;
+          paginationData = response.data.data.pagination || paginationData;
+        } else if (response.data.replies) {
+          // Structure: { replies: [...] }
+          newReplies = response.data.replies;
+          paginationData = response.data.pagination || paginationData;
+        } else if (Array.isArray(response.data.data)) {
+          // Structure: { data: [...] }
+          newReplies = response.data.data;
+        } else if (response.data.data?.data?.replies) {
+          // Structure: { data: { data: { replies: [...] } } }
+          newReplies = response.data.data.data.replies;
+          paginationData = response.data.data.data.pagination || paginationData;
+        } else if (Array.isArray(response.data)) {
+          // Structure: [...] (direct array)
+          newReplies = response.data;
+        }
+
+        // Append new replies to existing ones
+        setReplies(prevReplies => [...prevReplies, ...newReplies]);
+        setReplyPagination(paginationData);
+      }
+    } catch (error) {
+      console.error("Error loading more replies:", error);
+      toast.error("Failed to load more replies");
+    } finally {
+      setLoadingReplies(false);
+    }
+  };
+
+  return (
+    <div className="comment-item">
+      <div className="comment-header">
+        <Avatar
+          size={40}
+          src={
+            <ImageProxy
+              src={getImageUrl(author.profilePic, DEFAULT_PROFILE_PIC)}
+              alt={author.username || "User"}
+              defaultSrc={DEFAULT_PROFILE_PIC}
+            />
+          }
+          className="comment-avatar clickable"
+          onClick={navigateToUserProfile}
+        />
+
+        <div className="comment-user-info">
+          <div className="comment-user-name-container">
+            <Text
+              strong
+              className="comment-user-name clickable"
+              onClick={navigateToUserProfile}
+            >
+              {author.firstName || author.username || "User"}{" "}
+              {author.lastName || ""}
+              {author.isVerified && <span className="verified-badge">✓</span>}
+            </Text>
+
+            <Text
+              type="secondary"
+              className="comment-user-handle clickable"
+              onClick={navigateToUserProfile}
+            >
+              @{author.username || "user"}
+            </Text>
+
+            <Text type="secondary" className="comment-timestamp">
+              {formatTimestamp(comment.createdAt)}
+            </Text>
+          </div>
+        </div>
+      </div>
+
+      <div className="comment-content">
+        {isEditing ? (
+          <Form className="edit-comment-form">
+            <Form.Item>
+              <TextArea
+                value={editContent}
+                onChange={handleEditContentChange}
+                autoSize={{ minRows: 2, maxRows: 6 }}
+                maxLength={MAX_CHARS + 1} // Allow one extra character to trigger validation
+              />
+            </Form.Item>
+            <div className="edit-form-footer">
+              <div className="char-counter">
+                <Text
+                  type={editCharCount > MAX_CHARS ? "danger" : editCharCount > MAX_CHARS * 0.8 ? "warning" : "secondary"}
+                >
+                  {editCharCount}/{MAX_CHARS}
+                </Text>
+              </div>
+              <div className="edit-actions">
+                <Button onClick={() => setIsEditing(false)}>Cancel</Button>
+                <Button
+                  type="primary"
+                  onClick={handleEditSubmit}
+                  loading={actionInProgress}
+                  disabled={!editContent.trim() || editCharCount > MAX_CHARS}
+                >
+                  Save
+                </Button>
+              </div>
+            </div>
+          </Form>
+        ) : (
+          <Paragraph className="comment-text">{comment.content}</Paragraph>
+        )}
+      </div>
+
+      <div className="comment-actions">
+        {/* Like button */}
+        <div className="comment-action-group">
+          <Tooltip title={hasLiked ? "Unlike" : "Like"}>
+            <Button
+              type="text"
+              onClick={handleLikeToggle}
+              className="comment-action-button like-button"
+              aria-label={hasLiked ? "Unlike" : "Like"}
+              icon={hasLiked ? <HeartFilled style={{ color: '#e0245e' }} /> : <HeartOutlined />}
+              disabled={actionInProgress}
+            />
+          </Tooltip>
+          <span className="comment-action-count">{comment.likes?.length || 0}</span>
+        </div>
+
+        {/* Reply button */}
+        <div className="comment-action-group">
+          <Tooltip title="Reply">
+            <Button
+              type="text"
+              onClick={handleReplyClick}
+              className="comment-action-button"
+              aria-label="Reply"
+              icon={<MessageOutlined />}
+              disabled={actionInProgress}
+            />
+          </Tooltip>
+        </div>
+
+        {/* Edit button (only for author) */}
+        {isAuthor && (
+          <div className="comment-action-group">
+            <Tooltip title="Edit">
+              <Button
+                type="text"
+                onClick={handleEditClick}
+                className="comment-action-button"
+                aria-label="Edit"
+                icon={<EditOutlined />}
+                disabled={actionInProgress}
+              />
+            </Tooltip>
+          </div>
+        )}
+
+        {/* Delete button (only for author) */}
+        {isAuthor && (
+          <div className="comment-action-group">
+            <Popconfirm
+              title="Delete this comment?"
+              description="This action cannot be undone."
+              onConfirm={handleDeleteComment}
+              okText="Delete"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
+            >
+              <Tooltip title="Delete">
+                <Button
+                  type="text"
+                  className="comment-action-button delete-button"
+                  aria-label="Delete"
+                  icon={<DeleteOutlined />}
+                  disabled={actionInProgress}
+                />
+              </Tooltip>
+            </Popconfirm>
+          </div>
+        )}
+      </div>
+
+      {/* Reply form */}
+      {isReplying && (
+        <div className="comment-reply-form">
+          <CommentForm
+            postId={postId}
+            replyToId={comment._id || comment.id}
+            onCommentAdded={handleReplyAdded}
+            onCancel={handleCancelReply}
+          />
+        </div>
+      )}
+
+      {/* Toggle replies button */}
+      {(replies.length > 0 || comment.replyCount > 0) && (
+        <div className="comment-replies-toggle">
+          <Button
+            type="link"
+            onClick={toggleReplies}
+            className="toggle-replies-button"
+          >
+            {showReplies ? "Hide replies" : `Show ${replies.length || comment.replyCount} ${(replies.length === 1 || comment.replyCount === 1) ? 'reply' : 'replies'}`}
+          </Button>
+        </div>
+      )}
+
+      {/* Replies */}
+      {showReplies && (
+        <>
+          {loadingReplies && replies.length === 0 ? (
+            <div className="comment-loading-container">
+              <Spin size="small" />
+            </div>
+          ) : (
+            <>
+              <CommentList
+                comments={replies}
+                postId={postId}
+                onCommentUpdated={onCommentUpdated}
+                isNested={true}
+              />
+
+              {replyPagination.hasMore && (
+                <div className="load-more-replies">
+                  <Button
+                    type="link"
+                    onClick={loadMoreReplies}
+                    loading={loadingReplies}
+                  >
+                    Load more replies
+                  </Button>
+                </div>
+              )}
+
+              {loadingReplies && replies.length > 0 && (
+                <div className="comment-loading-container">
+                  <Spin size="small" />
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+export default CommentItem;

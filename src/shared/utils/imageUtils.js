@@ -1,9 +1,10 @@
 /**
  * Utility functions for handling images
  */
+import { getApiUrl } from './envUtils';
 
-// Get the API base URL from environment or use default
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://192.168.0.120:5050";
+// Get the API base URL from environment
+const API_BASE_URL = getApiUrl();
 
 /**
  * Get the full URL for an image path
@@ -23,14 +24,34 @@ export const getImageUrl = (imagePath, defaultImage) => {
     return imagePath.replace(/ /g, '%20');
   }
 
+  // Special case for URLs that include the server hostname but might be missing the protocol
+  // For example: 192.168.1.7:5050/uploads/profile-pictures/image.jpg
+  if (imagePath.includes('192.168.1.7:5050') ||
+      imagePath.includes('localhost:5050')) {
+    // Add http:// protocol if missing
+    const fullUrl = imagePath.startsWith('//')
+      ? `http:${imagePath}`
+      : `http://${imagePath}`;
+    console.log('Fixed URL with protocol:', fullUrl);
+    return fullUrl.replace(/ /g, '%20');
+  }
+
   // If the image path starts with a slash, append it to the API base URL
   if (imagePath.startsWith("/")) {
     // Special handling for profile pictures and other uploads
     if (imagePath.startsWith("/uploads/")) {
-      // Add /api prefix if it's not already there
-      const apiPath = imagePath.startsWith('/api/') ? imagePath : `/api${imagePath}`;
-      return `${API_BASE_URL}${apiPath}`.replace(/ /g, '%20');
+      // Remove /api suffix from API_BASE_URL if it exists
+      const baseUrl = API_BASE_URL.endsWith('/api')
+        ? API_BASE_URL.substring(0, API_BASE_URL.length - 4)
+        : API_BASE_URL;
+
+      // Don't add /api prefix to /uploads/ paths
+      const fullUrl = `${baseUrl}${imagePath}`.replace(/ /g, '%20');
+      console.log('Generated image URL:', fullUrl);
+      return fullUrl;
     }
+
+    // For other paths, use the API_BASE_URL as is
     return `${API_BASE_URL}${imagePath}`.replace(/ /g, '%20');
   }
 
