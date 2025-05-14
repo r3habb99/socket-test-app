@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaRegCommentDots, FaArrowLeft, FaEllipsisH } from "react-icons/fa";
-import { fetchUserProfileById, followUser } from "../../api/profileApi";
+import { fetchUserProfileById, followUser, fetchUserStats } from "../../api/profileApi";
 import { createChat, getAllChats } from "../../../messaging/api/messagingApi";
 import { findExistingChat } from "../../../messaging/components/ChatList/ChatListHelpers";
 import {
@@ -25,6 +25,7 @@ export const Profile = () => {
   const [error, setError] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
+  const [userStats, setUserStats] = useState(null);
 
   const loggedInUserId = localStorage.getItem("userId");
 
@@ -39,6 +40,7 @@ export const Profile = () => {
     }
 
     try {
+      // Fetch user profile data
       const response = await fetchUserProfileById(userId);
 
       if (response.error) {
@@ -66,6 +68,9 @@ export const Profile = () => {
           // Check if the logged-in user is in the followers array
           const followersArray = normalizedUser.followers || [];
           setIsFollowing(followersArray.includes(loggedInUserId));
+
+          // Fetch user stats with posts
+          fetchUserStatsData(normalizedUser.id || normalizedUser._id);
         } else {
           console.error("User data missing id/_id:", userDataObj);
           setError("User profile data missing ID.");
@@ -80,6 +85,29 @@ export const Profile = () => {
     }
   }, [userId, loggedInUserId]);
 
+  // Function to fetch user stats
+  const fetchUserStatsData = async (userId) => {
+    try {
+      const response = await fetchUserStats(userId, true);
+
+      if (response.error) {
+        console.error("Failed to fetch user stats:", response.message);
+        return;
+      }
+
+      // Extract stats from the nested response structure
+      const statsData = response.data?.data;
+
+      if (statsData) {
+        setUserStats(statsData);
+      } else {
+        console.warn("No stats data found in response");
+      }
+    } catch (err) {
+      console.error("Error fetching user stats:", err);
+    }
+  };
+
   // Use our custom hook for auto-refreshing
   const { triggerRefresh } = useAutoRefresh(
     fetchProfile,
@@ -91,6 +119,13 @@ export const Profile = () => {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  // Refresh stats when active tab changes
+  useEffect(() => {
+    if (user) {
+      fetchUserStatsData(user.id || user._id);
+    }
+  }, [activeTab, user]);
 
   const toggleFollow = async () => {
     try {
@@ -133,7 +168,7 @@ export const Profile = () => {
             {user.firstName} {user.lastName}
           </h2>
           <p className="profile-header-stats">
-            {user.posts?.length || 0} posts
+            {userStats?.stats?.postCount || 0} posts
           </p>
         </div>
       </div>

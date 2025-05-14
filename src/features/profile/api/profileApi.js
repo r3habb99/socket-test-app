@@ -15,6 +15,21 @@ export const fetchUserProfileById = async (userId) => {
 };
 
 /**
+ * Fetch user stats with recent posts
+ * @param {string} userId - User ID
+ * @param {boolean} includePosts - Whether to include recent posts in the response
+ * @returns {Promise<Object>} Response object containing user stats and recent posts
+ */
+export const fetchUserStats = async (userId, includePosts = true) => {
+  try {
+    const response = await apiClient.get(endpoints.user.stats(userId, includePosts));
+    return handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+/**
  * Follow/unfollow a user
  * @param {string} userId - User ID to follow/unfollow
  * @returns {Promise<Object>} Response object

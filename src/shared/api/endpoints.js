@@ -9,6 +9,7 @@ const endpoints = {
     profile: "/user/profile",
     updateProfile: "/user/profile",
     getById: (id) => `/user/${id}`,
+    stats: (id, includePosts = true) => `/user/${id}/stats?includePosts=${includePosts}`,
     followers: (id) => `/user/${id}/followers`,
     following: (id) => `/user/${id}/following`,
     follow: (id) => `/user/${id}/follow`,

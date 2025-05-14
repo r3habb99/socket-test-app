@@ -11,6 +11,7 @@ import { DeleteButton } from '../../../feed/components/DeleteButton';
 import { CommentButton } from '../../../feed/components/Comment';
 import { getPostId, formatTimestamp, navigateToUserProfile } from '../../../feed/components/PostList/PostListHelpers';
 import { getPosts } from '../../../feed/api/postApi';
+import { fetchUserStats } from '../../api/profileApi';
 import './UserPostList.css';
 
 export const UserPostList = ({ userId, activeTab }) => {
@@ -18,51 +19,63 @@ export const UserPostList = ({ userId, activeTab }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     const fetchUserPosts = async () => {
       setLoading(true);
       try {
-        // In a real implementation, we would have a dedicated API endpoint for user posts
-        // For now, we'll fetch all posts and filter by user
-        const response = await getPosts();
-        
+        // Use the new dedicated API endpoint for user stats with posts
+        const response = await fetchUserStats(userId, true);
+
         if (response.error) {
           setError(response.message || 'Failed to fetch posts');
           setLoading(false);
           return;
         }
-        
+
+        // Extract the data from the nested response structure
+        const userData = response.data?.data;
+
+        if (!userData) {
+          setError('No user data found in response');
+          setLoading(false);
+          return;
+        }
+
         let userPosts = [];
-        
-        if (response.data && Array.isArray(response.data)) {
+
+        // Check if we have recent posts in the response
+        if (userData.recentPosts && Array.isArray(userData.recentPosts)) {
           // Filter posts based on the active tab
           if (activeTab === 'posts') {
             // Show only original posts (not replies) by this user
-            userPosts = response.data.filter(post => 
-              (post.postedBy?.id === userId || post.postedBy?._id === userId) && 
-              !post.replyTo
-            );
+            userPosts = userData.recentPosts.filter(post => !post.replyTo);
           } else if (activeTab === 'replies') {
             // Show only replies by this user
-            userPosts = response.data.filter(post => 
-              (post.postedBy?.id === userId || post.postedBy?._id === userId) && 
-              post.replyTo
-            );
+            userPosts = userData.recentPosts.filter(post => post.replyTo);
           } else if (activeTab === 'media') {
             // Show posts with media
-            userPosts = response.data.filter(post => 
-              (post.postedBy?.id === userId || post.postedBy?._id === userId) && 
+            userPosts = userData.recentPosts.filter(post =>
               post.media && post.media.length > 0
             );
           } else if (activeTab === 'likes') {
-            // Show posts liked by this user
-            userPosts = response.data.filter(post => 
-              post.likes && post.likes.some(like => like === userId)
-            );
+            // For likes tab, we still need to fetch all posts and filter
+            // This is because the stats API doesn't return liked posts
+            const allPostsResponse = await getPosts();
+            if (!allPostsResponse.error && allPostsResponse.data && Array.isArray(allPostsResponse.data)) {
+              // Get the user's likes array from the user data
+              const userLikes = userData.user?.likes || [];
+
+              // Filter posts that are liked by this user
+              userPosts = allPostsResponse.data.filter(post =>
+                post.likes && userLikes.includes(post._id || post.id)
+              );
+            }
           }
+        } else {
+          console.warn('No recent posts found in user stats response');
         }
-        
+
         setPosts(userPosts);
       } catch (err) {
         console.error('Error fetching user posts:', err);
@@ -71,14 +84,14 @@ export const UserPostList = ({ userId, activeTab }) => {
         setLoading(false);
       }
     };
-    
+
     fetchUserPosts();
   }, [userId, activeTab]);
-  
+
   const handlePostsUpdated = (updatedPosts) => {
     setPosts(updatedPosts);
   };
-  
+
   const renderPostContent = (post) => {
     // Check if post has retweetData (from the API response structure)
     const original = post.retweetData || post.retweetedFrom;
@@ -166,9 +179,9 @@ export const UserPostList = ({ userId, activeTab }) => {
         <Empty
           description={
             <Typography.Text className="no-post">
-              {activeTab === 'posts' 
-                ? 'No posts to show.' 
-                : activeTab === 'replies' 
+              {activeTab === 'posts'
+                ? 'No posts to show.'
+                : activeTab === 'replies'
                   ? 'No replies to show.'
                   : activeTab === 'media'
                     ? 'No media posts to show.'
