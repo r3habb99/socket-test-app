@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Avatar, Typography, Button, List, Tooltip, Empty, Spin } from 'antd';
+import { Card, Avatar, Typography, Button, List, Tooltip, Empty } from 'antd';
 import { FaRetweet, FaShare } from 'react-icons/fa';
 import { DEFAULT_PROFILE_PIC } from '../../../../constants';
 import { getImageUrl } from '../../../../shared/utils/imageUtils';
@@ -103,8 +103,9 @@ export const UserPostList = ({ userId, activeTab }) => {
 
 
 
-  const handlePostsUpdated = (updatedPosts) => {
-    setPosts(updatedPosts);
+  const handlePostsUpdated = () => {
+    // Refresh the posts when a post is updated (liked, unliked, etc.)
+    fetchUserPosts();
   };
 
   const renderPostContent = (post) => {

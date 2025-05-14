@@ -32,6 +32,41 @@ export const Profile = () => {
   // If no userId is provided in the URL, use the logged-in user's ID
   const userId = urlUserId || loggedInUserId;
 
+  // Function to fetch user stats
+  const fetchUserStatsData = useCallback(async (userId) => {
+    try {
+      // Use the content type based on the active tab
+      const contentType = activeTab === 'posts' ? 'posts' :
+                          activeTab === 'replies' ? 'replies' :
+                          activeTab === 'media' ? 'media' :
+                          activeTab === 'likes' ? 'likes' : 'posts';
+
+      const options = {
+        contentType,
+        limit: 10,
+        includeComments: true
+      };
+
+      const response = await fetchUserStats(userId, options);
+
+      if (response.error) {
+        console.error("Failed to fetch user stats:", response.message);
+        return;
+      }
+
+      // Extract stats from the nested response structure
+      const statsData = response.data?.data;
+
+      if (statsData) {
+        setUserStats(statsData);
+      } else {
+        console.warn("No stats data found in response");
+      }
+    } catch (err) {
+      console.error("Error fetching user stats:", err);
+    }
+  }, [activeTab]);
+
   // Define the fetchProfile function as a callback so it can be used with useAutoRefresh
   const fetchProfile = useCallback(async () => {
     if (!userId) {
@@ -83,42 +118,7 @@ export const Profile = () => {
       console.error("Error fetching user profile:", err);
       setError("An error occurred while fetching the profile.");
     }
-  }, [userId, loggedInUserId]);
-
-  // Function to fetch user stats
-  const fetchUserStatsData = async (userId) => {
-    try {
-      // Use the content type based on the active tab
-      const contentType = activeTab === 'posts' ? 'posts' :
-                          activeTab === 'replies' ? 'replies' :
-                          activeTab === 'media' ? 'media' :
-                          activeTab === 'likes' ? 'likes' : 'posts';
-
-      const options = {
-        contentType,
-        limit: 10,
-        includeComments: true
-      };
-
-      const response = await fetchUserStats(userId, options);
-
-      if (response.error) {
-        console.error("Failed to fetch user stats:", response.message);
-        return;
-      }
-
-      // Extract stats from the nested response structure
-      const statsData = response.data?.data;
-
-      if (statsData) {
-        setUserStats(statsData);
-      } else {
-        console.warn("No stats data found in response");
-      }
-    } catch (err) {
-      console.error("Error fetching user stats:", err);
-    }
-  };
+  }, [userId, loggedInUserId, fetchUserStatsData]);
 
   // Use our custom hook for auto-refreshing
   const { triggerRefresh } = useAutoRefresh(
@@ -137,7 +137,7 @@ export const Profile = () => {
     if (user) {
       fetchUserStatsData(user.id || user._id);
     }
-  }, [activeTab, user]);
+  }, [activeTab, user, fetchUserStatsData]);
 
   const toggleFollow = async () => {
     try {
