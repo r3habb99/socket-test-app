@@ -1,11 +1,14 @@
 .comment-modal .ant-modal-content {
   border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 0 15px rgba(101, 119, 134, 0.2);
 }
 
 .comment-modal .ant-modal-header {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #eff3f4;
   padding: 16px 24px;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
 }
 
 .comment-modal .ant-modal-body {
@@ -16,7 +19,7 @@
 
 .comment-post-content {
   padding: 16px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #eff3f4;
   margin-bottom: 16px;
 }
 
@@ -41,17 +44,36 @@
   line-height: 1.2 !important;
   display: flex;
   align-items: center;
+  font-weight: 700 !important;
+  color: #0f1419 !important;
+}
+
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  color: #fff;
+  background-color: #1d9bf0;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
 }
 
 .post-author-username {
   font-size: 14px;
-  color: #6e767d;
+  color: #536471;
+  margin-top: 2px !important;
 }
 
 .post-content {
   margin-top: 8px;
   white-space: pre-wrap;
   word-break: break-word;
+  color: #0f1419;
+  font-size: 20px;
+  line-height: 1.5;
 }
 
 .comment-loading-container {
@@ -66,16 +88,28 @@
   align-items: center;
   margin: 16px 0;
   padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #eff3f4;
 }
 
 .comment-sort-options .ant-btn {
   margin-left: 8px;
+  border-radius: 20px;
 }
 
 .comment-sort-options .ant-typography {
   margin-right: 8px;
-  color: #6e767d;
+  color: #536471;
+  font-size: 14px;
+}
+
+.comment-sort-options .ant-btn-primary {
+  background-color: #1d9bf0;
+  border-color: #1d9bf0;
+}
+
+.comment-sort-options .ant-btn-primary:hover {
+  background-color: #1a8cd8;
+  border-color: #1a8cd8;
 }
 
 .no-comments-message {
@@ -84,8 +118,8 @@
   align-items: center;
   padding: 32px 16px;
   text-align: center;
-  background-color: #f9f9f9;
-  border-radius: 8px;
+  background-color: #f7f9fa;
+  border-radius: 16px;
   margin: 16px 0;
 }
 
@@ -97,7 +131,7 @@
   padding: 32px 16px;
   text-align: center;
   background-color: #fff0f0;
-  border-radius: 8px;
+  border-radius: 16px;
   margin: 16px 0;
   border: 1px solid #ffccc7;
 }
@@ -109,6 +143,9 @@
 
 .error-container .ant-btn {
   margin-top: 8px;
+  border-radius: 20px;
+  background-color: #1d9bf0;
+  border-color: #1d9bf0;
 }
 
 /* Mobile responsiveness */

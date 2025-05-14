@@ -2,8 +2,6 @@
   display: flex;
   margin-bottom: 16px;
   padding: 12px;
-  border: 1px solid #eee;
-  border-radius: 12px;
   background-color: #f8f9fa;
   width: 100%;
 }
@@ -19,7 +17,6 @@
 }
 
 .comment-input {
-  border-radius: 16px;
   padding: 8px 12px;
   resize: none;
   border: 1px solid #e1e8ed;
@@ -50,7 +47,6 @@
 .submit-button {
   background-color: #1d9bf0;
   border-color: #1d9bf0;
-  border-radius: 20px;
   display: flex;
   align-items: center;
 }
