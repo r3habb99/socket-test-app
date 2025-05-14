@@ -55,6 +55,31 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* Retweet and Reply Labels */
+.retweet-label,
+.reply-label {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #6e767d;
+  margin-bottom: 8px;
+  margin-left: 36px;
+}
+
+.retweet-label svg,
+.reply-label svg {
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.reply-label {
+  color: #17bf63;
+}
+
+.reply-label svg {
+  color: #17bf63;
+}
+
 /* Post Header Styles */
 .post-header {
   display: flex;

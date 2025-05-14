@@ -8,8 +8,15 @@ import { apiClient, endpoints, handleApiError, handleApiResponse } from '../../.
 export const fetchUserProfileById = async (userId) => {
   try {
     const response = await apiClient.get(endpoints.user.getById(userId));
-    return handleApiResponse(response);
+
+
+    // Process the response to handle different structures
+    const processedResponse = handleApiResponse(response);
+
+
+    return processedResponse;
   } catch (error) {
+    console.error('Error fetching user profile:', error);
     return handleApiError(error);
   }
 };

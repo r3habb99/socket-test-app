@@ -31,21 +31,82 @@ export const handleApiResponse = (response) => {
     };
   }
 
-  // Handle the new response structure with nested data
-  // {error: false, data: {statusCode: 200, message: "...", data: {...}}, status: 200, success: true}
-  if (response.data && typeof response.data === 'object') {
+  // Log the response for debugging
+  console.log("API Response:", {
+    status: response.status,
+    data: response.data,
+    headers: response.headers
+  });
+
+  // If response.data is null or undefined, return an error
+  if (response.data === null || response.data === undefined) {
+    return {
+      error: true,
+      message: "No data received from server",
+      status: response.status,
+      data: null,
+      success: false
+    };
+  }
+
+  // Handle different response structures
+  if (typeof response.data === 'object') {
+    // Case 1: { data: { data: {...} } }
+    if (response.data.data && typeof response.data.data === 'object') {
+      if (response.data.data.data && typeof response.data.data.data === 'object') {
+        return {
+          error: false,
+          data: response.data.data,
+          message: response.data.message || "Operation successful",
+          status: response.status,
+          success: true
+        };
+      }
+
+      return {
+        error: false,
+        data: response.data.data,
+        message: response.data.message || "Operation successful",
+        status: response.status,
+        success: true
+      };
+    }
+
+    // Case 2: { error: false, data: {...} }
     if (response.data.error === false && response.data.data) {
-      // New structure with nested data
+      return {
+        error: false,
+        data: response.data.data,
+        message: response.data.message || "Operation successful",
+        status: response.status,
+        success: true
+      };
+    }
+
+    // Case 3: { statusCode: 200, message: "...", data: {...} }
+    if (response.data.statusCode && response.data.data) {
+      return {
+        error: false,
+        data: response.data,  // Return the whole object to preserve the structure
+        message: response.data.message || "Operation successful",
+        status: response.status,
+        success: true
+      };
+    }
+
+    // Case 4: { user: {...} } or other direct object with nested data
+    if (response.data.user) {
       return {
         error: false,
         data: response.data,
+        message: "Operation successful",
         status: response.status,
         success: true
       };
     }
   }
 
-  // Default response handling
+  // Default response handling - return the data as is
   return {
     error: false,
     data: response.data,

@@ -54,8 +54,27 @@ export const Profile = () => {
         return;
       }
 
-      // Extract stats from the nested response structure
-      const statsData = response.data?.data;
+      // Log the stats response for debugging
+      console.log("User stats API response:", response);
+
+      // Handle different response structures for stats
+      let statsData = null;
+
+      // Case 1: Direct response with statusCode, message, data structure
+      if (response.data && response.data.statusCode && response.data.data) {
+        statsData = response.data;
+        console.log("Found stats data in response.data with statusCode structure", statsData);
+      }
+      // Case 2: Nested response.data.data structure
+      else if (response.data && response.data.data) {
+        statsData = response.data;
+        console.log("Found stats data in response.data.data structure", statsData);
+      }
+      // Case 3: Direct response.data structure
+      else if (response.data) {
+        statsData = response.data;
+        console.log("Found stats data in direct response.data structure", statsData);
+      }
 
       if (statsData) {
         setUserStats(statsData);
@@ -83,13 +102,30 @@ export const Profile = () => {
         return;
       }
 
-      // The API response has a nested structure with the actual user data in the 'data' property
-      const userData = response.data;
+      // Log the response data structure for debugging
+      console.log("Profile API response data:", response);
+
+      // Handle different response structures
+      let userDataObj = null;
+
+      // Case 1: Direct response.data with statusCode, message, data structure
+      if (response.data && response.data.statusCode && response.data.data) {
+        userDataObj = response.data.data;
+        console.log("Found user data in response.data.data", userDataObj);
+      }
+      // Case 2: Nested response.data.data structure
+      else if (response.data && response.data.data) {
+        userDataObj = response.data.data;
+        console.log("Found user data in response.data.data", userDataObj);
+      }
+      // Case 3: Direct response.data structure
+      else if (response.data) {
+        userDataObj = response.data;
+        console.log("Found user data in response.data", userDataObj);
+      }
 
       // Check if we have valid user data
-      if (userData && userData.data) {
-        const userDataObj = userData.data;
-
+      if (userDataObj) {
         // Check if we have either id or _id
         if (userDataObj.id || userDataObj._id) {
           // Normalize the user object to ensure it has both id and _id properties
@@ -111,7 +147,7 @@ export const Profile = () => {
           setError("User profile data missing ID.");
         }
       } else {
-        console.error("User data missing or invalid:", userData);
+        console.error("User data missing or invalid:", response);
         setError("User profile data not found.");
       }
     } catch (err) {

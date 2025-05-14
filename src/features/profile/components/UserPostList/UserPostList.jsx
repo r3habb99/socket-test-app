@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Avatar, Typography, Button, List, Tooltip, Empty } from 'antd';
-import { FaRetweet, FaShare } from 'react-icons/fa';
+import { FaRetweet, FaShare, FaReply } from 'react-icons/fa';
 import { DEFAULT_PROFILE_PIC } from '../../../../constants';
 import { getImageUrl } from '../../../../shared/utils/imageUtils';
 import { ImageProxy } from '../../../../shared/components';
@@ -9,6 +9,7 @@ import { LikeButton } from '../../../feed/components/LikeButton';
 import { RetweetButton } from '../../../feed/components/RetweetButton';
 import { DeleteButton } from '../../../feed/components/DeleteButton';
 import { CommentButton } from '../../../feed/components/Comment';
+import { ReplyButton } from '../../../feed/components/ReplyButton';
 import { getPostId, formatTimestamp, navigateToUserProfile } from '../../../feed/components/PostList/PostListHelpers';
 import { fetchUserStats } from '../../api/profileApi';
 import './UserPostList.css';
@@ -58,8 +59,27 @@ export const UserPostList = ({ userId, activeTab }) => {
         return;
       }
 
-      // Extract the data from the nested response structure
-      const statsData = response.data?.data;
+      // Log the response for debugging
+      console.log("User stats API response for posts:", response);
+
+      // Handle different response structures
+      let statsData = null;
+
+      // Case 1: Direct response with statusCode, message, data structure
+      if (response.data && response.data.statusCode && response.data.data) {
+        statsData = response.data.data;
+        console.log("Found stats data in response.data.data with statusCode structure", statsData);
+      }
+      // Case 2: Nested response.data.data structure
+      else if (response.data && response.data.data) {
+        statsData = response.data.data;
+        console.log("Found stats data in response.data.data structure", statsData);
+      }
+      // Case 3: Direct response.data structure
+      else if (response.data) {
+        statsData = response.data;
+        console.log("Found stats data in direct response.data structure", statsData);
+      }
 
       if (!statsData) {
         setError('No user data found in response');
@@ -118,6 +138,12 @@ export const UserPostList = ({ userId, activeTab }) => {
     // Use postedBy object from the appropriate source
     const postedByUser = original ? original.postedBy || {} : post.postedBy || {};
 
+    // Check if post is a reply
+    const isReply = post.replyTo || postToRender.replyTo;
+
+    // Get the original post this is replying to
+    const replyToPost = post.replyTo || postToRender.replyTo;
+
     // Check if the post has media
     const hasMedia = postToRender.media && postToRender.media.length > 0;
 
@@ -126,6 +152,12 @@ export const UserPostList = ({ userId, activeTab }) => {
         {original && <div className="post-retweet-label">
           <FaRetweet /> <span>{post.postedBy?.username || 'You'} retweeted</span>
         </div>}
+
+        {isReply && replyToPost && (
+          <div className="post-reply-label">
+            <FaReply /> <span>Replying to @{replyToPost.postedBy?.username || "user"}</span>
+          </div>
+        )}
 
         <div className="post-header">
           <div
@@ -231,6 +263,13 @@ export const UserPostList = ({ userId, activeTab }) => {
                   <div className="post-actions">
                     <CommentButton
                       post={post}
+                      getPostId={getPostId}
+                    />
+
+                    <ReplyButton
+                      post={post}
+                      setPosts={setPosts}
+                      onPostsUpdated={handlePostsUpdated}
                       getPostId={getPostId}
                     />
 

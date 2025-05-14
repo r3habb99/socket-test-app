@@ -172,6 +172,25 @@
   cursor: not-allowed;
 }
 
+/* Reply mode styles */
+.reply-mode .create-post-title {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.reply-mode .create-post-form textarea {
+  min-height: 80px;
+}
+
+.reply-btn {
+  background-color: #17bf63;
+  width: 120px;
+}
+
+.reply-btn:hover {
+  background-color: #0fa958;
+}
+
 .error {
   color: #f4212e;
   margin-bottom: 1rem;

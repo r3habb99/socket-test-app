@@ -41,23 +41,33 @@ const ProfileEdit = () => {
           return;
         }
 
+        // Log the response for debugging
+        console.log("Profile edit response:", response);
+
         // Handle the nested API response structure
         const responseData = response.data;
 
         // Try to extract user data from various possible locations
         let userData = null;
 
-        if (responseData?.data?.user) {
-          // Nested: { data: { user: {...} } }
-          userData = responseData.data.user;
-        } else if (responseData?.data) {
-          // Nested: { data: {...} }
+        // Case 1: Direct response with statusCode, message, data structure
+        if (responseData?.statusCode && responseData?.data) {
           userData = responseData.data;
-        } else if (responseData?.user) {
-          // Nested: { user: {...} }
+        }
+        // Case 2: Nested: { data: { user: {...} } }
+        else if (responseData?.data?.user) {
+          userData = responseData.data.user;
+        }
+        // Case 3: Nested: { data: {...} }
+        else if (responseData?.data) {
+          userData = responseData.data;
+        }
+        // Case 4: Nested: { user: {...} }
+        else if (responseData?.user) {
           userData = responseData.user;
-        } else {
-          // Direct: {...}
+        }
+        // Case 5: Direct: {...}
+        else {
           userData = responseData;
         }
 
@@ -71,7 +81,7 @@ const ProfileEdit = () => {
             email: userData.email || "",
           });
 
-       
+
         } else {
           console.error("Invalid user data format:", responseData);
           setError("Failed to parse user data");

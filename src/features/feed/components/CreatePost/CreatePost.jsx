@@ -6,7 +6,15 @@ import { FaImage, FaTimes } from "react-icons/fa";
 import { Input, Button, Alert } from "antd";
 import "./CreatePost.css";
 
-export const CreatePost = ({ onPostCreated }) => {
+/**
+ * CreatePost component for creating new posts or replies
+ * @param {Object} props - Component props
+ * @param {Function} props.onPostCreated - Callback function when a post is created
+ * @param {string} [props.replyTo] - ID of the post this is replying to
+ * @param {boolean} [props.isReply=false] - Whether this is a reply form
+ * @returns {JSX.Element} CreatePost component
+ */
+export const CreatePost = ({ onPostCreated, replyTo, isReply = false }) => {
   const [content, setContent] = useState("");
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,14 +82,29 @@ export const CreatePost = ({ onPostCreated }) => {
 
       formData.append("visibility", visibility);
 
+      // Add replyTo parameter if this is a reply
+      if (replyTo) {
+        formData.append("replyTo", replyTo);
+      }
+
+      console.log("Submitting post/reply with data:", {
+        content: content.trim(),
+        hasMedia: !!media,
+        replyTo: replyTo || null,
+        isReply
+      });
+
       const response = await createPost(formData);
+      console.log("Create post/reply API response:", response);
 
       if (response.error) {
+        console.error("Error creating post/reply:", response.message);
         setError(response.message || "Error creating post");
         return;
       }
 
       const newPost = response.data;
+      console.log("New post/reply created:", newPost);
 
       // Reset form
       setContent("");
@@ -93,33 +116,41 @@ export const CreatePost = ({ onPostCreated }) => {
       }
 
       // Show success message
-      toast.success("Post created successfully!");
+      const successMessage = isReply ? "Reply posted successfully!" : "Post created successfully!";
+      toast.success(successMessage);
 
       // Emit socket event if connected
       if (connected && emit) {
         emit("new post", newPost);
       }
 
-      onPostCreated(); // 🔄 Trigger refresh
+      // Call the onPostCreated callback with the new post data
+      if (typeof onPostCreated === 'function') {
+        console.log("Calling onPostCreated callback with new post data");
+        onPostCreated(newPost);
+      } else {
+        console.warn("onPostCreated is not a function:", onPostCreated);
+      }
     } catch (err) {
-      setError("Error creating post. Please try again.");
-      toast.error("Failed to create post. Please try again.");
+      const errorMessage = isReply ? "Error posting reply. Please try again." : "Error creating post. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="create-post-container">
-      <h1 className="create-post-title">Home</h1>
+    <div className={`create-post-container ${isReply ? 'reply-mode' : ''}`}>
+      <h1 className="create-post-title">{isReply ? 'Reply' : 'Home'}</h1>
       {error && <Alert message={error} type="error" className="error" />}
       <form className="create-post-form" onSubmit={handleSubmit}>
         <Input.TextArea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="What's happening?"
+          placeholder={isReply ? "Tweet your reply" : "What's happening?"}
           disabled={isSubmitting}
-          rows={4}
+          rows={isReply ? 3 : 4}
           className="create-post-form textarea"
         />
 
@@ -160,26 +191,30 @@ export const CreatePost = ({ onPostCreated }) => {
               icon={<FaImage />}
             />
 
-            {/* Visibility selector */}
-            <select
-              className="visibility-selector"
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
-              disabled={isSubmitting}
-              aria-label="Post visibility"
-            >
-              <option value="public">Everyone</option>
-              <option value="private">Only followers</option>
-            </select>
+            {/* Visibility selector - hide for replies */}
+            {!isReply && (
+              <select
+                className="visibility-selector"
+                value={visibility}
+                onChange={(e) => setVisibility(e.target.value)}
+                disabled={isSubmitting}
+                aria-label="Post visibility"
+              >
+                <option value="public">Everyone</option>
+                <option value="private">Only followers</option>
+              </select>
+            )}
           </div>
 
-          {/* Post button */}
+          {/* Post/Reply button */}
           <Button
             type="submit"
-            className="post-btn"
+            className={`post-btn ${isReply ? 'reply-btn' : ''}`}
             disabled={isSubmitting || (!content.trim() && !media)}
           >
-            {isSubmitting ? "Posting..." : "Tweet"}
+            {isSubmitting
+              ? (isReply ? "Replying..." : "Posting...")
+              : (isReply ? "Reply" : "Tweet")}
           </Button>
         </div>
       </form>

@@ -42,8 +42,25 @@ export const FollowingList = () => {
         }
 
         // Process profile data
-        if (profileResponse.data && profileResponse.data.data) {
-          const userData = profileResponse.data.data;
+        console.log("Profile response for following list:", profileResponse);
+
+        // Handle different response structures
+        let userData = null;
+
+        // Case 1: Direct response with statusCode, message, data structure
+        if (profileResponse.data && profileResponse.data.statusCode && profileResponse.data.data) {
+          userData = profileResponse.data.data;
+        }
+        // Case 2: Nested data.data structure
+        else if (profileResponse.data && profileResponse.data.data) {
+          userData = profileResponse.data.data;
+        }
+        // Case 3: Direct data structure
+        else if (profileResponse.data) {
+          userData = profileResponse.data;
+        }
+
+        if (userData) {
           setProfileUser({
             ...userData,
             id: userData.id || userData._id,
@@ -52,7 +69,7 @@ export const FollowingList = () => {
         } else {
           console.error(
             "Invalid profile data structure:",
-            profileResponse.data
+            profileResponse
           );
           setError("Failed to parse profile data");
           return;
@@ -73,45 +90,81 @@ export const FollowingList = () => {
         }
 
         // Process followers data
-        const followersData = followersResponse.data;
-        if (
-          followersData &&
-          followersData.data &&
-          Array.isArray(followersData.data)
-        ) {
-          const normalizedFollowers = followersData.data.map((follower) => ({
+        console.log("Followers response:", followersResponse);
+
+        // Handle different response structures
+        let followersArray = null;
+
+        // Case 1: Direct response with statusCode, message, data structure
+        if (followersResponse.data && followersResponse.data.statusCode && followersResponse.data.data) {
+          followersArray = followersResponse.data.data;
+          console.log("Found followers in response.data.data with statusCode structure", followersArray);
+        }
+        // Case 2: Nested data.data structure
+        else if (followersResponse.data && followersResponse.data.data && Array.isArray(followersResponse.data.data)) {
+          followersArray = followersResponse.data.data;
+          console.log("Found followers in response.data.data structure", followersArray);
+        }
+        // Case 3: Direct data structure
+        else if (followersResponse.data && Array.isArray(followersResponse.data)) {
+          followersArray = followersResponse.data;
+          console.log("Found followers in direct response.data structure", followersArray);
+        }
+
+        if (followersArray && Array.isArray(followersArray)) {
+          // Normalize each user object to ensure it has both id and _id properties
+          const normalizedFollowers = followersArray.map((follower) => ({
             ...follower,
-            id: follower.id || follower._id,
-            _id: follower._id || follower.id,
+            id: follower.id || follower._id, // Ensure id is available
+            _id: follower._id || follower.id, // Ensure _id is available
           }));
+
           setFollowers(normalizedFollowers);
         } else {
-          console.error("Invalid followers data structure:", followersData);
+          console.error("Invalid followers data structure:", followersResponse);
           setError("Failed to parse followers data");
         }
 
         // Process following data
-        const followingData = followingResponse.data;
-        if (
-          followingData &&
-          followingData.data &&
-          Array.isArray(followingData.data)
-        ) {
-          const normalizedFollowing = followingData.data.map((user) => ({
+        console.log("Following response:", followingResponse);
+
+        // Handle different response structures
+        let followingArray = null;
+
+        // Case 1: Direct response with statusCode, message, data structure
+        if (followingResponse.data && followingResponse.data.statusCode && followingResponse.data.data) {
+          followingArray = followingResponse.data.data;
+          console.log("Found following in response.data.data with statusCode structure", followingArray);
+        }
+        // Case 2: Nested data.data structure
+        else if (followingResponse.data && followingResponse.data.data && Array.isArray(followingResponse.data.data)) {
+          followingArray = followingResponse.data.data;
+          console.log("Found following in response.data.data structure", followingArray);
+        }
+        // Case 3: Direct data structure
+        else if (followingResponse.data && Array.isArray(followingResponse.data)) {
+          followingArray = followingResponse.data;
+          console.log("Found following in direct response.data structure", followingArray);
+        }
+
+        if (followingArray && Array.isArray(followingArray)) {
+          // Normalize each user object to ensure it has both id and _id properties
+          const normalizedFollowing = followingArray.map((user) => ({
             ...user,
-            id: user.id || user._id,
-            _id: user._id || user.id,
+            id: user.id || user._id, // Ensure id is available
+            _id: user._id || user.id, // Ensure _id is available
           }));
+
           setFollowing(normalizedFollowing);
         } else {
-          console.error("Invalid following data structure:", followingData);
+          console.error("Invalid following data structure:", followingResponse);
           setError("Failed to parse following data");
         }
 
         // Create follow status object for all users
         const allUsers = [
-          ...(followersData?.data || []),
-          ...(followingData?.data || []),
+          ...(followersArray || []),
+          ...(followingArray || []),
         ];
         const followStatus = {};
         allUsers.forEach((user) => {

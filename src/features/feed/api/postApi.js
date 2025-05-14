@@ -98,6 +98,7 @@ export const getPostById = async (postId) => {
  * @param {string} postData.content - Post content
  * @param {File} [postData.media] - Media file (image)
  * @param {string} [postData.visibility] - Post visibility (public, private, etc.)
+ * @param {string} [postData.replyTo] - ID of the post this is replying to
  * @returns {Promise<Object>} Response object
  */
 export const createPost = async (postData) => {

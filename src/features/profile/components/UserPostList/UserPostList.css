@@ -25,7 +25,8 @@
   background-color: rgba(0, 0, 0, 0.02);
 }
 
-.post-retweet-label {
+.post-retweet-label,
+.post-reply-label {
   display: flex;
   align-items: center;
   color: #536471;
@@ -34,8 +35,17 @@
   padding-left: 30px;
 }
 
-.post-retweet-label svg {
+.post-retweet-label svg,
+.post-reply-label svg {
   margin-right: 5px;
+}
+
+.post-reply-label {
+  color: #17bf63;
+}
+
+.post-reply-label svg {
+  color: #17bf63;
 }
 
 .post-header {

@@ -4,12 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
 import { getImageUrl } from "../../../../shared/utils/imageUtils";
 import { ImageProxy } from "../../../../shared/components";
-import { FaRetweet, FaShare } from "react-icons/fa";
+import { FaRetweet, FaShare, FaReply } from "react-icons/fa";
 import { Card, Avatar, Typography, Button, List, Tooltip, Empty } from "antd";
 import { LikeButton } from "../LikeButton";
 import { RetweetButton } from "../RetweetButton";
 import { DeleteButton } from "../DeleteButton";
 import { CommentButton } from "../Comment";
+import { ReplyButton } from "../ReplyButton";
 import { getPostId, formatTimestamp, navigateToUserProfile } from "./PostListHelpers";
 import "./PostList.css";
 
@@ -28,6 +29,12 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
     // but the retweeter's info for the "You retweeted" header
     const postedByUser = original ? original.postedBy || {} : post.postedBy || {};
 
+    // Check if post is a reply
+    const isReply = post.replyTo || postToRender.replyTo;
+
+    // Get the original post this is replying to
+    const replyToPost = post.replyTo || postToRender.replyTo;
+
     // Check if the post has media
     const hasMedia = postToRender.media && postToRender.media.length > 0;
 
@@ -42,6 +49,12 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
         {original && (
           <div className="retweet-label">
             <FaRetweet /> <Text type="secondary">{post.postedBy?.username || "You"} retweeted</Text>
+          </div>
+        )}
+
+        {isReply && replyToPost && (
+          <div className="reply-label">
+            <FaReply /> <Text type="secondary">Replying to @{replyToPost.postedBy?.username || "user"}</Text>
           </div>
         )}
 
@@ -155,6 +168,13 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                   <div className="post-actions">
                     <CommentButton
                       post={post}
+                      getPostId={getPostId}
+                    />
+
+                    <ReplyButton
+                      post={post}
+                      setPosts={setPosts}
+                      onPostsUpdated={onPostsUpdated}
                       getPostId={getPostId}
                     />
 
