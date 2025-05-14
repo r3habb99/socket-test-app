@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { Button, Tooltip, Spin, Modal } from "antd";
 import { FaReply } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
-import { CreatePost } from "../CreatePost/CreatePost";
 import "./ReplyButton.css";
+import { CreatePost } from "../CreatePost/CreatePost";
 
 /**
  * Button component for replying to posts
@@ -16,13 +15,11 @@ import "./ReplyButton.css";
  */
 export const ReplyButton = ({
   post,
-  setPosts,
   onPostsUpdated,
   getPostId
 }) => {
   const [actionInProgress, setActionInProgress] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const navigate = useNavigate();
 
   const postId = getPostId(post);
 
