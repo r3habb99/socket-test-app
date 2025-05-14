@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { getCommentReplies } from '../../../api/commentApi';
-import { processCommentsResponse } from '../utils/commentHelpers';
+import { processCommentsResponse, extractPaginationData } from '../utils/commentHelpers';
 
 /**
  * Custom hook for fetching and managing comment replies
@@ -15,14 +15,22 @@ export const useReplies = (commentId, postId) => {
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 5,
-    hasMore: true
+    hasMore: true,
+    total: 0
   });
-  const [showReplies, setShowReplies] = useState(false);
+  const [showReplies, setShowReplies] = useState(true);
+
+  // Use a ref to track if we've already fetched replies for this comment
+  const initialFetchDoneRef = useRef(false);
+
+  // Use a ref to track if a fetch is in progress
+  const fetchInProgressRef = useRef(false);
 
   // Fetch replies for the comment
   const fetchReplies = useCallback(async (refresh = false) => {
-    if (!commentId) return;
+    if (!commentId || fetchInProgressRef.current) return;
 
+    fetchInProgressRef.current = true;
     setLoading(true);
     setError(null);
 
@@ -36,12 +44,36 @@ export const useReplies = (commentId, postId) => {
         }));
       }
 
+      console.log(`Fetching replies for comment ${commentId}, page ${refresh ? 1 : pagination.page}`);
+
       const response = await getCommentReplies(commentId, {
         page: refresh ? 1 : pagination.page,
         limit: pagination.limit
       });
 
-      const repliesData = processCommentsResponse(response);
+      console.log('Replies API response:', response);
+
+      // Process the response to extract comments and pagination data
+      let repliesData = [];
+      let paginationData = extractPaginationData(response);
+
+      if (response && !response.error) {
+        // Check for the specific structure in the response
+        if (response.data?.data?.replies && Array.isArray(response.data.data.replies)) {
+          repliesData = response.data.data.replies;
+          console.log(`Found ${repliesData.length} replies in response.data.data.replies`);
+        } else if (response.data?.data?.comments && Array.isArray(response.data.data.comments)) {
+          repliesData = response.data.data.comments;
+          console.log(`Found ${repliesData.length} replies in response.data.data.comments`);
+        } else {
+          // Fall back to the generic processor if the structure is different
+          repliesData = processCommentsResponse(response);
+          console.log(`Processed ${repliesData.length} replies using generic processor`);
+        }
+      }
+
+      console.log('Processed replies data:', repliesData);
+      console.log('Pagination data:', paginationData);
 
       // Update replies state
       if (refresh) {
@@ -61,13 +93,15 @@ export const useReplies = (commentId, postId) => {
       setPagination(prev => ({
         ...prev,
         page: refresh ? 2 : prev.page + 1,
-        hasMore: repliesData.length === pagination.limit
+        hasMore: paginationData.hasMore,
+        total: paginationData.total
       }));
     } catch (err) {
       console.error('Error fetching replies:', err);
       setError('Failed to load replies. Please try again.');
     } finally {
       setLoading(false);
+      fetchInProgressRef.current = false;
     }
   }, [commentId, pagination.page, pagination.limit]);
 
@@ -82,16 +116,22 @@ export const useReplies = (commentId, postId) => {
   const toggleReplies = useCallback(() => {
     const newShowReplies = !showReplies;
     setShowReplies(newShowReplies);
-    
-    // Fetch replies if showing and not already loaded
-    if (newShowReplies && replies.length === 0 && !loading) {
+
+    // Fetch replies if showing and not already loaded or if we need to refresh
+    // Only fetch if we haven't already done the initial fetch and we're not currently loading
+    if (newShowReplies && replies.length === 0 && !initialFetchDoneRef.current && !loading && !fetchInProgressRef.current) {
+      console.log('Toggling replies - fetching fresh replies');
       fetchReplies(true);
+      initialFetchDoneRef.current = true;
     }
   }, [showReplies, replies.length, loading, fetchReplies]);
 
   // Add a new reply
   const addReply = useCallback((newReply) => {
     if (newReply.postId === postId && newReply.replyToId === commentId) {
+      // Mark that we've received at least one reply
+      initialFetchDoneRef.current = true;
+
       setReplies(prev => {
         // Check if reply already exists
         const exists = prev.some(
@@ -113,10 +153,10 @@ export const useReplies = (commentId, postId) => {
   // Update a reply
   const updateReply = useCallback((updatedReply) => {
     if (updatedReply.replyToId === commentId) {
-      setReplies(prev => 
-        prev.map(reply => 
-          (reply._id || reply.id) === (updatedReply._id || updatedReply.id) 
-            ? updatedReply 
+      setReplies(prev =>
+        prev.map(reply =>
+          (reply._id || reply.id) === (updatedReply._id || updatedReply.id)
+            ? updatedReply
             : reply
         )
       );
@@ -125,12 +165,26 @@ export const useReplies = (commentId, postId) => {
 
   // Remove a reply
   const removeReply = useCallback((replyId) => {
-    setReplies(prev => 
-      prev.filter(reply => 
+    setReplies(prev =>
+      prev.filter(reply =>
         (reply._id || reply.id) !== replyId
       )
     );
   }, []);
+
+  // Reset initialFetchDoneRef when commentId changes
+  useEffect(() => {
+    initialFetchDoneRef.current = false;
+  }, [commentId]);
+
+  // Automatically fetch replies when the component mounts, but only once
+  useEffect(() => {
+    if (commentId && !initialFetchDoneRef.current && !loading && !fetchInProgressRef.current) {
+      console.log('Auto-fetching replies on mount for comment:', commentId);
+      fetchReplies(true);
+      initialFetchDoneRef.current = true;
+    }
+  }, [commentId, loading, fetchReplies]);
 
   return {
     replies,

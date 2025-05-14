@@ -85,12 +85,30 @@ export const processCommentsResponse = (response) => {
   let commentsData = [];
 
   try {
-    // Check for different possible response structures
-    if (response.data?.data?.comments) {
-      // Structure: { data: { data: { comments: [...] } } }
+    // First, check for the specific structure used by the replies endpoint
+    if (response.data?.data?.replies && Array.isArray(response.data.data.replies)) {
+      // Structure: { data: { data: { replies: [...], pagination: {...} } } }
+      commentsData = response.data.data.replies;
+      console.log('Found replies in response.data.data.replies (replies endpoint structure)');
+
+      // If there's pagination info, log it
+      if (response.data.data.pagination) {
+        console.log('Pagination info:', response.data.data.pagination);
+      }
+    }
+    // Also check for comments structure
+    else if (response.data?.data?.comments && Array.isArray(response.data.data.comments)) {
+      // Structure: { data: { data: { comments: [...], pagination: {...} } } }
       commentsData = response.data.data.comments;
-      console.log('Found comments in response.data.data.comments');
-    } else if (response.data?.comments) {
+      console.log('Found comments in response.data.data.comments (comments endpoint structure)');
+
+      // If there's pagination info, log it
+      if (response.data.data.pagination) {
+        console.log('Pagination info:', response.data.data.pagination);
+      }
+    }
+    // Then check for other possible structures
+    else if (response.data?.comments) {
       // Structure: { data: { comments: [...] } }
       commentsData = response.data.comments;
       console.log('Found comments in response.data.comments');
@@ -309,4 +327,55 @@ export const filterTopLevelComments = (comments, isNested = false) => {
   return !isNested
     ? comments.filter(comment => !comment.replyToId)
     : comments;
+};
+
+/**
+ * Extract pagination data from API response
+ * @param {Object} response - API response object
+ * @returns {Object} Pagination data object with hasMore and total properties
+ */
+export const extractPaginationData = (response) => {
+  const defaultPagination = { hasMore: false, total: 0 };
+
+  if (!response || response.error) {
+    return defaultPagination;
+  }
+
+  try {
+    // Check for different possible structures
+    if (response.data?.data?.pagination) {
+      // Structure: { data: { data: { pagination: {...} } } }
+      return {
+        hasMore: response.data.data.pagination.hasMore || false,
+        total: response.data.data.pagination.total || 0,
+        page: response.data.data.pagination.page || 1,
+        limit: response.data.data.pagination.limit || 10
+      };
+    } else if (response.data?.pagination) {
+      // Structure: { data: { pagination: {...} } }
+      return {
+        hasMore: response.data.pagination.hasMore || false,
+        total: response.data.pagination.total || 0,
+        page: response.data.pagination.page || 1,
+        limit: response.data.pagination.limit || 10
+      };
+    } else if (response.data?.data) {
+      // Check if the data.data object has pagination-like properties
+      const data = response.data.data;
+      if (data.hasOwnProperty('hasMore') || data.hasOwnProperty('total') ||
+          data.hasOwnProperty('page') || data.hasOwnProperty('limit')) {
+        return {
+          hasMore: data.hasMore || false,
+          total: data.total || 0,
+          page: data.page || 1,
+          limit: data.limit || 10
+        };
+      }
+    }
+
+    return defaultPagination;
+  } catch (error) {
+    console.error('Error extracting pagination data:', error);
+    return defaultPagination;
+  }
 };

@@ -115,15 +115,15 @@
   color: #6e767d;
 }
 
-.comment-replies-toggle {
+.comment-replies-count {
   margin-left: 52px;
   margin-top: 8px;
+  margin-bottom: 4px;
+  font-size: 14px;
 }
 
-.toggle-replies-button {
-  padding: 0;
-  font-size: 14px;
-  color: #1d9bf0;
+.comment-replies-container {
+  margin-top: 8px;
 }
 
 .comment-reply-form {
@@ -182,7 +182,8 @@
 @media (max-width: 576px) {
   .comment-content,
   .comment-actions,
-  .comment-replies-toggle,
+  .comment-replies-count,
+  .comment-replies-container,
   .comment-reply-form,
   .comment-loading-container,
   .load-more-replies {

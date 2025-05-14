@@ -50,8 +50,6 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
   const {
     replies,
     loading: loadingReplies,
-    showReplies,
-    toggleReplies,
     addReply,
     loadMoreReplies,
     pagination: replyPagination
@@ -63,10 +61,16 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
   // Process the author's profile picture URL
   const authorProfilePic = getProcessedProfilePicUrl(rawAuthor.profilePic);
 
-  // Create a processed author object
+  // Create a processed author object with fallbacks for all fields
   const author = {
     ...rawAuthor,
-    profilePic: authorProfilePic
+    profilePic: authorProfilePic,
+    username: rawAuthor.username || "user",
+    firstName: rawAuthor.firstName || rawAuthor.name || rawAuthor.username || "User",
+    lastName: rawAuthor.lastName || "",
+    isVerified: rawAuthor.isVerified || false,
+    _id: rawAuthor._id || rawAuthor.id || "unknown",
+    id: rawAuthor.id || rawAuthor._id || "unknown"
   };
 
   // Check if the current user is the author of the comment
@@ -251,10 +255,6 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
     }
   };
 
-  // Handle toggle replies
-  const handleToggleReplies = () => {
-    toggleReplies();
-  };
 
 
 
@@ -421,56 +421,54 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
         </div>
       )}
 
-      {/* Toggle replies button */}
-      {(replies.length > 0 || comment.replyCount > 0) && (
-        <div className="comment-replies-toggle">
-          <Button
-            type="link"
-            onClick={handleToggleReplies}
-            className="toggle-replies-button"
-          >
-            {showReplies ? "Hide replies" : `Show ${replies.length || comment.replyCount} ${(replies.length === 1 || comment.replyCount === 1) ? 'reply' : 'replies'}`}
-          </Button>
+      {/* Replies count indicator */}
+      {(replies.length > 0 || comment.replyCount > 0 || comment.replies?.length > 0) && (
+        <div className="comment-replies-count">
+          <Text type="secondary">
+            {`${replies.length || comment.replyCount || comment.replies?.length || 0} ${(replies.length === 1 || comment.replyCount === 1 || comment.replies?.length === 1) ? 'reply' : 'replies'}`}
+          </Text>
         </div>
       )}
 
-      {/* Replies */}
-      {showReplies && (
-        <>
-          {loadingReplies && replies.length === 0 ? (
-            <div className="comment-loading-container">
-              <Spin size="small" />
-            </div>
-          ) : (
-            <>
-              <CommentList
-                comments={replies}
-                postId={postId}
-                onCommentUpdated={onCommentUpdated}
-                isNested={true}
-              />
+      {/* Replies - always visible */}
+      <>
+        {loadingReplies && replies.length === 0 ? (
+          <div className="comment-loading-container">
+            <Spin size="small" />
+          </div>
+        ) : (
+          <>
+            {replies.length > 0 && (
+              <div className="comment-replies-container">
+                <CommentList
+                  comments={replies}
+                  postId={postId}
+                  onCommentUpdated={onCommentUpdated}
+                  isNested={true}
+                />
 
-              {replyPagination.hasMore && (
-                <div className="load-more-replies">
-                  <Button
-                    type="link"
-                    onClick={loadMoreReplies}
-                    loading={loadingReplies}
-                  >
-                    Load more replies
-                  </Button>
-                </div>
-              )}
+                {replyPagination.hasMore && (
+                  <div className="load-more-replies">
+                    <Button
+                      type="link"
+                      onClick={loadMoreReplies}
+                      loading={loadingReplies}
+                    >
+                      Load more replies
+                    </Button>
+                  </div>
+                )}
 
-              {loadingReplies && replies.length > 0 && (
-                <div className="comment-loading-container">
-                  <Spin size="small" />
-                </div>
-              )}
-            </>
-          )}
-        </>
-      )}
+                {loadingReplies && replies.length > 0 && (
+                  <div className="comment-loading-container">
+                    <Spin size="small" />
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </>
     </div>
   );
 };
