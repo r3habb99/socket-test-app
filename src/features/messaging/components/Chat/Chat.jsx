@@ -47,12 +47,18 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
+  // Track the last loaded chat ID to prevent duplicate API calls
+  const lastLoadedChatIdRef = useRef(null);
+
   // Load messages when chat is selected
   useEffect(() => {
     // Extract chat ID to a variable for dependency array
     const chatId = selectedChat?._id || selectedChat?.id;
 
-    if (chatId) {
+    // Only load messages if the chat ID has changed
+    if (chatId && chatId !== lastLoadedChatIdRef.current) {
+      // Update the ref to track this chat ID
+      lastLoadedChatIdRef.current = chatId;
 
       setLoadingMessages(true);
 
@@ -63,7 +69,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         .then((response) => {
           // Only proceed if the component is still mounted
           if (!isMounted) return;
-
 
 
           // Handle the nested API response structure
@@ -140,18 +145,16 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       previousChatIdRef.current = chatId;
 
       // Join the chat room via socket
-
       socketContext.joinChat(chatId);
 
       // Clean up function will only run on unmount or when chat ID changes
       return () => {
-
         socketContext.leaveChat(chatId);
         // Don't reset previousChatIdRef here, it will be updated in the next effect run
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChat]); // Only depend on the selectedChat object
+  }, [selectedChat?._id, selectedChat?.id]); // Only depend on the chat ID properties
 
   // Handle typing indicator with debounce and improved timeout management
   const handleTyping = (isTyping) => {
@@ -210,7 +213,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChat]);
+  }, [selectedChat?._id, selectedChat?.id]); // Only depend on the chat ID properties
 
   // Effect to scroll to bottom when new messages are received
   useEffect(() => {
@@ -220,23 +223,30 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     }
   }, [socketContext.messages, scrollToBottom]);
 
-  // Effect to handle socket connection changes
+  // Effect to handle socket connection changes - optimized to prevent duplicate API calls
   useEffect(() => {
     if (socketContext.connected) {
-
       // If we have a selected chat but no messages, try to load messages
       const chatId = selectedChat?._id || selectedChat?.id;
+
+      // Only load messages if:
+      // 1. We have a valid chat ID
+      // 2. We don't have messages already
+      // 3. We're not currently loading messages
+      // 4. The chat ID is different from the last loaded chat ID (to prevent duplicate calls)
       if (
         chatId &&
         (!socketContext.messages || socketContext.messages.length === 0) &&
-        !loadingMessages
+        !loadingMessages &&
+        chatId !== lastLoadedChatIdRef.current
       ) {
+        // Update the ref to track this chat ID
+        lastLoadedChatIdRef.current = chatId;
 
         setLoadingMessages(true);
 
         getMessagesForChat(chatId)
           .then((response) => {
-
             // Handle the nested API response structure
             let msgs = [];
 
@@ -250,7 +260,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
               if (responseData?.data && Array.isArray(responseData.data)) {
                 // Nested: { data: [...] }
                 msgs = responseData.data;
-
               } else if (Array.isArray(responseData)) {
                 // Direct: [...]
                 msgs = responseData;
@@ -316,7 +325,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     return () => {
       socketContext.socket?.off("message received", handleMessageReceived);
     };
-  }, [selectedChat, socketContext, scrollToBottom]);
+  }, [selectedChat?._id, selectedChat?.id, socketContext, scrollToBottom]); // Only depend on the chat ID properties
 
   // Add a useEffect to listen for changes in the messages state
   useEffect(() => {
@@ -471,7 +480,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
               if (selectedChat.isGroupChat) {
                 // For group chats, show group info
                 // You could implement group info modal here
-                
+
               } else {
                 // For 1:1 chats, show the chat partner's profile
                 setShowProfileModal(true);

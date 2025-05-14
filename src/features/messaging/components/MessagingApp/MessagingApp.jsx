@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useSocketContext } from "../../../../core/providers/SocketProvider";
+import { useMessaging } from "../../hooks";
 import { ChatList } from "../ChatList";
 import { Chat } from "../Chat";
 import { Layout, Alert, Button } from "antd";
@@ -12,6 +13,8 @@ const MessagingApp = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const socketContext = useSocketContext();
+  const { chats, fetchChats } = useMessaging();
+  const initialChatProcessed = useRef(false);
 
   // Handle window resize for responsive layout
   useEffect(() => {
@@ -26,7 +29,6 @@ const MessagingApp = () => {
   // Handle socket reconnection if needed - only on mount
   useEffect(() => {
     if (!socketContext.connected) {
-
       socketContext.reconnect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -36,20 +38,29 @@ const MessagingApp = () => {
   const prefillGroupName = location.state?.prefillGroupName || "";
   const prefillGroupUsers = location.state?.prefillGroupUsers || "";
 
+  // Fetch chats on component mount
   useEffect(() => {
-    if (location.state?.initialChat) {
+    fetchChats();
+  }, [fetchChats]);
 
+  // Handle initialChat from location state - with memoized location state to prevent infinite loops
+  useEffect(() => {
+    // Store the initial chat data in a ref to prevent re-processing
+    const initialChatData = location.state?.initialChat;
+    const isExistingChat = location.state?.isExistingChat || false;
+
+    if (initialChatData && !initialChatProcessed.current && chats.length > 0) {
+      console.log("Processing initial chat:", initialChatData);
+      initialChatProcessed.current = true;
 
       // Check if we have a valid chat object
-      const chatData = location.state.initialChat;
-
-      if (!chatData) {
+      if (!initialChatData) {
         console.error("No chat data received");
         return;
       }
 
       // Normalize the chat object
-      let normalizedChat = chatData;
+      let normalizedChat = initialChatData;
 
       // If the chat has a data property, use that
       if (normalizedChat.data) {
@@ -60,16 +71,40 @@ const MessagingApp = () => {
       normalizedChat = {
         ...normalizedChat,
         _id: normalizedChat._id || normalizedChat.id, // Use _id if available, otherwise use id
+        id: normalizedChat.id || normalizedChat._id, // Ensure id is available
       };
 
-
       if (normalizedChat._id) {
-        setSelectedChat(normalizedChat);
+        if (isExistingChat) {
+          // If it's an existing chat, find it in the chats list and use that instance
+          console.log("Using existing chat from chats list");
+          const existingChat = chats.find(
+            chat =>
+              (chat._id === normalizedChat._id) ||
+              (chat.id === normalizedChat._id) ||
+              (chat._id === normalizedChat.id) ||
+              (chat.id === normalizedChat.id)
+          );
+
+          if (existingChat) {
+            // Use the chat from the list to ensure consistency
+            setSelectedChat(existingChat);
+          } else {
+            // If not found (unlikely), use the normalized chat
+            console.log("Existing chat not found in list, using provided chat");
+            setSelectedChat(normalizedChat);
+          }
+        } else {
+          // For new chats, just use the normalized chat
+          console.log("Using new chat");
+          setSelectedChat(normalizedChat);
+        }
       } else {
-        console.error("Invalid chat data structure (no id or _id):", chatData);
+        console.error("Invalid chat data structure (no id or _id):", initialChatData);
       }
     }
-  }, [location.state]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chats.length]); // Only depend on chats.length to prevent infinite loops
 
   // Log when prefillUserId changes
   useEffect(() => {

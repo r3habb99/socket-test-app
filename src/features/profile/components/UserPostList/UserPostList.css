@@ -1,0 +1,136 @@
+.user-post-list-container {
+  width: 100%;
+  margin-top: 0;
+  background-color: #fff;
+}
+
+.user-post-list-loading,
+.user-post-list-error {
+  padding: 20px;
+  text-align: center;
+  color: #536471;
+}
+
+.user-post-list-error {
+  color: #e0245e;
+}
+
+.post-card {
+  margin-bottom: 0 !important;
+  border-radius: 0 !important;
+  transition: background-color 0.2s ease;
+}
+
+.post-card:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.post-retweet-label {
+  display: flex;
+  align-items: center;
+  color: #536471;
+  font-size: 13px;
+  margin-bottom: 8px;
+  padding-left: 30px;
+}
+
+.post-retweet-label svg {
+  margin-right: 5px;
+}
+
+.post-header {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.post-avatar {
+  margin-right: 12px;
+}
+
+.post-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.post-user-name {
+  font-weight: 700;
+  color: #0f1419;
+  margin-right: 5px;
+}
+
+.post-user-handle,
+.post-timestamp {
+  color: #536471;
+  font-size: 14px;
+}
+
+.post-content-container {
+  margin-left: 60px;
+  margin-bottom: 12px;
+}
+
+.post-text {
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.post-media-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.post-media {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 Aspect Ratio */
+  overflow: hidden;
+}
+
+.post-media-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  margin-left: 60px;
+}
+
+.post-action-group {
+  display: flex;
+  align-items: center;
+}
+
+.post-action-button {
+  color: #536471;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.post-action-button:hover {
+  background-color: rgba(29, 161, 242, 0.1);
+  color: #1da1f2;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.no-post {
+  color: #536471;
+  font-size: 15px;
+}

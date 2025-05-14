@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { FaEdit, FaRegCommentDots, FaArrowLeft } from "react-icons/fa";
+import { useParams, useNavigate } from "react-router-dom";
+import { FaRegCommentDots, FaArrowLeft, FaEllipsisH } from "react-icons/fa";
 import { fetchUserProfileById, followUser } from "../../api/profileApi";
-import { createChat } from "../../../messaging/api/messagingApi";
+import { createChat, getAllChats } from "../../../messaging/api/messagingApi";
+import { findExistingChat } from "../../../messaging/components/ChatList/ChatListHelpers";
 import {
   DEFAULT_COVER_PHOTO,
   DEFAULT_PROFILE_PIC,
@@ -13,6 +14,8 @@ import { useAutoRefresh } from "../../../../shared/hooks";
 import { CoverPhotoUploader } from "../CoverPhotoUploader";
 import { ProfilePicUploader } from "../ProfilePicUploader";
 import { FollowButton } from "../FollowButton";
+import { ProfileTabs } from "../ProfileTabs";
+import { UserPostList } from "../UserPostList";
 import "./Profile.css";
 
 export const Profile = () => {
@@ -21,6 +24,7 @@ export const Profile = () => {
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [activeTab, setActiveTab] = useState('posts');
 
   const loggedInUserId = localStorage.getItem("userId");
 
@@ -150,17 +154,19 @@ export const Profile = () => {
 
       <div className="profile-content">
         <div className="profile-left">
-          <ImageProxy
-            src={user.profilePic ? `${getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC)}?t=${Date.now()}` : DEFAULT_PROFILE_PIC}
-            alt="Profile"
-            className="profile-pic"
-            defaultSrc={DEFAULT_PROFILE_PIC}
-            noCache={true}
-            onError={(e) => {
-              console.warn(`Failed to load profile image: ${e.target.src}`);
-            }}
-          />
-          {isOwnProfile && <ProfilePicUploader setUser={setUser} refreshProfile={triggerRefresh} />}
+          <div className="profile-pic-container">
+            <ImageProxy
+              src={user.profilePic ? `${getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC)}?t=${Date.now()}` : DEFAULT_PROFILE_PIC}
+              alt="Profile"
+              className="profile-pic"
+              defaultSrc={DEFAULT_PROFILE_PIC}
+              noCache={true}
+              onError={(e) => {
+                console.warn(`Failed to load profile image: ${e.target.src}`);
+              }}
+            />
+            {isOwnProfile && <ProfilePicUploader setUser={setUser} refreshProfile={triggerRefresh} />}
+          </div>
         </div>
 
         <div className="profile-right">
@@ -170,57 +176,136 @@ export const Profile = () => {
             </h2>
             <div className="actions">
               {isOwnProfile ? (
-                <button className="edit-button">
-                  <FaEdit onClick={handleEditClick} />
+                <button className="edit-profile-button" onClick={handleEditClick}>
+                  Edit profile
                 </button>
               ) : (
                 <>
-                  <FollowButton
-                    isFollowing={isFollowing}
-                    toggleFollow={toggleFollow}
-                  />
-                  <button
-                    className="message-button"
-                    onClick={async () => {
-                      try {
-                        // Get the user ID (either id or _id)
-                        const userId = user.id || user._id;
+                  <div className="profile-action-buttons">
+                    <button className="more-options-button" title="More options">
+                      <FaEllipsisH />
+                    </button>
+                    <button
+                      className="message-button"
+                      onClick={async () => {
+                        try {
+                          // Get the user ID (either id or _id)
+                          const userId = user.id || user._id;
 
-                        const response = await createChat({ userId });
+                          // First check if a chat already exists with this user
+                          const chatsResponse = await getAllChats();
+                          console.log("Chats response:", chatsResponse);
 
-                        if (response.error) {
-                          console.error(
-                            "Failed to create chat:",
-                            response.message
-                          );
-                          alert("Failed to create chat. Please try again.");
-                          return;
+                          if (chatsResponse.error) {
+                            console.error("Failed to fetch chats:", chatsResponse.message);
+                            // Continue with creating a new chat as fallback
+                          } else {
+                            // Extract chats from the response, handling nested data structure
+                            let existingChats = [];
+
+                            if (chatsResponse.data) {
+                              // Handle nested data structure: response.data.data
+                              if (chatsResponse.data.data && Array.isArray(chatsResponse.data.data)) {
+                                existingChats = chatsResponse.data.data;
+                              }
+                              // Handle direct data structure: response.data
+                              else if (Array.isArray(chatsResponse.data)) {
+                                existingChats = chatsResponse.data;
+                              }
+                            }
+
+                            console.log("Existing chats:", existingChats);
+
+                            // Use the findExistingChat helper function to check if a chat already exists
+                            const existingChat = findExistingChat(existingChats, userId);
+
+                            if (existingChat) {
+                              console.log("Chat already exists, navigating to existing chat:", existingChat);
+
+                              // Ensure the chat object has the expected structure
+                              const normalizedChat = {
+                                ...existingChat,
+                                _id: existingChat._id || existingChat.id,
+                                id: existingChat.id || existingChat._id,
+                                users: existingChat.users || []
+                              };
+
+                              // If chat exists, navigate to it with a flag indicating it's an existing chat
+                              navigate("/dashboard/messages", {
+                                state: {
+                                  initialChat: normalizedChat,
+                                  prefillUserId: userId,
+                                  isExistingChat: true  // Add this flag to indicate it's an existing chat
+                                },
+                              });
+                              return;
+                            }
+                          }
+
+                          // If no existing chat was found, create a new one
+                          console.log("Creating new chat with user ID:", userId);
+                          const response = await createChat({ userId });
+                          console.log("Create chat response:", response);
+
+                          if (response.error) {
+                            console.error(
+                              "Failed to create chat:",
+                              response.message
+                            );
+                            alert("Failed to create chat. Please try again.");
+                            return;
+                          }
+
+                          // Extract chat data from the response, handling nested data structure
+                          let chatData;
+                          if (response.data) {
+                            // Handle nested data structure: response.data.data
+                            if (response.data.data) {
+                              chatData = response.data.data;
+                            }
+                            // Handle direct data structure: response.data
+                            else {
+                              chatData = response.data;
+                            }
+                          }
+
+                          if (!chatData) {
+                            console.error("Invalid chat data in response:", response);
+                            alert("Failed to create chat: Invalid response data");
+                            return;
+                          }
+
+                          console.log("Extracted chat data:", chatData);
+
+                          // Create a normalized chat object with _id property
+                          const normalizedChat = {
+                            ...chatData,
+                            _id: chatData._id || chatData.id, // Use _id if available, otherwise use id
+                            id: chatData.id || chatData._id,  // Ensure id is available
+                            users: chatData.users || []       // Ensure users array exists
+                          };
+
+                          // Navigate to the dashboard/messages route with the normalized chat data
+                          navigate("/dashboard/messages", {
+                            state: {
+                              initialChat: normalizedChat,
+                              prefillUserId: userId,
+                            },
+                          });
+                        } catch (error) {
+                          console.error("Failed to start chat:", error);
+                          alert("Failed to start chat. Please try again.");
                         }
-
-                        const chatData = response.data;
-
-                        // Create a normalized chat object with _id property
-                        const normalizedChat = {
-                          ...chatData,
-                          _id: chatData._id || chatData.id, // Use _id if available, otherwise use id
-                        };
-
-                        // Navigate to the dashboard/messages route with the normalized chat data
-                        navigate("/dashboard/messages", {
-                          state: {
-                            initialChat: normalizedChat,
-                            prefillUserId: userId,
-                          },
-                        });
-                      } catch (error) {
-                        console.error("Failed to start chat:", error);
-                        alert("Failed to start chat. Please try again.");
-                      }
-                    }}
-                    title="Message"
-                  >
-                    <FaRegCommentDots size={20} />
-                  </button>
+                      }}
+                      title="Message"
+                    >
+                      <FaRegCommentDots size={16} />
+                    </button>
+                    <FollowButton
+                      isFollowing={isFollowing}
+                      toggleFollow={toggleFollow}
+                    />
+                  </div>
                 </>
               )}
             </div>
@@ -228,30 +313,44 @@ export const Profile = () => {
 
           <p className="username">@{user.username}</p>
           <div className="bio">
-            <p>{user.bio || "Coming soon!"}</p>
+            <p>{user.bio || "No bio yet."}</p>
+          </div>
+
+          <div className="profile-location-date">
+            {user.location && (
+              <div className="profile-location">
+                <span>{user.location}</span>
+              </div>
+            )}
+            <div className="profile-joined-date">
+              <span>Joined {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+            </div>
           </div>
 
           <div className="stats">
             <div>
               <button
                 className="link-button"
-                onClick={() => navigate(`/user/${user.id || user._id}/followers`)}
+                onClick={() => navigate(`/user/${user.id || user._id}/following`)}
               >
-                Followers{" "}
-                <strong className="count">{user.followers?.length || 0}</strong>
+                <strong className="count">{user.following?.length || 0}</strong> Following
               </button>
             </div>
             <div>
               <button
                 className="link-button"
-                onClick={() => navigate(`/user/${user.id || user._id}/following`)}
+                onClick={() => navigate(`/user/${user.id || user._id}/followers`)}
               >
-                Following{" "}
-                <strong className="count">{user.following?.length || 0}</strong>
+                <strong className="count">{user.followers?.length || 0}</strong> Followers
               </button>
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="profile-tabs-section">
+        <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} userId={userId} />
+        <UserPostList userId={userId} activeTab={activeTab} />
       </div>
     </div>
   );
