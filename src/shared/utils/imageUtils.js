@@ -26,13 +26,39 @@ export const getImageUrl = (imagePath, defaultImage) => {
 
   // Special case for URLs that include the server hostname but might be missing the protocol
   // For example: 192.168.1.7:5050/uploads/profile-pictures/image.jpg
-  if (imagePath.includes('192.168.1.7:5050') ||
+  if (imagePath.includes('192.168.0.120:5050') ||
+      imagePath.includes('192.168.1.7:5050') ||
       imagePath.includes('localhost:5050')) {
+    console.log('Detected server hostname in image path:', imagePath);
+
+    // Replace old IP with current API base URL hostname and port
+    const apiUrlObj = new URL(API_BASE_URL);
+    const currentHostPort = apiUrlObj.host; // e.g. 192.168.0.120:5050
+    console.log('Current API host:port is:', currentHostPort);
+
+    // Replace any of the known IPs with the current API host
+    let fixedPath = imagePath;
+    if (imagePath.includes('192.168.1.7:5050')) {
+      console.log('Replacing 192.168.1.7:5050 with', currentHostPort);
+      fixedPath = imagePath.replace(/192\.168\.1\.7:5050/g, currentHostPort);
+    } else if (imagePath.includes('192.168.0.120:5050')) {
+      console.log('Replacing 192.168.0.120:5050 with', currentHostPort);
+      fixedPath = imagePath.replace(/192\.168\.0\.120:5050/g, currentHostPort);
+    } else if (imagePath.includes('localhost:5050')) {
+      console.log('Replacing localhost:5050 with', currentHostPort);
+      fixedPath = imagePath.replace(/localhost:5050/g, currentHostPort);
+    }
+
+    console.log('Path after IP replacement:', fixedPath);
+
     // Add http:// protocol if missing
-    const fullUrl = imagePath.startsWith('//')
-      ? `http:${imagePath}`
-      : `http://${imagePath}`;
-    console.log('Fixed URL with protocol:', fullUrl);
+    const fullUrl = fixedPath.startsWith('//')
+      ? `http:${fixedPath}`
+      : (fixedPath.startsWith('http://') || fixedPath.startsWith('https://'))
+        ? fixedPath
+        : `http://${fixedPath}`;
+
+    console.log('Final fixed URL with protocol:', fullUrl);
     return fullUrl.replace(/ /g, '%20');
   }
 

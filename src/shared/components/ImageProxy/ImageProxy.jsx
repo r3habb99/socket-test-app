@@ -40,10 +40,6 @@ const ImageProxy = ({
 
     // Update the previous src reference
     prevSrcRef.current = src;
-
-    // Debug log for image loading
-    console.log('ImageProxy loading image:', src);
-
     // Reset state when src changes
     setLoading(true);
     setError(false);
@@ -64,7 +60,7 @@ const ImageProxy = ({
 
     // Special case for URLs that might have the full path but are missing the protocol
     // For example: 192.168.1.7:5050/uploads/profile-pictures/image.jpg
-    if (src.includes('192.168.1.7:5050') || src.includes('localhost:5050')) {
+    if (src.includes('192.168.0.120:5050') || src.includes('192.168.1.7:5050') || src.includes('localhost:5050')) {
       // Add http:// protocol if missing
       if (!src.startsWith('http://') && !src.startsWith('https://')) {
         const fullUrl = src.startsWith('//') ? `http:${src}` : `http://${src}`;
@@ -130,6 +126,41 @@ const ImageProxy = ({
         processedSrc,
         error: e
       });
+
+      // Additional debugging for IP address issues
+      if (processedSrc.includes('192.168.1.7:5050')) {
+        console.error('Detected old IP address (192.168.1.7:5050) in image URL. This should have been replaced with the current API URL.');
+
+        // Try to fix the URL on error
+        const apiUrl = getApiUrl();
+        const apiUrlObj = new URL(apiUrl.endsWith('/api') ? apiUrl.substring(0, apiUrl.length - 4) : apiUrl);
+        const currentHostPort = apiUrlObj.host;
+
+        const fixedUrl = processedSrc.replace(/192\.168\.1\.7:5050/g, currentHostPort);
+        console.log('Attempting to fix URL on error:', fixedUrl);
+
+        // Try loading with fixed URL
+        const retryImg = new Image();
+        retryImg.onload = () => {
+          console.log('Successfully loaded image with fixed URL:', fixedUrl);
+          setImageSrc(fixedUrl);
+          setError(false);
+          setLoading(false);
+          if (onLoad) onLoad();
+        };
+
+        retryImg.onerror = () => {
+          console.error('Still failed to load image with fixed URL:', fixedUrl);
+          setImageSrc(defaultSrc);
+          setError(true);
+          setLoading(false);
+          if (onError) onError(e);
+        };
+
+        retryImg.src = fixedUrl;
+        return;
+      }
+
       setImageSrc(defaultSrc);
       setError(true);
       setLoading(false);

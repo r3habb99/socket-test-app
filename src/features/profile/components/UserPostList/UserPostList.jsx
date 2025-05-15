@@ -156,7 +156,7 @@ export const UserPostList = ({ userId, activeTab }) => {
         {isReply && replyToPost && (
           <div className="post-reply-label">
             <FaReply /> <span>Replying to @{replyToPost.postedBy?.username || "user"}</span>
-            
+
             {/* Original post that was replied to */}
             <div className="original-post-container">
               <div className="original-post-content">
@@ -213,7 +213,8 @@ export const UserPostList = ({ userId, activeTab }) => {
                       alt={`Post media ${index + 1}`}
                       className="post-media-image"
                       defaultSrc={placeholderImage}
-                      onError={() => {
+                      onError={(e) => {
+                        console.warn(`Failed to load post media in UserPostList: ${mediaUrl}`, e);
                         // Silent error handling - fallback to placeholder image
                       }}
                     />

@@ -5,8 +5,8 @@
 
 // Default values for environment variables
 const DEFAULT_VALUES = {
-  API_URL: 'http://localhost:5050/api',
-  SOCKET_URL: 'http://localhost:5050',
+  API_URL: 'http://192.168.0.120:5050/api',
+  SOCKET_URL: 'http://192.168.0.120:5050',
 };
 
 /**
@@ -18,13 +18,13 @@ const DEFAULT_VALUES = {
 export const getEnv = (name, defaultValue) => {
   const envName = `REACT_APP_${name}`;
   const value = process.env[envName];
-  
+
   // If the value is undefined or empty, use the default value
   if (value === undefined || value === '') {
     // Use the provided default value or the one from DEFAULT_VALUES
     return defaultValue || DEFAULT_VALUES[name] || '';
   }
-  
+
   return value;
 };
 
@@ -47,7 +47,7 @@ export const getSocketUrl = () => getEnv('SOCKET_URL');
  */
 export const getHostname = (url) => {
   if (!url) return null;
-  
+
   try {
     return new URL(url).hostname;
   } catch (error) {

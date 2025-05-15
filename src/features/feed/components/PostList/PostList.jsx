@@ -121,7 +121,7 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
             {hasMedia && (
               <div className="post-media-container">
                 {postToRender.media.map((mediaUrl, index) => {
-                  // Create a placeholder image URL (using a more relevant placeholder)
+                  // Create a placeholder image URL (using a more reliable source)
                   const placeholderImage = "https://via.placeholder.com/400x300?text=Image+Loading...";
 
                   return (
@@ -131,7 +131,8 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                         alt={`Post media ${index + 1}`}
                         className="post-media-image"
                         defaultSrc={placeholderImage}
-                        onError={() => {
+                        onError={(e) => {
+                          console.warn(`Failed to load post media: ${mediaUrl}`, e);
                           // Silent error handling - fallback to placeholder image
                         }}
                       />
