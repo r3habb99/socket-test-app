@@ -55,8 +55,9 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
     pagination: replyPagination
   } = useReplies(commentId, postId);
 
-  // Get author information (handle both postedBy and author fields)
-  const rawAuthor = comment.author || comment.postedBy || {};
+
+  const rawAuthor = comment?.author ?? comment?.postedBy ?? comment?.replyTo?.author ?? {};
+ 
 
   // Process the author's profile picture URL
   const authorProfilePic = getProcessedProfilePicUrl(rawAuthor.profilePic);

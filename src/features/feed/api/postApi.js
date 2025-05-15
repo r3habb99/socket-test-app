@@ -93,27 +93,111 @@ export const getPostById = async (postId) => {
 };
 
 /**
- * Create a new post
+ * Create a new post or reply to an existing post
  * @param {Object|FormData} postData - Post data or FormData containing post data and media
- * @param {string} postData.content - Post content
- * @param {File} [postData.media] - Media file (image)
- * @param {string} [postData.visibility] - Post visibility (public, private, etc.)
- * @param {string} [postData.replyTo] - ID of the post this is replying to
+ * @param {string} [postData.content] - Post content (optional if media is provided)
+ * @param {Array<File>|File} [postData.media] - Media files to upload (images/videos)
+ * @param {string} [postData.visibility="public"] - Post visibility (public, private, followers)
+ * @param {string} [postData.replyTo] - ID of the post this is replying to (for creating replies)
  * @returns {Promise<Object>} Response object
  */
 export const createPost = async (postData) => {
   try {
     // Check if postData is FormData (for media uploads) or regular object
-    const isFormData = postData instanceof FormData;
+    let isFormData = postData instanceof FormData;
+    let dataToSend = postData;
+    const isReply = !!postData.replyTo;
 
-    const response = await apiClient.post(endpoints.post.create, postData, {
-      headers: isFormData ? {
-        'Content-Type': 'multipart/form-data'
-      } : undefined
-    });
+    // If it's not FormData, convert it to FormData to handle all data consistently
+    if (!isFormData) {
+      const formData = new FormData();
 
-    return handleApiResponse(response);
+      // Add content if provided
+      if (postData.content !== undefined) {
+        formData.append("content", postData.content);
+      }
+
+      // Add media files (handle both array and single file)
+      if (Array.isArray(postData.media)) {
+        postData.media.forEach((file) => {
+          formData.append("media", file);
+        });
+      } else if (postData.media) {
+        formData.append("media", postData.media);
+      }
+
+      // Add visibility if provided, default to "public"
+      formData.append("visibility", postData.visibility || "public");
+
+      // Add replyTo if provided (for replies)
+      if (postData.replyTo) {
+        formData.append("replyTo", postData.replyTo);
+      }
+
+      dataToSend = formData;
+      isFormData = true;
+    }
+
+    // For FormData, we need to explicitly remove the Content-Type header
+    // so that the browser can set the correct boundary
+    const config = {};
+
+    // If it's FormData, we need to override the default Content-Type
+    if (isFormData) {
+      config.headers = {
+        'Content-Type': undefined // Let the browser set it automatically
+      };
+    }
+
+    // Make the API request to the post endpoint
+    // According to the API docs, both new posts and replies use the same endpoint
+    const response = await apiClient.post(endpoints.post.create, dataToSend, config);
+
+
+    // Handle successful response
+    if (response.status >= 200 && response.status < 300) {
+      // Extract the post data from the response according to the API structure
+      let postData = null;
+
+      if (response.data) {
+        if (response.data.data) {
+          // Standard API response structure: { statusCode, message, data }
+          postData = response.data.data;
+        } else {
+          // Fallback to using the response data directly
+          postData = response.data;
+        }
+      }
+
+      return {
+        error: false,
+        data: postData,
+        message: isReply ? "Reply created successfully" : "Post created successfully",
+        status: response.status,
+        success: true
+      };
+    }
+
+    // If we get here, use the standard response handler
+    const processedResponse = handleApiResponse(response);
+    return processedResponse;
   } catch (error) {
+    console.error("Error creating post:", error);
+
+    // Log more details about the error
+    if (error.response) {
+      console.error("Error response:", {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    } else if (error.request) {
+      console.error("No response received:", error.request);
+    } else {
+      console.error("Error message:", error.message);
+    }
+
     return handleApiError(error);
   }
 };

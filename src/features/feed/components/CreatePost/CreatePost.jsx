@@ -74,7 +74,11 @@ export const CreatePost = ({ onPostCreated, replyTo, isReply = false }) => {
     try {
       // Create FormData for the request
       const formData = new FormData();
-      formData.append("content", content);
+
+      // Only append content if it's not empty
+      if (content.trim()) {
+        formData.append("content", content.trim());
+      }
 
       if (media) {
         formData.append("media", media);
@@ -87,15 +91,8 @@ export const CreatePost = ({ onPostCreated, replyTo, isReply = false }) => {
         formData.append("replyTo", replyTo);
       }
 
-      console.log("Submitting post/reply with data:", {
-        content: content.trim(),
-        hasMedia: !!media,
-        replyTo: replyTo || null,
-        isReply
-      });
 
       const response = await createPost(formData);
-      console.log("Create post/reply API response:", response);
 
       if (response.error) {
         console.error("Error creating post/reply:", response.message);
@@ -104,7 +101,6 @@ export const CreatePost = ({ onPostCreated, replyTo, isReply = false }) => {
       }
 
       const newPost = response.data;
-      console.log("New post/reply created:", newPost);
 
       // Reset form
       setContent("");
@@ -126,7 +122,6 @@ export const CreatePost = ({ onPostCreated, replyTo, isReply = false }) => {
 
       // Call the onPostCreated callback with the new post data
       if (typeof onPostCreated === 'function') {
-        console.log("Calling onPostCreated callback with new post data");
         onPostCreated(newPost);
       } else {
         console.warn("onPostCreated is not a function:", onPostCreated);
@@ -144,6 +139,7 @@ export const CreatePost = ({ onPostCreated, replyTo, isReply = false }) => {
     <div className={`create-post-container ${isReply ? 'reply-mode' : ''}`}>
       <h1 className="create-post-title">{isReply ? 'Reply' : 'Home'}</h1>
       {error && <Alert message={error} type="error" className="error" />}
+
       <form className="create-post-form" onSubmit={handleSubmit}>
         <Input.TextArea
           value={content}
@@ -208,13 +204,14 @@ export const CreatePost = ({ onPostCreated, replyTo, isReply = false }) => {
 
           {/* Post/Reply button */}
           <Button
-            type="submit"
+            htmlType="submit"
+            type="primary"
             className={`post-btn ${isReply ? 'reply-btn' : ''}`}
             disabled={isSubmitting || (!content.trim() && !media)}
+            loading={isSubmitting}
+
           >
-            {isSubmitting
-              ? (isReply ? "Replying..." : "Posting...")
-              : (isReply ? "Reply" : "Tweet")}
+            {isReply ? "Reply" : "Tweet"}
           </Button>
         </div>
       </form>
