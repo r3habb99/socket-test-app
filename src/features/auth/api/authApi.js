@@ -71,7 +71,6 @@ export const refreshToken = async () => {
  */
 export const login = async (credentials) => {
   try {
-    console.log("Attempting login with email:", credentials.email);
 
     // Make sure we're not sending any auth headers for login
     const response = await apiClient.post(endpoints.auth.login, credentials, {
@@ -80,7 +79,6 @@ export const login = async (credentials) => {
       }
     });
 
-    console.log("Login response status:", response.status);
     toast.success("Login successful!");
     return handleApiResponse(response);
   } catch (error) {

@@ -14,12 +14,6 @@ import "./CommentsPage.css";
 const { Title, Text } = Typography;
 const { Header, Content } = Layout;
 
-// Log environment variables for debugging
-console.log('Environment variables in CommentsPage:');
-console.log('API_URL:', process.env.REACT_APP_API_URL);
-console.log('SOCKET_URL:', process.env.REACT_APP_SOCKET_URL);
-
-
 
 /**
  * Page component for displaying and creating comments on a post
@@ -29,7 +23,6 @@ export const CommentsPage = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
 
-  console.log(`CommentsPage rendering with postId: ${postId}`);
 
   // Use custom hooks for post and comments
   const {
@@ -52,31 +45,17 @@ export const CommentsPage = () => {
     refreshComments
   } = useComments(postId);
 
-  // Log state for debugging
-  React.useEffect(() => {
-    console.log('CommentsPage state updated:');
-    console.log('Post loading:', postLoading);
-    console.log('Post error:', postError);
-    console.log('Post data:', post);
-    console.log('Comments loading:', commentsLoading);
-    console.log('Comments error:', commentsError);
-    console.log('Comments count:', comments?.length);
-    console.log('Sort order:', sortOrder);
-  }, [post, postLoading, postError, comments, commentsLoading, commentsError, sortOrder]);
-
   // Use socket hook for real-time updates
   useCommentSocket(postId, addComment, updateComment, removeComment);
 
   // Handle sort order change
   const handleSortChange = (order) => {
-    console.log(`Changing sort order to: ${order}`);
     changeSortOrder(order);
   };
 
   // Handle comment added
   const handleCommentAdded = (newComment) => {
-    console.log('New comment added:', newComment);
-    addComment(newComment);
+   addComment(newComment);
     updateCommentCount(1);
   };
 
@@ -107,8 +86,7 @@ export const CommentsPage = () => {
             <Button
               type="primary"
               onClick={() => {
-                console.log('Retrying post fetch...');
-                // Use the fetchPost function from the hook
+             // Use the fetchPost function from the hook
                 fetchPost();
               }}
             >
@@ -185,8 +163,7 @@ export const CommentsPage = () => {
                 <Button
                   type="primary"
                   onClick={() => {
-                    console.log('Retrying comments fetch...');
-                    // Use the refreshComments function to refresh comments
+               // Use the refreshComments function to refresh comments
                     refreshComments();
                   }}
                 >

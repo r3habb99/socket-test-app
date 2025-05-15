@@ -67,8 +67,7 @@ export const useComments = (postId, options = {}) => {
         }));
       }
 
-      console.log(`Fetching comments for post ${postId} with sort order ${currentSortOrder}`);
-
+ 
       const response = await getComments(postId, {
         sort: currentSortOrder,
         parentOnly: currentOptions.parentOnly !== undefined ? currentOptions.parentOnly : true,
@@ -76,11 +75,9 @@ export const useComments = (postId, options = {}) => {
         limit: currentPagination.limit
       });
 
-      console.log('Comments API response:', response);
-
+   
       const commentsData = processCommentsResponse(response);
-      console.log('Processed comments data:', commentsData);
-
+    
       // Update comments state
       if (refresh) {
         setComments(commentsData);

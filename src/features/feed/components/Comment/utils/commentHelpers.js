@@ -74,12 +74,8 @@ export const isSameComment = (comment1, comment2) => {
  */
 export const processCommentsResponse = (response) => {
   if (!response || response.error) {
-    console.log('Invalid or error response:', response);
     return [];
   }
-
-  // Log the full response structure for debugging
-  console.log('Processing comments response:', JSON.stringify(response, null, 2));
 
   // Handle nested data structure if present
   let commentsData = [];
@@ -89,65 +85,40 @@ export const processCommentsResponse = (response) => {
     if (response.data?.data?.replies && Array.isArray(response.data.data.replies)) {
       // Structure: { data: { data: { replies: [...], pagination: {...} } } }
       commentsData = response.data.data.replies;
-      console.log('Found replies in response.data.data.replies (replies endpoint structure)');
-
-      // If there's pagination info, log it
-      if (response.data.data.pagination) {
-        console.log('Pagination info:', response.data.data.pagination);
-      }
     }
     // Also check for comments structure
     else if (response.data?.data?.comments && Array.isArray(response.data.data.comments)) {
       // Structure: { data: { data: { comments: [...], pagination: {...} } } }
       commentsData = response.data.data.comments;
-      console.log('Found comments in response.data.data.comments (comments endpoint structure)');
-
-      // If there's pagination info, log it
-      if (response.data.data.pagination) {
-        console.log('Pagination info:', response.data.data.pagination);
-      }
     }
     // Then check for other possible structures
     else if (response.data?.comments) {
       // Structure: { data: { comments: [...] } }
       commentsData = response.data.comments;
-      console.log('Found comments in response.data.comments');
     } else if (Array.isArray(response.data?.data)) {
       // Structure: { data: { data: [...] } }
       commentsData = response.data.data;
-      console.log('Found comments in response.data.data (array)');
     } else if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
       // Structure: { data: { data: { data: [...] } } }
       commentsData = response.data.data.data;
-      console.log('Found comments in response.data.data.data');
     } else if (Array.isArray(response.data)) {
       // Structure: { data: [...] } (direct array)
       commentsData = response.data;
-      console.log('Found comments in response.data (array)');
     } else if (response.data?.data && typeof response.data.data === 'object' && !Array.isArray(response.data.data)) {
       // Structure: { data: { data: { ... } } } (single comment object)
       commentsData = [response.data.data];
-      console.log('Found single comment object in response.data.data');
     } else if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
       // Structure: { data: { ... } } (single comment object)
       commentsData = [response.data];
-      console.log('Found single comment object in response.data');
     } else {
-      // Default empty array if no recognized structure
-      console.warn('No recognized comment data structure in response:', response);
       commentsData = [];
     }
 
     // Ensure commentsData is an array
     if (!Array.isArray(commentsData)) {
-      console.warn('Processed comments data is not an array, converting to array:', commentsData);
       commentsData = commentsData ? [commentsData] : [];
     }
-
-    // Log the extracted comments data
-    console.log(`Extracted ${commentsData.length} comments from response`);
   } catch (error) {
-    console.error('Error processing comments response:', error);
     commentsData = [];
   }
 
@@ -161,12 +132,8 @@ export const processCommentsResponse = (response) => {
  */
 export const processPostResponse = (response) => {
   if (!response || response.error) {
-    console.log('Invalid or error response for post:', response);
     return null;
   }
-
-  // Log the full response structure for debugging
-  console.log('Processing post response:', JSON.stringify(response, null, 2));
 
   // Handle nested data structure if present
   let postData = null;
@@ -176,41 +143,30 @@ export const processPostResponse = (response) => {
     if (response.data?.data?.data) {
       // Structure: { data: { data: { data: {...} } } }
       postData = response.data.data.data;
-      console.log('Found post in response.data.data.data');
     } else if (response.data?.data) {
       // Structure: { data: { data: {...} } }
       postData = response.data.data;
-      console.log('Found post in response.data.data');
     } else if (response.data?.post) {
       // Structure: { data: { post: {...} } }
       postData = response.data.post;
-      console.log('Found post in response.data.post');
     } else if (response.data) {
       // Structure: { data: {...} } (direct object)
       postData = response.data;
-      console.log('Found post in response.data');
     } else {
       // Structure: {...} (direct object)
       postData = response;
-      console.log('Using direct response as post data');
     }
 
     // Ensure postData is an object
     if (!postData || typeof postData !== 'object') {
-      console.warn('Processed post data is not an object:', postData);
       return null;
     }
 
     // Ensure postedBy exists
     if (!postData.postedBy && postData.author) {
       postData.postedBy = postData.author;
-      console.log('Using author field as postedBy');
     }
-
-    // Log the extracted post data
-    console.log('Extracted post data:', postData);
   } catch (error) {
-    console.error('Error processing post response:', error);
     return null;
   }
 
@@ -375,7 +331,6 @@ export const extractPaginationData = (response) => {
 
     return defaultPagination;
   } catch (error) {
-    console.error('Error extracting pagination data:', error);
     return defaultPagination;
   }
 };

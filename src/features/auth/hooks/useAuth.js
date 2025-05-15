@@ -28,8 +28,6 @@ export const useAuth = () => {
     setError(null);
 
     try {
-      // Log the login attempt for debugging
-      console.log("Attempting login with credentials:", { email: credentials.email, password: "********" });
 
       const response = await loginApi(credentials);
 
@@ -38,9 +36,6 @@ export const useAuth = () => {
         setError(response.message);
         return { success: false, message: response.message };
       }
-
-      // Log the successful response for debugging
-      console.log("Login API response received:", response);
 
       // Extract token and user data, handling different response structures
       const responseData = response.data;
@@ -65,13 +60,7 @@ export const useAuth = () => {
       // Try to extract username
       username = userData?.username || userData?.name;
 
-      // Log the extracted data for debugging
-      console.log("Extracted login data:", {
-        hasToken: !!token,
-        hasUserId: !!userId,
-        hasUsername: !!username,
-        userData
-      });
+
 
       if (!token) {
         console.error("Token is missing from the response:", responseData);
@@ -108,8 +97,6 @@ export const useAuth = () => {
         localStorage.setItem("lastName", userData.lastName);
       }
       if (userData.profilePic) {
-        // Log the original profile picture URL
-        console.log('Original profile picture URL:', userData.profilePic);
 
         // Process the profile picture URL to ensure it's in the correct format
         let profilePicUrl = userData.profilePic;
@@ -129,8 +116,7 @@ export const useAuth = () => {
           }
         }
 
-        console.log('Processed profile picture URL for localStorage:', profilePicUrl);
-        localStorage.setItem("profilePic", profilePicUrl);
+      localStorage.setItem("profilePic", profilePicUrl);
       }
       if (userData.email) {
         localStorage.setItem("email", userData.email);
@@ -146,8 +132,7 @@ export const useAuth = () => {
         email: userData.email
       });
 
-      console.log("Login successful, user data saved to localStorage");
-
+  
       return { success: true };
     } catch (err) {
       // Enhanced error logging

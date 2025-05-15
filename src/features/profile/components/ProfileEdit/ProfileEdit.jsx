@@ -41,9 +41,6 @@ const ProfileEdit = () => {
           return;
         }
 
-        // Log the response for debugging
-        console.log("Profile edit response:", response);
-
         // Handle the nested API response structure
         const responseData = response.data;
 

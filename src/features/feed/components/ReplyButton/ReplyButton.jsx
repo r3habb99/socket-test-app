@@ -41,9 +41,7 @@ export const ReplyButton = ({
 
   // Handle post created (reply added)
   const handleReplyAdded = (newReply) => {
-    console.log("Reply added successfully:", newReply);
-
-    // Close the modal
+ // Close the modal
     setModalVisible(false);
 
     // Refresh the posts to show the new reply
@@ -75,7 +73,6 @@ export const ReplyButton = ({
         title="Reply to Post"
         open={modalVisible}
         onCancel={handleModalClose}
-        afterClose={() => console.log("Modal closed")}
         maskClosable={false}
         footer={null}
         width={600}

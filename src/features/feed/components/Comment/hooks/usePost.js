@@ -23,15 +23,13 @@ export const usePost = (postId) => {
     setError(null);
 
     try {
-      console.log(`Fetching post data for post ID: ${postId}`);
-      const response = await getPostById(postId);
+    const response = await getPostById(postId);
       const postData = processPostResponse(response);
 
       // Check if component is still mounted before updating state
       if (isMountedRef.current) {
         if (postData) {
           setPost(postData);
-          console.log('Post data successfully loaded');
         } else {
           setError('Failed to load post data.');
           console.error('Failed to process post data');
