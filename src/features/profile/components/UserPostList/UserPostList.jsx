@@ -2,7 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Avatar, Typography, Button, List, Tooltip, Empty } from 'antd';
 import { FaRetweet, FaShare, FaReply } from 'react-icons/fa';
-import { DEFAULT_PROFILE_PIC } from '../../../../constants';
+import {
+  DEFAULT_PROFILE_PIC,
+  PLACEHOLDER_IMAGE
+} from '../../../../constants';
 import { getImageUrl } from '../../../../shared/utils/imageUtils';
 import { ImageProxy } from '../../../../shared/components';
 import { LikeButton } from '../../../feed/components/LikeButton';
@@ -204,7 +207,8 @@ export const UserPostList = ({ userId, activeTab }) => {
           {hasMedia && (
             <div className="post-media-container">
               {postToRender.media.map((mediaUrl, index) => {
-                const placeholderImage = "https://via.placeholder.com/400x300?text=Image+Loading...";
+                // Get placeholder image URL from constants
+                const placeholderImage = PLACEHOLDER_IMAGE;
 
                 return (
                   <div key={index} className="post-media">

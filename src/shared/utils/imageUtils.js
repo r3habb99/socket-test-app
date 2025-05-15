@@ -1,10 +1,14 @@
 /**
  * Utility functions for handling images
  */
-import { getApiUrl } from './envUtils';
+import {
+  API_URL,
+  API_HOST,
+  LEGACY_API_HOSTS,
+} from '../../constants';
 
-// Get the API base URL from environment
-const API_BASE_URL = getApiUrl();
+// For backward compatibility
+const API_BASE_URL = API_URL;
 
 /**
  * Get the full URL for an image path
@@ -26,27 +30,29 @@ export const getImageUrl = (imagePath, defaultImage) => {
 
   // Special case for URLs that include the server hostname but might be missing the protocol
   // For example: 192.168.1.7:5050/uploads/profile-pictures/image.jpg
-  if (imagePath.includes('192.168.0.120:5050') ||
-      imagePath.includes('192.168.1.7:5050') ||
-      imagePath.includes('localhost:5050')) {
+  const currentApiHost = API_HOST;
+  const legacyHosts = LEGACY_API_HOSTS;
+
+  // Check if the image path includes any known API host
+  const hasCurrentHost = imagePath.includes(currentApiHost);
+  const legacyHostFound = legacyHosts.find(host => imagePath.includes(host));
+
+  if (hasCurrentHost || legacyHostFound) {
     console.log('Detected server hostname in image path:', imagePath);
 
-    // Replace old IP with current API base URL hostname and port
+    // Get the current API host from the API URL
     const apiUrlObj = new URL(API_BASE_URL);
     const currentHostPort = apiUrlObj.host; // e.g. 192.168.0.120:5050
     console.log('Current API host:port is:', currentHostPort);
 
     // Replace any of the known IPs with the current API host
     let fixedPath = imagePath;
-    if (imagePath.includes('192.168.1.7:5050')) {
-      console.log('Replacing 192.168.1.7:5050 with', currentHostPort);
-      fixedPath = imagePath.replace(/192\.168\.1\.7:5050/g, currentHostPort);
-    } else if (imagePath.includes('192.168.0.120:5050')) {
-      console.log('Replacing 192.168.0.120:5050 with', currentHostPort);
-      fixedPath = imagePath.replace(/192\.168\.0\.120:5050/g, currentHostPort);
-    } else if (imagePath.includes('localhost:5050')) {
-      console.log('Replacing localhost:5050 with', currentHostPort);
-      fixedPath = imagePath.replace(/localhost:5050/g, currentHostPort);
+
+    if (legacyHostFound) {
+      console.log(`Replacing ${legacyHostFound} with ${currentHostPort}`);
+      // Create a regex to replace the legacy host with the current host
+      const legacyHostRegex = new RegExp(legacyHostFound.replace(/\./g, '\\.'), 'g');
+      fixedPath = imagePath.replace(legacyHostRegex, currentHostPort);
     }
 
     console.log('Path after IP replacement:', fixedPath);

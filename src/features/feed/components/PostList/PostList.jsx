@@ -1,7 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-import { DEFAULT_PROFILE_PIC } from "../../../../constants";
+import {
+  DEFAULT_PROFILE_PIC,
+  PLACEHOLDER_IMAGE
+} from "../../../../constants";
 import { getImageUrl } from "../../../../shared/utils/imageUtils";
 import { ImageProxy } from "../../../../shared/components";
 import { FaRetweet, FaShare, FaReply } from "react-icons/fa";
@@ -121,8 +124,8 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
             {hasMedia && (
               <div className="post-media-container">
                 {postToRender.media.map((mediaUrl, index) => {
-                  // Create a placeholder image URL (using a more reliable source)
-                  const placeholderImage = "https://via.placeholder.com/400x300?text=Image+Loading...";
+                  // Get placeholder image URL from constants
+                  const placeholderImage = PLACEHOLDER_IMAGE;
 
                   return (
                     <div key={index} className="post-media">

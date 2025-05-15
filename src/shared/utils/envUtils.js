@@ -1,28 +1,49 @@
 /**
  * Environment variable utilities
  * This file provides a centralized way to access environment variables with fallbacks
+ *
+ * NOTE: This file is deprecated. Use constants/index.js instead for environment variables.
  */
 
-// Default values for environment variables
-const DEFAULT_VALUES = {
-  API_URL: 'http://192.168.0.120:5050/api',
-  SOCKET_URL: 'http://192.168.0.120:5050',
-};
+import {
+  API_URL,
+  SOCKET_URL,
+  API_HOST,
+  LEGACY_API_HOSTS,
+  MEDIA_URL,
+  PLACEHOLDER_IMAGE
+} from '../../constants';
 
 /**
  * Get an environment variable with a fallback value
  * @param {string} name - Name of the environment variable (without REACT_APP_ prefix)
  * @param {string} [defaultValue] - Default value to use if the environment variable is not set
  * @returns {string} The environment variable value or the default value
+ * @deprecated Use constants/index.js instead
  */
 export const getEnv = (name, defaultValue) => {
+  // Map environment variable names to constants
+  const constantsMap = {
+    'API_URL': API_URL,
+    'SOCKET_URL': SOCKET_URL,
+    'API_HOST': API_HOST,
+    'LEGACY_API_HOSTS': LEGACY_API_HOSTS.join(','),
+    'MEDIA_URL': MEDIA_URL,
+    'PLACEHOLDER_IMAGE': PLACEHOLDER_IMAGE
+  };
+
+  // If the name is in our constants map, return the constant value
+  if (constantsMap[name]) {
+    return constantsMap[name];
+  }
+
+  // Otherwise, try to get it from process.env
   const envName = `REACT_APP_${name}`;
   const value = process.env[envName];
 
   // If the value is undefined or empty, use the default value
   if (value === undefined || value === '') {
-    // Use the provided default value or the one from DEFAULT_VALUES
-    return defaultValue || DEFAULT_VALUES[name] || '';
+    return defaultValue || '';
   }
 
   return value;
@@ -31,14 +52,44 @@ export const getEnv = (name, defaultValue) => {
 /**
  * Get the API URL
  * @returns {string} The API URL
+ * @deprecated Use API_URL from constants/index.js instead
  */
-export const getApiUrl = () => getEnv('API_URL');
+export const getApiUrl = () => API_URL;
 
 /**
  * Get the Socket URL
  * @returns {string} The Socket URL
+ * @deprecated Use SOCKET_URL from constants/index.js instead
  */
-export const getSocketUrl = () => getEnv('SOCKET_URL');
+export const getSocketUrl = () => SOCKET_URL;
+
+/**
+ * Get the API host (without protocol)
+ * @returns {string} The API host
+ * @deprecated Use API_HOST from constants/index.js instead
+ */
+export const getApiHost = () => API_HOST;
+
+/**
+ * Get the legacy API hosts as an array
+ * @returns {string[]} Array of legacy API hosts
+ * @deprecated Use LEGACY_API_HOSTS from constants/index.js instead
+ */
+export const getLegacyApiHosts = () => LEGACY_API_HOSTS;
+
+/**
+ * Get the media URL
+ * @returns {string} The media URL
+ * @deprecated Use MEDIA_URL from constants/index.js instead
+ */
+export const getMediaUrl = () => MEDIA_URL;
+
+/**
+ * Get the placeholder image URL
+ * @returns {string} The placeholder image URL
+ * @deprecated Use PLACEHOLDER_IMAGE from constants/index.js instead
+ */
+export const getPlaceholderImage = () => PLACEHOLDER_IMAGE;
 
 /**
  * Extract hostname from a URL
@@ -57,6 +108,10 @@ export const getHostname = (url) => {
 };
 
 // Log environment variables for debugging
-console.log('Environment variables:');
-console.log('API_URL:', getApiUrl());
-console.log('SOCKET_URL:', getSocketUrl());
+console.log('Environment variables (from constants):');
+console.log('API_URL:', API_URL);
+console.log('SOCKET_URL:', SOCKET_URL);
+console.log('API_HOST:', API_HOST);
+console.log('LEGACY_API_HOSTS:', LEGACY_API_HOSTS);
+console.log('MEDIA_URL:', MEDIA_URL);
+console.log('PLACEHOLDER_IMAGE:', PLACEHOLDER_IMAGE);

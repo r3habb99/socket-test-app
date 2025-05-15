@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { getApiUrl, getSocketUrl } from '../../utils/envUtils';
+import {
+  API_URL,
+  SOCKET_URL,
+  API_HOST,
+  LEGACY_API_HOSTS
+} from '../../../constants';
 import './ImageProxy.css';
 
 /**
@@ -60,7 +65,10 @@ const ImageProxy = ({
 
     // Special case for URLs that might have the full path but are missing the protocol
     // For example: 192.168.1.7:5050/uploads/profile-pictures/image.jpg
-    if (src.includes('192.168.0.120:5050') || src.includes('192.168.1.7:5050') || src.includes('localhost:5050')) {
+    const currentApiHost = API_HOST;
+
+    // Check if the src includes any of the known API hosts
+    if (src.includes(currentApiHost) || LEGACY_API_HOSTS.some(host => src.includes(host))) {
       // Add http:// protocol if missing
       if (!src.startsWith('http://') && !src.startsWith('https://')) {
         const fullUrl = src.startsWith('//') ? `http:${src}` : `http://${src}`;
@@ -84,12 +92,10 @@ const ImageProxy = ({
     if (processedSrc.startsWith('/')) {
       // Check if it's an API path (like /uploads/) that needs the API base URL
       if (processedSrc.startsWith('/uploads/')) {
-        const API_BASE_URL = getApiUrl();
-
-        // Remove /api prefix if it's already in the API_BASE_URL
-        const baseUrl = API_BASE_URL.endsWith('/api')
-          ? API_BASE_URL.substring(0, API_BASE_URL.length - 4)
-          : API_BASE_URL;
+        // Remove /api prefix if it's already in the API_URL
+        const baseUrl = API_URL.endsWith('/api')
+          ? API_URL.substring(0, API_URL.length - 4)
+          : API_URL;
 
         // Don't add /api prefix to /uploads/ paths
         setImageSrc(`${baseUrl}${processedSrc}`);
@@ -104,8 +110,7 @@ const ImageProxy = ({
 
     // For external URLs that might have CORS/CORP issues, we'll handle them differently
     // If the URL is from our API server, we'll use it directly but handle errors
-    const serverUrl = getSocketUrl();
-    if (serverUrl && processedSrc.includes(new URL(serverUrl).hostname)) {
+    if (SOCKET_URL && processedSrc.includes(new URL(SOCKET_URL).hostname)) {
       setImageSrc(processedSrc);
       setLoading(false);
       return;
@@ -128,15 +133,17 @@ const ImageProxy = ({
       });
 
       // Additional debugging for IP address issues
-      if (processedSrc.includes('192.168.1.7:5050')) {
-        console.error('Detected old IP address (192.168.1.7:5050) in image URL. This should have been replaced with the current API URL.');
+      const legacyHostFound = LEGACY_API_HOSTS.find(host => processedSrc.includes(host));
+
+      if (legacyHostFound) {
+        console.error(`Detected old IP address (${legacyHostFound}) in image URL. This should have been replaced with the current API URL.`);
 
         // Try to fix the URL on error
-        const apiUrl = getApiUrl();
-        const apiUrlObj = new URL(apiUrl.endsWith('/api') ? apiUrl.substring(0, apiUrl.length - 4) : apiUrl);
-        const currentHostPort = apiUrlObj.host;
+        const currentHostPort = API_HOST;
 
-        const fixedUrl = processedSrc.replace(/192\.168\.1\.7:5050/g, currentHostPort);
+        // Create a regex to replace the legacy host with the current host
+        const legacyHostRegex = new RegExp(legacyHostFound.replace(/\./g, '\\.'), 'g');
+        const fixedUrl = processedSrc.replace(legacyHostRegex, currentHostPort);
         console.log('Attempting to fix URL on error:', fixedUrl);
 
         // Try loading with fixed URL

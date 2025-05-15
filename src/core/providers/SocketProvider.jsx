@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect } from "react";
 import { useSocket } from "../../features/messaging/hooks";
 import { useAuthContext } from "./AuthProvider";
 import { toast } from "react-toastify";
-import { getSocketUrl } from "../../shared/utils/envUtils";
+import { SOCKET_URL } from "../../constants";
 
 // Create context
 const SocketContext = createContext(null);
@@ -15,9 +15,8 @@ const SocketContext = createContext(null);
  */
 export const SocketProvider = ({ children }) => {
   const { isAuthenticated } = useAuthContext();
-  // Use socket URL from envUtils
-  const socketUrl = getSocketUrl();
-  const socket = useSocket(socketUrl);
+  // Use socket URL from constants
+  const socket = useSocket(SOCKET_URL);
 
   // Log socket connection status changes
   useEffect(() => {
