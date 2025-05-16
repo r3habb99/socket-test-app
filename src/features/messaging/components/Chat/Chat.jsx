@@ -25,7 +25,7 @@ import {
   DisconnectOutlined,
   LoadingOutlined,
   CheckCircleOutlined,
-  WarningOutlined,
+  // WarningOutlined,
   ReloadOutlined
 } from "@ant-design/icons";
 import "./Chat.css";
