@@ -1,10 +1,12 @@
 import React, { useState, useRef } from "react";
 import { useSocketContext } from "../../../../core/providers/SocketProvider";
+// import { useAuthContext } from "../../../../core/providers/AuthProvider";
 import { createPost } from "../../api/postApi";
 import { toast } from "react-toastify";
-import { FaImage, FaTimes } from "react-icons/fa";
+import { FaImage, FaTimes, FaGlobeAmericas, FaLock } from "react-icons/fa";
 import { Input, Button, Alert } from "antd";
-import "./CreatePost.css";
+// import { DEFAULT_PROFILE_PIC } from "../../../../constants";
+import styles from "./CreatePost.module.css";
 
 /**
  * CreatePost component for creating new posts or replies
@@ -23,6 +25,9 @@ export const CreatePost = ({ onPostCreated, replyTo, isReply = false }) => {
   const [visibility, setVisibility] = useState("public");
   const fileInputRef = useRef(null);
   const { connected, emit } = useSocketContext();
+
+  // Character limit for tweets
+  const MAX_CHARS = 500;
 
   // Handle file selection
   const handleFileChange = (e) => {
@@ -67,6 +72,11 @@ export const CreatePost = ({ onPostCreated, replyTo, isReply = false }) => {
 
     if (!content.trim() && !media) {
       setError("Post must have content or media");
+      return;
+    }
+
+    if (content.length > MAX_CHARS) {
+      setError(`Post exceeds maximum character limit of ${MAX_CHARS}`);
       return;
     }
 
@@ -136,85 +146,129 @@ export const CreatePost = ({ onPostCreated, replyTo, isReply = false }) => {
   };
 
   return (
-    <div className={`create-post-container ${isReply ? 'reply-mode' : ''}`}>
-      <h1 className="create-post-title">{isReply ? 'Reply' : 'Home'}</h1>
-      {error && <Alert message={error} type="error" className="error" />}
+    <div className={`${styles['cp-container']} ${isReply ? styles['reply-mode'] : ''}`}>
+      <div className={styles['cp-header']}>
+        <h1 className={styles['cp-title']}>{isReply ? 'Reply' : 'Home'}</h1>
+      </div>
 
-      <form className="create-post-form" onSubmit={handleSubmit}>
-        <Input.TextArea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={isReply ? "Tweet your reply" : "What's happening?"}
-          disabled={isSubmitting}
-          rows={isReply ? 3 : 4}
-          className="create-post-form textarea"
-        />
+      {error && <Alert message={error} type="error" className={styles['cp-error']} />}
 
-        {/* Media preview */}
-        {mediaPreview && (
-          <div className="media-preview-container">
-            <img src={mediaPreview} alt="Preview" className="media-preview" />
-            <Button
-              type="button"
-              className="remove-media-btn"
-              onClick={handleRemoveMedia}
-              aria-label="Remove media"
-              icon={<FaTimes />}
-            />
-          </div>
-        )}
+      <div className={styles['cp-form-container']}>
+        {/* <div className={styles['cp-avatar']}>
+          <Avatar
+            src={user?.profilePic || DEFAULT_PROFILE_PIC}
+            alt="User Avatar"
+            size={48}
+          />
+        </div> */}
 
-        <div className="post-actions">
-          <div className="post-actions-left">
-            {/* Hidden file input */}
-            <input
-              type="file"
-              id="media-upload"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
-              style={{ display: "none" }}
-            />
+        <form className={styles['cp-form']} onSubmit={handleSubmit}>
+          <Input.TextArea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={isReply ? "Tweet your reply" : "What's happening?"}
+            disabled={isSubmitting}
+            rows={isReply ? 3 : 4}
+            className={styles['cp-textarea']}
+            autoSize={{ minRows: isReply ? 3 : 4, maxRows: 12 }}
+          />
 
-            {/* Media upload button */}
-            <Button
-              type="text"
-              className="media-upload-btn"
-              onClick={() => fileInputRef.current.click()}
-              disabled={isSubmitting}
-              aria-label="Add image"
-              title="Add image"
-              icon={<FaImage />}
-            />
+          {/* Media preview */}
+          {mediaPreview && (
+            <div className={styles['cp-media-container']}>
+              <img src={mediaPreview} alt="Preview" className={styles['cp-media-preview']} />
+              <Button
+                type="text"
+                className={styles['cp-remove-media']}
+                onClick={handleRemoveMedia}
+                aria-label="Remove media"
+                icon={<FaTimes />}
+              />
+            </div>
+          )}
 
-            {/* Visibility selector - hide for replies */}
-            {!isReply && (
-              <select
-                className="visibility-selector"
-                value={visibility}
-                onChange={(e) => setVisibility(e.target.value)}
+          <div className={styles['cp-actions']}>
+            <div className={styles['cp-actions-left']}>
+              {/* Hidden file input */}
+              <input
+                type="file"
+                id="media-upload"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                style={{ display: "none" }}
+              />
+
+              {/* Media upload button */}
+              <Button
+                type="text"
+                className={styles['cp-media-btn']}
+                onClick={() => fileInputRef.current.click()}
                 disabled={isSubmitting}
-                aria-label="Post visibility"
+                aria-label="Add image"
+                title="Add image"
+                icon={<FaImage />}
+              />
+
+              {/* Visibility selector - hide for replies */}
+              {!isReply && (
+                <div className={styles['cp-visibility-wrapper']}>
+                  <select
+                    className={styles['cp-visibility']}
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value)}
+                    disabled={isSubmitting}
+                    aria-label="Post visibility"
+                  >
+                    <option value="public">Everyone</option>
+                    <option value="private">Only followers</option>
+                  </select>
+                  {visibility === 'public' ? (
+                    <FaGlobeAmericas className={styles['cp-visibility-icon']} />
+                  ) : (
+                    <FaLock className={styles['cp-visibility-icon']} />
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className={styles['cp-actions-right']}>
+              {/* Character count */}
+              {content.length > 0 && (
+                <div
+                  className={`${styles['cp-char-count']} ${
+                    content.length > MAX_CHARS * 0.8
+                      ? content.length > MAX_CHARS
+                        ? styles['cp-char-count-exceeded']
+                        : styles['cp-char-count-warning']
+                      : ''
+                  }`}
+                >
+                  {content.length > MAX_CHARS && (
+                    <span className={styles['cp-char-count-over']}>
+                      {content.length - MAX_CHARS}
+                    </span>
+                  )}
+                  {content.length <= MAX_CHARS && (
+                    <span>{MAX_CHARS - content.length}</span>
+                  )}
+                </div>
+              )}
+
+              {/* Post/Reply button */}
+              <Button
+                htmlType="submit"
+                type="primary"
+                className={`${styles['cp-post-btn']} ${isReply ? styles['reply-btn'] : ''}`}
+                disabled={isSubmitting || (!content.trim() && !media) || content.length > MAX_CHARS}
+                loading={isSubmitting}
               >
-                <option value="public">Everyone</option>
-                <option value="private">Only followers</option>
-              </select>
-            )}
+                {isReply ? "Reply" : "Tweet"}
+              </Button>
+            </div>
           </div>
-
-          {/* Post/Reply button */}
-          <Button
-            htmlType="submit"
-            type="primary"
-            className={`post-btn ${isReply ? 'reply-btn' : ''}`}
-            disabled={isSubmitting || (!content.trim() && !media)}
-            loading={isSubmitting}
-
-          >
-            {isReply ? "Reply" : "Tweet"}
-          </Button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };
