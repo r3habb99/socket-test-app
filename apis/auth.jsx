@@ -102,8 +102,18 @@ export const loginUser = async (userData) => {
 // Logout User API
 export const logoutUser = async () => {
   try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      console.warn("No token found in localStorage during logout");
+      throw new Error("No authentication token found");
+    }
+
+    // Use the proper endpoint with the token in the Authorization header
     const response = await api.delete("/user/logout", {
-      headers: getAuthHeaders(),
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
       withCredentials: true,
     });
     toast.success("Logout successful!");

@@ -1,8 +1,7 @@
 import { io } from "socket.io-client";
-import { getSocketUrl } from "../../../shared/utils/envUtils";
+import { SOCKET_URL } from "../../../constants";
 
 // Socket.io connection URL - should match your backend
-const SOCKET_URL = getSocketUrl();
 
 let socket = null;
 let eventHandlers = {};

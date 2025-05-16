@@ -1,8 +1,6 @@
 import axios from "axios";
-import { getApiUrl } from "../utils/envUtils";
 
-// Get the API URL from environment
-const API_URL = getApiUrl();
+import { API_URL } from "../../constants";
 
 // Create an axios instance with default config
 const apiClient = axios.create({

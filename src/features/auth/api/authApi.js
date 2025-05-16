@@ -130,7 +130,7 @@ export const register = async (userData) => {
 export const logout = async () => {
   try {
     const token = localStorage.getItem("token");
-    
+
     if (!token) {
       console.warn("No token found in localStorage during logout");
       return {
@@ -138,12 +138,17 @@ export const logout = async () => {
         message: "No authentication token found"
       };
     }
-  
-    // Use the endpoint from endpoints.js with the token as a query parameter
-    const response = await apiClient.delete(`${endpoints.auth.logout}?token=${token}`);
-    
-    const data = await response.json();
-    
+
+    // Use the endpoint from endpoints.js
+    // The apiClient interceptor will automatically add the token from localStorage
+    // But we'll explicitly set it here to ensure it's sent correctly
+    const response = await apiClient.delete(endpoints.auth.logout, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      withCredentials: true // Ensure cookies are sent with the request
+    });
+
     // Clear local storage
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
@@ -152,9 +157,9 @@ export const logout = async () => {
     localStorage.removeItem("lastName");
     localStorage.removeItem("profilePic");
     localStorage.removeItem("email");
-    
+
     toast.success("Logout successful!");
-    return { error: false, data };
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Logout error:", error);
     // Still clear localStorage even if the API call fails
@@ -165,11 +170,8 @@ export const logout = async () => {
     localStorage.removeItem("lastName");
     localStorage.removeItem("profilePic");
     localStorage.removeItem("email");
-    
-    return { 
-      error: true, 
-      message: error.message || "An error occurred during logout" 
-    };
+
+    return handleApiError(error);
   }
 };
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import io from "socket.io-client";
 import { toast } from "react-toastify";
-import { getSocketUrl } from "../../../shared/utils/envUtils";
+import { SOCKET_URL } from "../../../constants";
 
 /**
  * Custom hook for socket.io functionality
@@ -9,7 +9,7 @@ import { getSocketUrl } from "../../../shared/utils/envUtils";
  * @returns {Object} Socket methods and state
  */
 export const useSocket = (
-  url = getSocketUrl()
+  url = SOCKET_URL
 ) => {
 
   const [connected, setConnected] = useState(false);
