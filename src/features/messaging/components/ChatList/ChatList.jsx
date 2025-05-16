@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useMessaging } from "../../hooks";
+import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { getImageUrl, customToast } from "../../../../shared/utils";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
+import UserStatus from "../UserStatus";
 import {
   formatChatTime,
   getChatName,
@@ -35,6 +37,7 @@ export const ChatList = ({
 }) => {
   const { chats, loading, fetchChats, createChat, createGroupChat } =
     useMessaging();
+  const socketContext = useSocketContext();
   const [newUserId, setNewUserId] = useState(prefillUserId);
   const [groupName, setGroupName] = useState(prefillGroupName);
   const [groupUsers, setGroupUsers] = useState(prefillGroupUsers);
@@ -353,10 +356,31 @@ export const ChatList = ({
                       <div className="chat-time">{timeDisplay}</div>
                     </div>
 
-                    {/* Show username for non-group chats */}
-                    {!chat.isGroupChat && getChatUsername(chat) && (
-                      <div className="chat-username">
-                        {getChatUsername(chat)}
+                    {/* Show username and status for non-group chats */}
+                    {!chat.isGroupChat && (
+                      <div className="chat-username-container">
+                        {getChatUsername(chat) && (
+                          <div className="chat-username">
+                            {getChatUsername(chat)}
+                          </div>
+                        )}
+
+                        {/* Get the other user's ID for status */}
+                        {(() => {
+                          const currentUserId = localStorage.getItem("userId");
+                          const otherUser = chat.users?.find(
+                            user => String(user._id || user.id) !== String(currentUserId)
+                          );
+                          const otherUserId = otherUser?._id || otherUser?.id;
+
+                          return otherUserId ? (
+                            <UserStatus
+                              userId={otherUserId}
+                              size="small"
+                              showText={false}
+                            />
+                          ) : null;
+                        })()}
                       </div>
                     )}
 

@@ -5,7 +5,12 @@ import { useMessaging } from "../../hooks";
 import { ChatList } from "../ChatList";
 import { Chat } from "../Chat";
 import { Layout, Alert, Button } from "antd";
-import { MessageOutlined, ReloadOutlined } from "@ant-design/icons";
+import {
+  MessageOutlined,
+  ReloadOutlined,
+  DisconnectOutlined,
+  LoadingOutlined
+} from "@ant-design/icons";
 import "./MessagingApp.css";
 
 const MessagingApp = () => {
@@ -138,11 +143,13 @@ const MessagingApp = () => {
         }`}
       >
         {/* Connection status indicator */}
-        {!socketContext.connected && (
+        {socketContext.connectionStatus === 'disconnected' && (
           <Alert
             message="Disconnected from chat server"
+            description={socketContext.error ? `Error: ${socketContext.error}` : "Check your internet connection"}
             type="error"
             showIcon
+            icon={<DisconnectOutlined />}
             action={
               <Button
                 size="small"
@@ -152,6 +159,36 @@ const MessagingApp = () => {
                 onClick={() => socketContext.reconnect()}
               >
                 Reconnect
+              </Button>
+            }
+            className="connection-status-banner"
+          />
+        )}
+
+        {socketContext.connectionStatus === 'connecting' && (
+          <Alert
+            message="Connecting to chat server..."
+            type="warning"
+            showIcon
+            icon={<LoadingOutlined spin />}
+            className="connection-status-banner"
+          />
+        )}
+
+        {socketContext.connectionStatus === 'reconnecting' && (
+          <Alert
+            message={`Reconnecting to chat server (Attempt ${socketContext.reconnectAttempts}/${10})`}
+            type="warning"
+            showIcon
+            icon={<LoadingOutlined spin />}
+            action={
+              <Button
+                size="small"
+                type="primary"
+                icon={<ReloadOutlined />}
+                onClick={() => socketContext.reconnect()}
+              >
+                Try Now
               </Button>
             }
             className="connection-status-banner"

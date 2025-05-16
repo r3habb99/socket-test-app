@@ -1,0 +1,30 @@
+.message-status-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.message-status-icon {
+  font-size: 12px;
+}
+
+.message-status-text {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+/* Animation for sending status */
+.message-status-container .anticon-loading {
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

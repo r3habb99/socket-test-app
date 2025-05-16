@@ -250,11 +250,28 @@
   margin-left: 8px;
 }
 
+.chat-username-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  margin-bottom: 2px;
+  margin-top: -2px;
+}
+
 .chat-username {
   font-size: 14px;
   color: #536471;
-  margin-bottom: 2px;
-  margin-top: -2px;
+}
+
+/* Override UserStatus component styles in chat list */
+.chat-username-container .user-status-container {
+  margin-top: 0;
+}
+
+.chat-username-container .status-indicator {
+  width: 6px;
+  height: 6px;
 }
 
 .chat-preview {

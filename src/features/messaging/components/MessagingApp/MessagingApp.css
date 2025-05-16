@@ -36,10 +36,53 @@
 .connection-status-banner {
   width: 100%;
   z-index: 100;
-  border-bottom: 1px solid #ef9a9a;
   border-radius: 0;
   margin-bottom: 0;
   padding: 8px 16px;
+  display: flex;
+  align-items: center;
+}
+
+/* Error status */
+.ant-alert-error.connection-status-banner {
+  background-color: #ffebee;
+  border-bottom: 1px solid #ef9a9a;
+}
+
+/* Warning status */
+.ant-alert-warning.connection-status-banner {
+  background-color: #fff8e1;
+  border-bottom: 1px solid #ffe082;
+}
+
+/* Success status */
+.ant-alert-success.connection-status-banner {
+  background-color: #e8f5e9;
+  border-bottom: 1px solid #a5d6a7;
+}
+
+/* Info status */
+.ant-alert-info.connection-status-banner {
+  background-color: #e3f2fd;
+  border-bottom: 1px solid #90caf9;
+}
+
+/* Status icons */
+.connection-status-banner .anticon {
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+/* Status message */
+.connection-status-banner .ant-alert-message {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Status description */
+.connection-status-banner .ant-alert-description {
+  font-size: 12px;
+  margin-top: 4px;
 }
 
 .chatlist-section {
