@@ -93,90 +93,153 @@ export const FollowersList = () => {
         // Process followers data - these are people who follow the profile we're viewing
         console.log("Followers response:", followersResponse);
 
-        // Handle different response structures
-        let followersArray = null;
+        // Initialize followers as an empty array by default
+        setFollowers([]);
 
-        // Case 1: Direct response with statusCode, message, data structure
-        if (followersResponse.data && followersResponse.data.statusCode && followersResponse.data.data) {
-          followersArray = followersResponse.data.data;
-          console.log("Found followers in response.data.data with statusCode structure", followersArray);
+        // Check if the API explicitly indicates no followers found
+        if (followersResponse.message &&
+            (followersResponse.message.includes("No followers") ||
+             followersResponse.message.includes("not found"))) {
+          console.log("API explicitly indicates no followers found");
+          // Already set to empty array above
         }
-        // Case 2: Nested data.data structure
-        else if (followersResponse.data && followersResponse.data.data && Array.isArray(followersResponse.data.data)) {
-          followersArray = followersResponse.data.data;
-          console.log("Found followers in response.data.data structure", followersArray);
+        // Check if the response data contains a message about no followers
+        else if (followersResponse.data &&
+                followersResponse.data.message &&
+                (followersResponse.data.message.includes("No followers") ||
+                 followersResponse.data.message.includes("not found"))) {
+          console.log("API data message indicates no followers found");
+          // Already set to empty array above
         }
-        // Case 3: Direct data structure
-        else if (followersResponse.data && Array.isArray(followersResponse.data)) {
-          followersArray = followersResponse.data;
-          console.log("Found followers in direct response.data structure", followersArray);
-        }
+        else {
+          // Handle different response structures
+          let followersArray = null;
 
-        if (followersArray && Array.isArray(followersArray)) {
-          // Normalize each user object to ensure it has both id and _id properties
-          const normalizedFollowers = followersArray.map((follower) => ({
-            ...follower,
-            id: follower.id || follower._id, // Ensure id is available
-            _id: follower._id || follower.id, // Ensure _id is available
-          }));
+          // Case 1: Direct response with statusCode, message, data structure
+          if (followersResponse.data && followersResponse.data.statusCode && followersResponse.data.data) {
+            followersArray = followersResponse.data.data;
+            console.log("Found followers in response.data.data with statusCode structure", followersArray);
+          }
+          // Case 2: Nested data.data structure
+          else if (followersResponse.data && followersResponse.data.data && Array.isArray(followersResponse.data.data)) {
+            followersArray = followersResponse.data.data;
+            console.log("Found followers in response.data.data structure", followersArray);
+          }
+          // Case 3: Direct data structure
+          else if (followersResponse.data && Array.isArray(followersResponse.data)) {
+            followersArray = followersResponse.data;
+            console.log("Found followers in direct response.data structure", followersArray);
+          }
 
-          setFollowers(normalizedFollowers);
-        } else {
-          console.error("Invalid followers data structure:", followersResponse);
-          setError("Failed to parse followers data");
+          if (followersArray && Array.isArray(followersArray) && followersArray.length > 0) {
+            // Only process if we have actual data
+            // Normalize each user object to ensure it has both id and _id properties
+            const normalizedFollowers = followersArray.map((follower) => {
+              // Skip any entries that don't have basic user data
+              if (!follower || (!follower.id && !follower._id)) {
+                console.log("Skipping invalid follower entry:", follower);
+                return null;
+              }
+
+              return {
+                ...follower,
+                id: follower.id || follower._id, // Ensure id is available
+                _id: follower._id || follower.id, // Ensure _id is available
+              };
+            }).filter(Boolean); // Remove any null entries
+
+            if (normalizedFollowers.length > 0) {
+              setFollowers(normalizedFollowers);
+            }
+          }
         }
 
         // Process following data - these are people the profile we're viewing follows
         console.log("Following response:", followingResponse);
 
-        // Handle different response structures
-        let followingArray = null;
+        // Initialize following as an empty array by default
+        setFollowing([]);
 
-        // Case 1: Direct response with statusCode, message, data structure
-        if (followingResponse.data && followingResponse.data.statusCode && followingResponse.data.data) {
-          followingArray = followingResponse.data.data;
-          console.log("Found following in response.data.data with statusCode structure", followingArray);
+        // Check if the API explicitly indicates no following found
+        if (followingResponse.message &&
+            (followingResponse.message.includes("No following") ||
+             followingResponse.message.includes("not found"))) {
+          console.log("API explicitly indicates no following users found");
+          // Already set to empty array above
         }
-        // Case 2: Nested data.data structure
-        else if (followingResponse.data && followingResponse.data.data && Array.isArray(followingResponse.data.data)) {
-          followingArray = followingResponse.data.data;
-          console.log("Found following in response.data.data structure", followingArray);
+        // Check if the response data contains a message about no following
+        else if (followingResponse.data &&
+                followingResponse.data.message &&
+                (followingResponse.data.message.includes("No following") ||
+                 followingResponse.data.message.includes("not found"))) {
+          console.log("API data message indicates no following users found");
+          // Already set to empty array above
         }
-        // Case 3: Direct data structure
-        else if (followingResponse.data && Array.isArray(followingResponse.data)) {
-          followingArray = followingResponse.data;
-          console.log("Found following in direct response.data structure", followingArray);
-        }
+        else {
+          // Handle different response structures
+          let followingArray = null;
 
-        if (followingArray && Array.isArray(followingArray)) {
-          // Normalize each user object to ensure it has both id and _id properties
-          const normalizedFollowing = followingArray.map((user) => ({
-            ...user,
-            id: user.id || user._id, // Ensure id is available
-            _id: user._id || user.id, // Ensure _id is available
-          }));
+          // Case 1: Direct response with statusCode, message, data structure
+          if (followingResponse.data && followingResponse.data.statusCode && followingResponse.data.data) {
+            followingArray = followingResponse.data.data;
+            console.log("Found following in response.data.data with statusCode structure", followingArray);
+          }
+          // Case 2: Nested data.data structure
+          else if (followingResponse.data && followingResponse.data.data && Array.isArray(followingResponse.data.data)) {
+            followingArray = followingResponse.data.data;
+            console.log("Found following in response.data.data structure", followingArray);
+          }
+          // Case 3: Direct data structure
+          else if (followingResponse.data && Array.isArray(followingResponse.data)) {
+            followingArray = followingResponse.data;
+            console.log("Found following in direct response.data structure", followingArray);
+          }
 
-          setFollowing(normalizedFollowing);
-        } else {
-          console.error("Invalid following data structure:", followingResponse);
-          setError("Failed to parse following data");
+          if (followingArray && Array.isArray(followingArray) && followingArray.length > 0) {
+            // Only process if we have actual data
+            // Normalize each user object to ensure it has both id and _id properties
+            const normalizedFollowing = followingArray.map((user) => {
+              // Skip any entries that don't have basic user data
+              if (!user || (!user.id && !user._id)) {
+                console.log("Skipping invalid following entry:", user);
+                return null;
+              }
+
+              return {
+                ...user,
+                id: user.id || user._id, // Ensure id is available
+                _id: user._id || user.id, // Ensure _id is available
+              };
+            }).filter(Boolean); // Remove any null entries
+
+            if (normalizedFollowing.length > 0) {
+              setFollowing(normalizedFollowing);
+            }
+          }
         }
 
         // Create follow status object for all users (both followers and following)
         // This determines which users the LOGGED IN user is following
         const allUsers = [
-          ...(followersArray || []),
-          ...(followingArray || []),
+          ...followers,
+          ...following,
         ];
+
+        // Only process if we have users to check
         const followStatus = {};
-        allUsers.forEach((user) => {
-          const userIdToCheck = user.id || user._id;
-          if (userIdToCheck) {
-            // Check if the logged-in user is following this user
-            followStatus[userIdToCheck] =
-              user.followers?.includes(loggedInUserId);
-          }
-        });
+        if (allUsers.length > 0) {
+          allUsers.forEach((user) => {
+            // Skip any invalid entries
+            if (!user) return;
+
+            const userIdToCheck = user.id || user._id;
+            if (userIdToCheck) {
+              // Check if the logged-in user is following this user
+              followStatus[userIdToCheck] =
+                user.followers?.includes(loggedInUserId);
+            }
+          });
+        }
         setFollowingStates(followStatus);
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -187,6 +250,9 @@ export const FollowersList = () => {
     };
 
     fetchData();
+    // We don't include followers and following in the dependency array
+    // because they're set inside the fetchData function
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, loggedInUserId]);
 
   const toggleFollow = async (userId) => {
