@@ -140,13 +140,12 @@ export const logout = async () => {
     }
 
     // Use the endpoint from endpoints.js
-    // The apiClient interceptor will automatically add the token from localStorage
-    // But we'll explicitly set it here to ensure it's sent correctly
     const response = await apiClient.delete(endpoints.auth.logout, {
       headers: {
         Authorization: `Bearer ${token}`
       },
-      withCredentials: true // Ensure cookies are sent with the request
+      // Remove withCredentials to avoid CORS issues
+      withCredentials: false
     });
 
     // Clear local storage

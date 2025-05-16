@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../../core/providers/AuthProvider";
 import { Sidebar } from "../Sidebar/Sidebar";
+import { logout } from "../../../features/auth/api/authApi";
 import "./Layout.css";
 
 /**
@@ -10,7 +11,8 @@ import "./Layout.css";
  */
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { logout } = useAuthContext();
+  const authContext = useAuthContext();
+  const navigate = useNavigate();
 
   const links = [
     { name: "dashboard", label: "Feed", icon: "📰" },
@@ -24,8 +26,34 @@ const Layout = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    try {
+      // First call the API to logout from the server
+      await logout();
+      
+      // Then use the context logout to clear local state
+      if (typeof authContext.logout === 'function') {
+        authContext.logout();
+      } else {
+        // Fallback if logout function is not available
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+      }
+      
+      // Navigate to login page
+      navigate('/login');
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Still logout locally even if server logout fails
+      if (typeof authContext.logout === 'function') {
+        authContext.logout();
+      } else {
+        // Fallback if logout function is not available
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+      }
+      navigate('/login');
+    }
   };
 
   return (

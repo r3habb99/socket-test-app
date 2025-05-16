@@ -175,18 +175,18 @@ export const useAuth = () => {
   }, []);
 
   // Logout function
-  const logout = useCallback(() => {
-    // Remove all user-related data from localStorage
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("username");
-    localStorage.removeItem("firstName");
-    localStorage.removeItem("lastName");
-    localStorage.removeItem("profilePic");
-    localStorage.removeItem("email");
+  // const logout = useCallback(() => {
+  //   // Remove all user-related data from localStorage
+  //   localStorage.removeItem("token");
+  //   localStorage.removeItem("userId");
+  //   localStorage.removeItem("username");
+  //   localStorage.removeItem("firstName");
+  //   localStorage.removeItem("lastName");
+  //   localStorage.removeItem("profilePic");
+  //   localStorage.removeItem("email");
 
-    setUser(null);
-  }, []);
+  //   setUser(null);
+  // }, []);
 
   // Check if user is authenticated
   const isAuthenticated = useCallback(() => {
@@ -199,7 +199,7 @@ export const useAuth = () => {
     error,
     login,
     register,
-    logout,
+    // logout,
     isAuthenticated,
   };
 };
