@@ -28,7 +28,6 @@ This document provides an index of all files in the `src/` directory, excluding 
 
 - **src/css/dashboard.css**: Styles for dashboard components
 - **src/css/main-content.css**: Styles for main content area
-- **src/css/sidebar.css**: Styles for sidebar components
 
 ## Constants
 

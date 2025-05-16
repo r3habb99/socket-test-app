@@ -30,12 +30,20 @@
   white-space: pre-wrap;
 }
 
-/* Post Card Styles */
+/* Post Card Styles - Using Grid Layout */
 .post-card {
   color: #000;
   padding: 12px 16px;
   transition: background-color 0.2s;
   cursor: pointer;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "avatar header"
+    "space content"
+    "space media"
+    "space actions";
+  column-gap: 12px;
 }
 
 .post-card:hover {
@@ -90,16 +98,20 @@
   margin-bottom: 0;
 }
 
-/* Post Header Styles */
+/* Post Header Styles - Using Grid Areas */
 .post-header {
-  display: flex;
+  grid-area: header;
   width: 100%;
   margin-bottom: 0.5rem;
 }
 
 .post-avatar {
-  margin-right: 12px;
-  flex-shrink: 0;
+  grid-area: avatar;
+}
+
+/* Space column for alignment */
+.space-column {
+  grid-area: space;
 }
 
 .avatar {
@@ -189,8 +201,9 @@
   margin: 0 4px;
 }
 
-/* Post Content Styles */
+/* Post Content Styles - Using Grid Areas */
 .post-content {
+  grid-area: content;
   color: #000;
   margin: 4px 0 12px;
   line-height: 1.3;
@@ -225,10 +238,11 @@
   text-decoration: underline;
 }
 
-/* Post Actions */
+/* Post Actions - Using Grid Areas */
 .post-actions {
-  display: flex;
-  justify-content: space-between;
+  grid-area: actions;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   margin-top: 12px;
   padding: 0 8px;
 }
@@ -381,13 +395,17 @@
   color: #6e767d;
 }
 
-/* Post Media Styles */
+/* Post Media Styles - Using Grid Areas */
 .post-media-container {
+  grid-area: media;
   margin: 12px 0;
   border-radius: 16px;
   overflow: hidden;
   max-width: 100%;
   border: 1px solid #2f3336;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2px;
 }
 
 .post-media {

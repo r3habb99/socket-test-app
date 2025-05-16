@@ -1,24 +1,35 @@
-/* Twitter-like layout structure */
+/* Twitter-like layout structure with CSS Grid */
 .dashboard-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: 250px 1fr 0px;
+  grid-template-areas: "sidebar main widgets";
   min-height: 100vh;
-  position: relative;
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
   background-color: #fff;
 }
 
+.sidebar {
+  grid-area: sidebar;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
 .main-content {
-  flex: 1;
+  grid-area: main;
   min-width: 0; /* Prevent flex items from overflowing */
-  max-width: calc(100% - 250px); /* Ensure content doesn't overlap sidebar */
   height: 100vh;
   overflow-y: auto;
   border-left: 1px solid #eff3f4;
   border-right: 1px solid #eff3f4;
-  transition: margin-left 0.3s, max-width 0.3s;
   position: relative;
+}
+
+.widgets-column {
+  grid-area: widgets;
+  display: none; /* Hidden by default, can be enabled for future widget implementation */
 }
 
 .hamburger-icon {
@@ -33,19 +44,34 @@
 }
 
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+  .dashboard-container {
+    grid-template-columns: 250px 1fr;
+    grid-template-areas: "sidebar main";
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-container {
-    max-width: 100%;
+    grid-template-columns: 1fr;
+    grid-template-areas: "main";
   }
 
   .hamburger-icon {
     display: block;
   }
 
+  .sidebar {
+    display: none; /* Hide sidebar on mobile */
+    position: fixed;
+    z-index: 999;
+  }
+
+  .sidebar.open {
+    display: block;
+  }
+
   .main-content {
-    max-width: 100%;
-    width: 100%;
-    margin-left: 0;
     border-left: none;
   }
 }
