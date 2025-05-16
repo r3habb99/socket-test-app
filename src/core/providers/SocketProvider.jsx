@@ -52,27 +52,56 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket.connected, socket.connectionStatus, socket.error, isAuthenticated]);
 
-  // Attempt to reconnect socket when authentication changes or when connection is lost
+  // Improved reconnection logic with better conditions and error handling
   useEffect(() => {
     // Only attempt reconnection if:
     // 1. User is authenticated
     // 2. Not on login page
-    // 3. Socket is not connected
+    // 3. Socket is not connected OR connection status is 'disconnected'
     // 4. We haven't attempted reconnection recently (to prevent spam)
     const now = Date.now();
     const shouldReconnect =
       isAuthenticated() &&
-      !socket.connected &&
+      (!socket.connected || socket.connectionStatus === 'disconnected') &&
       window.location.pathname !== '/login' &&
       (now - lastReconnectAttempt > reconnectCooldown);
 
+    // Additional check for messaging page - more aggressive reconnection
+    const isOnMessagingPage = window.location.pathname.includes('/messages');
+
     if (shouldReconnect) {
-      console.log("Attempting to reconnect socket...");
+      console.log(`Attempting to reconnect socket... (On messaging page: ${isOnMessagingPage})`);
       setLastReconnectAttempt(now);
-      socket.reconnect();
+
+      try {
+        socket.reconnect();
+
+        // If we're on the messaging page, show a toast notification
+        if (isOnMessagingPage && socket.connectionStatus === 'disconnected') {
+          toast.info("Reconnecting to chat server...", {
+            autoClose: 2000,
+            hideProgressBar: false,
+          });
+        }
+      } catch (error) {
+        console.error("Error reconnecting socket:", error);
+
+        // If reconnection fails, show an error toast on the messaging page
+        if (isOnMessagingPage) {
+          toast.error("Failed to reconnect to chat server. Will retry shortly.", {
+            autoClose: 3000,
+          });
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, socket.connected]); // Include socket.connected to attempt reconnection when connection is lost
+  }, [
+    isAuthenticated,
+    socket.connected,
+    socket.connectionStatus,
+    // Check location pathname to detect navigation to/from messaging page
+    window.location.pathname
+  ]);
 
   // Reconnect when user information changes
   useEffect(() => {

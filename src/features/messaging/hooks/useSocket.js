@@ -456,26 +456,57 @@ export const useSocket = (
 
 
       setMessages((prevMessages) => {
-        // Check if message already exists to avoid duplicates
-        const exists = prevMessages.some(
-          (msg) => (msg._id || msg.id) === messageId
+        // More thorough duplicate checking
+        const existsById = prevMessages.some(
+          (msg) =>
+            // Check by ID if available
+            (messageId && ((msg._id && msg._id === messageId) || (msg.id && msg.id === messageId))) ||
+            // Also check for temporary messages with the same content and sender
+            (msg.isTemp &&
+             msg.content === messageContent &&
+             String(msg.sender?._id || msg.sender?.id) === String(senderId))
         );
 
-        if (exists) {
+        if (existsById) {
+          console.log(`Message already exists in state (ID: ${messageId}), updating status only`);
           // If message exists, just update its status
           return updateMessageStatus(prevMessages, messageId, messageStatus);
         }
 
         // Only add the message if it's for the current chat
         if (messageChat === currentChatIdRef.current) {
+          console.log(`Adding new message to chat ${messageChat}: ${messageContent.substring(0, 20)}...`);
+
           // Add the new message with status
           const messageWithStatus = {
             ...newMessage,
-            status: messageStatus // Use the status we determined earlier
+            status: messageStatus, // Use the status we determined earlier
+            _id: messageId || `generated-${Date.now()}`, // Ensure it has an _id
+            id: messageId || `generated-${Date.now()}` // Ensure it has an id
           };
 
-          // Add the new message and ensure it's at the end (newest messages at the bottom)
-          const updatedMessages = [...prevMessages, messageWithStatus];
+          // Replace any temporary message with the same content and sender
+          const hasTempMessage = prevMessages.some(
+            msg => msg.isTemp &&
+                  msg.content === messageContent &&
+                  String(msg.sender?._id || msg.sender?.id) === String(senderId)
+          );
+
+          let updatedMessages;
+
+          if (hasTempMessage) {
+            console.log('Replacing temporary message with real message');
+            updatedMessages = prevMessages.map(msg =>
+              (msg.isTemp &&
+               msg.content === messageContent &&
+               String(msg.sender?._id || msg.sender?.id) === String(senderId))
+                ? { ...messageWithStatus, replaced: true }
+                : msg
+            );
+          } else {
+            // Add the new message
+            updatedMessages = [...prevMessages, messageWithStatus];
+          }
 
           // Sort messages by timestamp if available
           if (updatedMessages.length > 0 && updatedMessages[0].createdAt) {
@@ -530,11 +561,12 @@ export const useSocket = (
       }
     };
 
-    // Register the handler for both possible backend event names
+    // Register the handler for only one event name to prevent duplicate processing
+    // The backend should be consistent with its event naming
     socket.on("message received", messageReceivedHandler);
 
-    // Also listen for 'new message' event as some backends use this name instead
-    socket.on("new message", messageReceivedHandler);
+    // We'll keep a reference to the handler for cleanup
+    const messageHandler = messageReceivedHandler;
 
     // Handle message delivery status updates
     socket.on("message delivered", (data) => {
@@ -632,9 +664,8 @@ export const useSocket = (
       socket.off("disconnect");
       socket.off("reconnect");
 
-      // Message events
-      socket.off("message received", messageReceivedHandler);
-      socket.off("new message", messageReceivedHandler);
+      // Message events - use the saved reference to ensure we remove the correct handler
+      socket.off("message received", messageHandler);
 
       // Message status events
       socket.off("message delivered");
@@ -677,7 +708,7 @@ export const useSocket = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]); // Include url in dependencies to ensure correct socket server is used
 
-  // Join a chat room
+  // Join a chat room - improved to handle message state properly
   const joinChat = useCallback(
     (chatId) => {
       if (!chatId) {
@@ -698,7 +729,7 @@ export const useSocket = (
       setCurrentChatId(chatId);
       currentChatIdRef.current = chatId;
 
-      // Clear messages when joining a new chat
+      // Clear messages when joining a new chat to avoid showing messages from previous chat
       setMessages([]);
 
       // Initialize socket if it doesn't exist
@@ -744,6 +775,15 @@ export const useSocket = (
         // Join the new chat room
         console.log(`Emitting join room event for ${chatId}`);
         socketRef.current.emit("join room", chatId);
+
+        // Emit a ready event to let the server know we're ready to receive messages
+        // This can help with ensuring we get the latest messages
+        setTimeout(() => {
+          if (socketRef.current && socketRef.current.connected) {
+            console.log(`Emitting ready event for chat ${chatId}`);
+            socketRef.current.emit("ready", { chatId });
+          }
+        }, 300);
       } else {
         // Socket exists but is not connected
         console.log("Socket exists but not connected, attempting to reconnect...");
@@ -758,6 +798,14 @@ export const useSocket = (
           socketRef.current.emit("join room", chatId);
           setConnected(true);
           setConnectionStatus('connected');
+
+          // Emit a ready event after a short delay
+          setTimeout(() => {
+            if (socketRef.current && socketRef.current.connected) {
+              console.log(`Emitting ready event for chat ${chatId} after reconnection`);
+              socketRef.current.emit("ready", { chatId });
+            }
+          }, 300);
 
           // Only show success toast if we're in the chat section
           if (window.location.pathname.includes('/messages')) {
