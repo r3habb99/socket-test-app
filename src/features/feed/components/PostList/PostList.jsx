@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -7,8 +7,8 @@ import {
 } from "../../../../constants";
 import { getImageUrl } from "../../../../shared/utils/imageUtils";
 import { ImageProxy } from "../../../../shared/components";
-import { FaRetweet, FaShare, FaReply } from "react-icons/fa";
-import { Card, Avatar, Typography, Button, List, Tooltip, Empty } from "antd";
+import { FaRetweet, FaShare, FaReply, FaEye } from "react-icons/fa";
+import { Card, Avatar, Typography, Button, List, Tooltip, Empty, Modal } from "antd";
 import { LikeButton } from "../LikeButton";
 import { RetweetButton } from "../RetweetButton";
 import { DeleteButton } from "../DeleteButton";
@@ -19,6 +19,31 @@ import "./PostList.css";
 
 export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
   const navigate = useNavigate();
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
+  const [previewImages, setPreviewImages] = useState([]);
+  const [previewIndex, setPreviewIndex] = useState(0);
+
+  const handlePreview = (imageUrl, images, index) => {
+    setPreviewImage(imageUrl);
+    setPreviewImages(images);
+    setPreviewIndex(index);
+    setPreviewVisible(true);
+  };
+
+  const handlePreviewClose = () => {
+    setPreviewVisible(false);
+  };
+
+  const handlePrevImage = () => {
+    setPreviewIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : previewImages.length - 1));
+    setPreviewImage(previewImages[previewIndex > 0 ? previewIndex - 1 : previewImages.length - 1]);
+  };
+
+  const handleNextImage = () => {
+    setPreviewIndex((prevIndex) => (prevIndex < previewImages.length - 1 ? prevIndex + 1 : 0));
+    setPreviewImage(previewImages[previewIndex < previewImages.length - 1 ? previewIndex + 1 : 0]);
+  };
 
   const renderPostContent = (post) => {
     // Check if post has retweetData (from the API response structure)
@@ -69,7 +94,10 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
         <div className="post-header">
           <div
             className="post-avatar clickable"
-            onClick={() => navigateToUserProfile(postedByUser, navigate)}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigateToUserProfile(postedByUser, navigate);
+            }}
             title={`View ${postedByUser.username}'s profile`}
           >
             <Avatar
@@ -85,7 +113,10 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                 />
               }
               className="avatar"
-              onClick={() => navigateToUserProfile(postedByUser, navigate)}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigateToUserProfile(postedByUser, navigate);
+              }}
             />
           </div>
           <div className="post-user-info">
@@ -93,7 +124,10 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
               <Text
                 strong
                 className="post-user-name clickable"
-                onClick={() => navigateToUserProfile(postedByUser, navigate)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToUserProfile(postedByUser, navigate);
+                }}
                 title={`View ${postedByUser.username}'s profile`}
               >
                 {postedByUser.firstName || postedByUser.username || "User"} {postedByUser.lastName || ""}
@@ -102,7 +136,10 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
               <Text
                 type="secondary"
                 className="post-user-handle clickable"
-                onClick={() => navigateToUserProfile(postedByUser, navigate)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToUserProfile(postedByUser, navigate);
+                }}
                 title={`View ${postedByUser.username}'s profile`}
               >
                 @{postedByUser.username || "user"}
@@ -124,13 +161,23 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
             {hasMedia && (
               <div className="post-media-container">
                 {postToRender.media.map((mediaUrl, index) => {
-                  // Get placeholder image URL from constants
                   const placeholderImage = PLACEHOLDER_IMAGE;
-
+                  const imageUrl = getImageUrl(mediaUrl, placeholderImage);
+                  const allImageUrls = postToRender.media.map(url => 
+                    getImageUrl(url, placeholderImage)
+                  );
+                  
                   return (
-                    <div key={index} className="post-media">
+                    <div 
+                      key={index} 
+                      className="post-media"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePreview(imageUrl, allImageUrls, index);
+                      }}
+                    >
                       <ImageProxy
-                        src={getImageUrl(mediaUrl, placeholderImage)}
+                        src={imageUrl}
                         alt={`Post media ${index + 1}`}
                         className="post-media-image"
                         defaultSrc={placeholderImage}
@@ -139,6 +186,9 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                           // Silent error handling - fallback to placeholder image
                         }}
                       />
+                      <div className="post-media-overlay">
+                        <FaEye /> View
+                      </div>
                     </div>
                   );
                 })}
@@ -161,69 +211,98 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         ) : (
-          <List
-            itemLayout="vertical"
-            dataSource={posts}
-            renderItem={(post) => {
-              const postId = getPostId(post);
-              return (
-                <Card
-                  key={postId}
-                  className="post-card"
-                  style={{ padding: '12px 16px', border: 'none' }}
-                  onClick={() => navigate(`/post/${postId}`)}
-                >
-                  {renderPostContent(post)}
+          <>
+            <List
+              itemLayout="vertical"
+              dataSource={posts}
+              renderItem={(post) => {
+                const postId = getPostId(post);
+                return (
+                  <Card
+                    key={postId}
+                    className="post-card"
+                    style={{ padding: '12px 16px', border: 'none' }}
+                    onClick={() => navigate(`/post/${postId}`)}
+                  >
+                    {renderPostContent(post)}
+                    
+                    <div className="post-actions" onClick={(e) => e.stopPropagation()}>
+                      <CommentButton
+                        post={post}
+                        getPostId={getPostId}
+                      />
 
-                  <div className="post-actions" onClick={(e) => e.stopPropagation()}>
-                    <CommentButton
-                      post={post}
-                      getPostId={getPostId}
-                    />
+                      <ReplyButton
+                        post={post}
+                        setPosts={setPosts}
+                        onPostsUpdated={onPostsUpdated}
+                        getPostId={getPostId}
+                      />
 
-                    <ReplyButton
-                      post={post}
-                      setPosts={setPosts}
-                      onPostsUpdated={onPostsUpdated}
-                      getPostId={getPostId}
-                    />
+                      <RetweetButton
+                        post={post}
+                        setPosts={setPosts}
+                        onPostsUpdated={onPostsUpdated}
+                        getPostId={getPostId}
+                      />
 
-                    <RetweetButton
-                      post={post}
-                      setPosts={setPosts}
-                      onPostsUpdated={onPostsUpdated}
-                      getPostId={getPostId}
-                    />
+                      <LikeButton
+                        post={post}
+                        setPosts={setPosts}
+                        onPostsUpdated={onPostsUpdated}
+                        getPostId={getPostId}
+                      />
 
-                    <LikeButton
-                      post={post}
-                      setPosts={setPosts}
-                      onPostsUpdated={onPostsUpdated}
-                      getPostId={getPostId}
-                    />
+                      <div className="post-action-group">
+                        <Tooltip title="Share">
+                          <Button
+                            type="text"
+                            className="post-action-button share-button"
+                            aria-label="Share"
+                            icon={<FaShare />}
+                          />
+                        </Tooltip>
+                      </div>
 
-                    <div className="post-action-group">
-                      <Tooltip title="Share">
-                        <Button
-                          type="text"
-                          className="post-action-button share-button"
-                          aria-label="Share"
-                          icon={<FaShare />}
-                        />
-                      </Tooltip>
+                      {/* Delete button component */}
+                      <DeleteButton
+                        post={post}
+                        setPosts={setPosts}
+                        getPostId={getPostId}
+                      />
                     </div>
-
-                    {/* Delete button component */}
-                    <DeleteButton
-                      post={post}
-                      setPosts={setPosts}
-                      getPostId={getPostId}
-                    />
-                  </div>
-                </Card>
-              );
-            }}
-          />
+                  </Card>
+                );
+              }}
+            />
+            
+            <Modal
+              open={previewVisible}
+              title={`Image ${previewIndex + 1} of ${previewImages.length}`}
+              footer={null}
+              onCancel={handlePreviewClose}
+              width="80%"
+              centered
+            >
+              <div style={{ textAlign: 'center' }}>
+                <img
+                  alt="Preview"
+                  style={{ maxWidth: '100%', maxHeight: '70vh' }}
+                  src={previewImage}
+                />
+              </div>
+              {previewImages.length > 1 && (
+                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                  <Button onClick={handlePrevImage} style={{ marginRight: '8px' }}>
+                    Previous
+                  </Button>
+                  <Button onClick={handleNextImage}>
+                    Next
+                  </Button>
+                </div>
+              )}
+            </Modal>
+          </>
         )}
       </div>
     </div>
