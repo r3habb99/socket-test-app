@@ -51,16 +51,27 @@ export const CoverPhotoUploader = ({ setUser, refreshProfile }) => {
     }
   }, [refreshTrigger, refreshUserData]); // Add refreshUserData as a dependency
 
-  const handleFileChange = (e) => {
-    setImage(e.target.files[0]);
+  const handleFileChange = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedImage = e.target.files[0];
+      setImage(selectedImage);
+      console.log("Cover photo selected:", selectedImage.name);
+
+      // Automatically upload the image after selection
+      await handleUpload(selectedImage);
+    }
   };
 
-  const handleUpload = async () => {
-    if (image) {
+  const handleUpload = async (imageToUpload) => {
+    // Use the provided image or fall back to the state image
+    const imageFile = imageToUpload || image;
+
+    if (imageFile) {
       try {
         setIsUploading(true);
+        console.log("Starting cover photo upload...");
 
-        const response = await uploadCoverPhoto(image);
+        const response = await uploadCoverPhoto(imageFile);
 
         if (response.error) {
           toast.error(`Failed to upload cover photo: ${response.message}`);
@@ -68,10 +79,29 @@ export const CoverPhotoUploader = ({ setUser, refreshProfile }) => {
           return;
         }
 
-        // Get the cover photo URL from the response
-        const coverPhotoUrl = response.data?.coverPhoto ||
-                             (response.data?.user?.coverPhoto) ||
-                             null;
+        // Extract cover photo URL from the response, handling different response structures
+        let coverPhotoUrl = null;
+
+        // Case 1: Direct response.data.coverPhoto
+        if (response.data?.coverPhoto) {
+          coverPhotoUrl = response.data.coverPhoto;
+          console.log("Found cover photo in response.data.coverPhoto:", coverPhotoUrl);
+        }
+        // Case 2: Nested in response.data.user.coverPhoto
+        else if (response.data?.user?.coverPhoto) {
+          coverPhotoUrl = response.data.user.coverPhoto;
+          console.log("Found cover photo in response.data.user.coverPhoto:", coverPhotoUrl);
+        }
+        // Case 3: Nested in response.data.data.coverPhoto
+        else if (response.data?.data?.coverPhoto) {
+          coverPhotoUrl = response.data.data.coverPhoto;
+          console.log("Found cover photo in response.data.data.coverPhoto:", coverPhotoUrl);
+        }
+        // Case 4: Nested in response.data.data.user.coverPhoto
+        else if (response.data?.data?.user?.coverPhoto) {
+          coverPhotoUrl = response.data.data.user.coverPhoto;
+          console.log("Found cover photo in response.data.data.user.coverPhoto:", coverPhotoUrl);
+        }
 
         if (coverPhotoUrl) {
           // Add a timestamp to the URL to prevent caching
@@ -80,15 +110,18 @@ export const CoverPhotoUploader = ({ setUser, refreshProfile }) => {
             ? `${coverPhotoUrl}&t=${timestamp}`
             : `${coverPhotoUrl}?t=${timestamp}`;
 
+          console.log("Updating user state with new cover photo:", updatedUrl);
+
           // Update user state with new cover photo
           setUser((prevUser) => ({
             ...prevUser,
-            coverPhoto: updatedUrl,
-            // Store the original URL without timestamp as well
-            originalCoverPhoto: coverPhotoUrl,
+            coverPhoto: coverPhotoUrl, // Store original URL
+            // Add timestamp for display to prevent caching
+            coverPhotoWithTimestamp: updatedUrl,
           }));
         } else {
-          console.warn("No cover photo URL found in response:", response.data);
+          console.warn("No cover photo URL found in response:", response);
+          toast.warning("Cover photo was uploaded but the URL was not returned. The page will refresh to show your new cover photo.");
         }
 
         toast.success("Cover photo updated successfully!");
@@ -96,13 +129,26 @@ export const CoverPhotoUploader = ({ setUser, refreshProfile }) => {
 
         // If refreshProfile function is provided, use it
         if (refreshProfile) {
+          console.log("Using provided refreshProfile function");
           // Wait for toast to disappear (3 seconds) then refresh
           setTimeout(() => {
             refreshProfile();
           }, 3000);
         } else {
+          console.log("Using fallback refresh method");
           // Fallback to the old refresh method
           setRefreshTrigger(true);
+        }
+
+        // Still trigger a refresh even if we couldn't find the URL
+        if (!coverPhotoUrl) {
+          if (refreshProfile) {
+            setTimeout(() => {
+              refreshProfile();
+            }, 3000);
+          } else {
+            setRefreshTrigger(true);
+          }
         }
       } catch (error) {
         toast.error("Failed to upload cover photo. Please try again.");
@@ -124,24 +170,19 @@ export const CoverPhotoUploader = ({ setUser, refreshProfile }) => {
         style={{ display: "none" }}
       />
 
-      {/* Upload Button */}
+      {/* Camera Icon Button */}
       <button
         className="upload-btn"
         onClick={() => document.getElementById("coverFileInput").click()}
         disabled={isUploading}
+        title="Change cover photo"
       >
-        <FaCamera />
+        {isUploading ? (
+          <div className="spinner"></div>
+        ) : (
+          <FaCamera />
+        )}
       </button>
-
-      {image && (
-        <button
-          onClick={handleUpload}
-          disabled={isUploading}
-          className="upload-confirm-btn"
-        >
-          {isUploading ? "Uploading..." : "Upload"}
-        </button>
-      )}
     </div>
   );
 };

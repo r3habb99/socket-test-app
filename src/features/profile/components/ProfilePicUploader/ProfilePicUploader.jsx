@@ -51,16 +51,28 @@ export const ProfilePicUploader = ({ setUser, refreshProfile }) => {
     }
   }, [refreshTrigger, refreshUserData]); // Add refreshUserData as a dependency
 
-  const handleFileChange = (e) => {
-    setImage(e.target.files[0]);
+  const handleFileChange = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedImage = e.target.files[0];
+      setImage(selectedImage);
+      console.log("Image selected:", selectedImage.name);
+
+      // Automatically upload the image after selection
+      await handleUpload(selectedImage);
+    }
   };
 
-  const handleUpload = async () => {
-    if (image) {
+  const handleUpload = async (imageToUpload) => {
+    // Use the provided image or fall back to the state image
+    const imageFile = imageToUpload || image;
+
+    if (imageFile) {
       try {
         setIsUploading(true);
+        console.log("Starting profile picture upload...");
 
-        const response = await uploadProfilePic(image);
+        const response = await uploadProfilePic(imageFile);
+        console.log("Upload response:", response);
 
         if (response.error) {
           toast.error(`Failed to upload profile picture: ${response.message}`);
@@ -68,10 +80,29 @@ export const ProfilePicUploader = ({ setUser, refreshProfile }) => {
           return;
         }
 
-        // Get the profile picture URL from the response
-        const profilePicUrl = response.data?.profilePic ||
-                             (response.data?.user?.profilePic) ||
-                             null;
+        // Extract profile picture URL from the response, handling different response structures
+        let profilePicUrl = null;
+
+        // Case 1: Direct response.data.profilePic
+        if (response.data?.profilePic) {
+          profilePicUrl = response.data.profilePic;
+          console.log("Found profile pic in response.data.profilePic:", profilePicUrl);
+        }
+        // Case 2: Nested in response.data.user.profilePic
+        else if (response.data?.user?.profilePic) {
+          profilePicUrl = response.data.user.profilePic;
+          console.log("Found profile pic in response.data.user.profilePic:", profilePicUrl);
+        }
+        // Case 3: Nested in response.data.data.profilePic
+        else if (response.data?.data?.profilePic) {
+          profilePicUrl = response.data.data.profilePic;
+          console.log("Found profile pic in response.data.data.profilePic:", profilePicUrl);
+        }
+        // Case 4: Nested in response.data.data.user.profilePic
+        else if (response.data?.data?.user?.profilePic) {
+          profilePicUrl = response.data.data.user.profilePic;
+          console.log("Found profile pic in response.data.data.user.profilePic:", profilePicUrl);
+        }
 
         if (profilePicUrl) {
           // Add a timestamp to the URL to prevent caching
@@ -80,29 +111,43 @@ export const ProfilePicUploader = ({ setUser, refreshProfile }) => {
             ? `${profilePicUrl}&t=${timestamp}`
             : `${profilePicUrl}?t=${timestamp}`;
 
+          console.log("Updating user state with new profile picture:", updatedUrl);
+
           // Update user state with new profile picture
           setUser((prevUser) => ({
             ...prevUser,
-            profilePic: updatedUrl,
-            // Store the original URL without timestamp as well
-            originalProfilePic: profilePicUrl,
+            profilePic: profilePicUrl, // Store original URL
+            // Add timestamp for display to prevent caching
+            profilePicWithTimestamp: updatedUrl,
           }));
-        } else {
-          console.warn("No profile picture URL found in response:", response.data);
-        }
 
-        toast.success("Profile picture updated successfully!");
-        setImage(null);
+          toast.success("Profile picture updated successfully!");
+          setImage(null);
 
-        // If refreshProfile function is provided, use it
-        if (refreshProfile) {
-          // Wait for toast to disappear (3 seconds) then refresh
-          setTimeout(() => {
-            refreshProfile();
-          }, 3000);
+          // If refreshProfile function is provided, use it
+          if (refreshProfile) {
+            console.log("Using provided refreshProfile function");
+            // Wait for toast to disappear (3 seconds) then refresh
+            setTimeout(() => {
+              refreshProfile();
+            }, 3000);
+          } else {
+            console.log("Using fallback refresh method");
+            // Fallback to the old refresh method
+            setRefreshTrigger(true);
+          }
         } else {
-          // Fallback to the old refresh method
-          setRefreshTrigger(true);
+          console.warn("No profile picture URL found in response:", response);
+          toast.warning("Profile picture was uploaded but the URL was not returned. The page will refresh to show your new picture.");
+
+          // Still trigger a refresh even if we couldn't find the URL
+          if (refreshProfile) {
+            setTimeout(() => {
+              refreshProfile();
+            }, 3000);
+          } else {
+            setRefreshTrigger(true);
+          }
         }
       } catch (error) {
         toast.error("Failed to upload profile picture. Please try again.");
@@ -110,6 +155,8 @@ export const ProfilePicUploader = ({ setUser, refreshProfile }) => {
       } finally {
         setIsUploading(false);
       }
+    } else {
+      toast.warning("Please select an image first");
     }
   };
 
@@ -124,24 +171,19 @@ export const ProfilePicUploader = ({ setUser, refreshProfile }) => {
         style={{ display: "none" }}
       />
 
-      {/* Upload Button */}
+      {/* Camera Icon Button */}
       <button
         className="upload-btn"
         onClick={() => document.getElementById("fileInput").click()}
         disabled={isUploading}
+        title="Change profile picture"
       >
-        <FaCamera />
+        {isUploading ? (
+          <div className="spinner"></div>
+        ) : (
+          <FaCamera />
+        )}
       </button>
-
-      {image && (
-        <button
-          onClick={handleUpload}
-          disabled={isUploading}
-          className="upload-confirm-btn"
-        >
-          {isUploading ? "Uploading..." : "Upload"}
-        </button>
-      )}
     </div>
   );
 };

@@ -102,9 +102,6 @@ export const Profile = () => {
         return;
       }
 
-      // Log the response data structure for debugging
-      console.log("Profile API response data:", response);
-
       // Handle different response structures
       let userDataObj = null;
 
@@ -121,7 +118,6 @@ export const Profile = () => {
       // Case 3: Direct response.data structure
       else if (response.data) {
         userDataObj = response.data;
-        console.log("Found user data in response.data", userDataObj);
       }
 
       // Check if we have valid user data
