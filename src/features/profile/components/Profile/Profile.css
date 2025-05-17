@@ -395,4 +395,187 @@
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(2, auto);
   }
+
+  .profile-header {
+    height: 150px;
+  }
+
+  .cover-photo {
+    height: 150px;
+  }
+
+  .profile-name {
+    font-size: 18px;
+  }
+
+  .username {
+    font-size: 14px;
+  }
+
+  .bio {
+    font-size: 14px;
+  }
+
+  .profile-action-buttons {
+    gap: 6px;
+  }
+
+  .edit-profile-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-header {
+    height: 120px;
+  }
+
+  .cover-photo {
+    height: 120px;
+  }
+
+  .profile-pic-container {
+    width: 70px;
+    height: 70px;
+    border-width: 3px;
+  }
+
+  .profile-pic {
+    width: 70px;
+    height: 70px;
+  }
+
+  .profile-left {
+    top: -35px;
+  }
+
+  .profile-content {
+    grid-template-columns: 80px 1fr;
+    padding: 0 12px 12px;
+  }
+
+  .profile-right {
+    margin-top: 10px;
+  }
+
+  .profile-name {
+    font-size: 16px;
+  }
+
+  .username {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .bio {
+    font-size: 13px;
+    margin: 8px 0;
+  }
+
+  .profile-location-date {
+    font-size: 12px;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .stats {
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .link-button {
+    font-size: 12px;
+  }
+
+  .profile-action-buttons {
+    gap: 4px;
+  }
+
+  .edit-profile-button {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-height: 30px;
+  }
+
+  .more-options-button,
+  .message-button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .profile-header-bar {
+    padding: 8px 12px;
+  }
+
+  .back-button {
+    margin-right: 12px;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+
+  .profile-header-name {
+    font-size: 16px;
+  }
+
+  .profile-header-stats {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 375px) {
+  .profile-header {
+    height: 100px;
+  }
+
+  .cover-photo {
+    height: 100px;
+  }
+
+  .profile-pic-container {
+    width: 60px;
+    height: 60px;
+  }
+
+  .profile-pic {
+    width: 60px;
+    height: 60px;
+  }
+
+  .profile-left {
+    top: -30px;
+  }
+
+  .profile-content {
+    grid-template-columns: 70px 1fr;
+    padding: 0 8px 8px;
+  }
+
+  .profile-name {
+    font-size: 15px;
+  }
+
+  .username {
+    font-size: 12px;
+  }
+
+  .bio {
+    font-size: 12px;
+  }
+
+  .profile-action-buttons {
+    flex-wrap: wrap;
+  }
+
+  .edit-profile-button {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .more-options-button,
+  .message-button {
+    width: 28px;
+    height: 28px;
+  }
 }

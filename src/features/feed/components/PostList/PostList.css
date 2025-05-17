@@ -493,3 +493,148 @@
   white-space: pre-wrap;
   word-wrap: break-word;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .post-card {
+    padding: 10px 12px;
+    column-gap: 10px;
+  }
+
+  .post-action-button {
+    padding: 6px;
+  }
+
+  .post-action-button::before {
+    width: 32px;
+    height: 32px;
+  }
+
+  .post-action-button svg {
+    font-size: 16px;
+  }
+
+  .post-media-image {
+    height: 250px;
+  }
+
+  .post-media .ant-image-img {
+    height: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .post-card {
+    padding: 8px 10px;
+    column-gap: 8px;
+  }
+
+  .avatar,
+  .avatar.ant-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .post-action-group {
+    min-width: auto;
+  }
+
+  .post-actions {
+    padding: 0 4px;
+  }
+
+  .post-action-button {
+    padding: 6px;
+    min-height: var(--mobile-touch-target);
+    min-width: var(--mobile-touch-target);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .post-action-button::before {
+    width: 30px;
+    height: 30px;
+  }
+
+  .post-action-button svg {
+    font-size: 15px;
+  }
+
+  .post-action-count {
+    font-size: 12px;
+  }
+
+  .post-media-image {
+    height: 200px;
+  }
+
+  .post-media .ant-image-img {
+    height: 200px;
+  }
+
+  .retweet-label,
+  .reply-label {
+    margin-left: 28px;
+    font-size: 12px;
+  }
+
+  .original-post-container {
+    margin: 8px 0 10px 20px;
+    padding: 10px 12px;
+    max-width: calc(100% - 20px);
+  }
+}
+
+@media (max-width: 375px) {
+  .post-card {
+    padding: 8px;
+    column-gap: 6px;
+  }
+
+  .avatar,
+  .avatar.ant-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .post-user-name {
+    font-size: 14px;
+  }
+
+  .post-user-handle,
+  .post-timestamp {
+    font-size: 12px;
+  }
+
+  .post-content,
+  .post-content.ant-typography {
+    font-size: 14px;
+    margin: 2px 0 8px;
+  }
+
+  .post-action-button {
+    padding: 4px;
+  }
+
+  .post-action-button::before {
+    width: 28px;
+    height: 28px;
+  }
+
+  .post-action-button svg {
+    font-size: 14px;
+  }
+
+  .post-action-count {
+    font-size: 11px;
+  }
+
+  .post-media-image {
+    height: 180px;
+  }
+
+  .post-media .ant-image-img {
+    height: 180px;
+  }
+}
