@@ -615,6 +615,7 @@ li.receiver .message-info {
   position: relative;
   box-sizing: border-box;
   max-width: 100%;
+  z-index: 101; /* Ensure input is above other elements */
 }
 
 .message-actions {
@@ -736,6 +737,7 @@ li.receiver .message-info {
 @media (max-width: 768px) {
   .chat-container {
     width: 100%;
+    padding-bottom: 60px; /* Make room for the bottom navigation */
   }
 
   .chat-header-name {
@@ -748,6 +750,18 @@ li.receiver .message-info {
 
   .input-container {
     padding: 10px;
+    position: fixed;
+    bottom: 60px; /* Position above the bottom navigation */
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border-top: 1px solid #eff3f4;
+    z-index: 101;
+  }
+
+  /* Adjust messages container to account for fixed input */
+  .messages-container {
+    padding-bottom: 70px; /* Add extra padding to prevent messages from being hidden behind input */
   }
 }
 
@@ -785,5 +799,12 @@ li.receiver .message-info {
 
   .input-container {
     padding: 8px 12px;
+    bottom: 95px; /* Ensure consistent positioning on small screens */
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05); /* Add shadow for better visibility */
+  }
+
+  /* Ensure messages don't get hidden behind the input */
+  .messages-container {
+    padding-bottom: 80px;
   }
 }

@@ -24,12 +24,19 @@ const MessagingApp = () => {
   // Handle window resize for responsive layout
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+
+      // Reset selected chat when switching to mobile view
+      if (mobile && !isMobile) {
+        setSelectedChat(null);
+      }
     };
 
+    handleResize(); // Call once on mount
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [isMobile]);
 
   // Handle socket reconnection if needed - only on mount
   useEffect(() => {
@@ -198,7 +205,12 @@ const MessagingApp = () => {
         {/* Main content container */}
         <Content
           className="messaging-content-container"
-          style={{ display: "flex", flex: 1, overflow: "hidden" }}
+          style={{
+            display: "flex",
+            flex: 1,
+            overflow: "hidden",
+            flexDirection: isMobile ? "column" : "row"
+          }}
         >
           {/* Chat list - always visible */}
           <div className="chatlist-section">
@@ -228,6 +240,17 @@ const MessagingApp = () => {
                     if (chatList) {
                       chatList.scrollTop = 0;
                     }
+
+                    // Add a small delay to ensure smooth transition
+                    setTimeout(() => {
+                      // Focus the search input in the ChatList component
+                      const searchInput = document.querySelector(
+                        ".chatlist-search input"
+                      );
+                      if (searchInput) {
+                        searchInput.focus();
+                      }
+                    }, 300);
                   }
                 }}
               />

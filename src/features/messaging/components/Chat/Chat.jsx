@@ -831,12 +831,15 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     <div className="chat-container">
       <Layout.Header className="chat-header-container">
         <div className="chat-header-left">
-          <Button
-            type="text"
-            icon={<ArrowLeftOutlined />}
-            className="back-button"
-            onClick={onBackClick}
-          />
+          <div className="back-button-container">
+            <Button
+              type="text"
+              icon={<ArrowLeftOutlined />}
+              className="back-button"
+              onClick={onBackClick}
+              aria-label="Back to chat list"
+            />
+          </div>
 
           {chatPartner && chatPartner.profilePic ? (
             <Avatar

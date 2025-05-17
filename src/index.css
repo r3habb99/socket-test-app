@@ -105,6 +105,19 @@ button:disabled {
 
 /* Chat-related styles have been moved to src/components/Messages/css/chat.css */
 
+/* Global Responsive Design Variables */
+:root {
+  --mobile-breakpoint: 768px;
+  --small-screen-breakpoint: 480px;
+  --sidebar-width: 250px;
+  --mobile-nav-height: 60px;
+  --primary-color: #1d9bf0;
+  --border-color: #eff3f4;
+  --text-color: #0f1419;
+  --secondary-text-color: #536471;
+  --background-color: #ffffff;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .container {
@@ -128,6 +141,19 @@ button:disabled {
     margin-bottom: 10px;
   }
 
+  /* Ensure content doesn't get hidden behind the mobile navigation */
+  body {
+    padding-bottom: var(--mobile-nav-height);
+  }
+
+  /* Improve tap targets for mobile */
+  button,
+  a,
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px; /* Minimum recommended touch target size */
+  }
+
   /* Chat-specific responsive styles moved to chat.css */
 }
 
@@ -148,5 +174,10 @@ button:disabled {
   input[type="text"] {
     padding: 8px;
     font-size: 0.9rem;
+  }
+
+  /* Adjust font sizes for better readability on small screens */
+  body {
+    font-size: 14px;
   }
 }

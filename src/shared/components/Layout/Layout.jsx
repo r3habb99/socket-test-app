@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuthContext } from "../../../core/providers/AuthProvider";
 import { Sidebar } from "../Sidebar/Sidebar";
 import { logout } from "../../../features/auth/api/authApi";
@@ -11,8 +11,38 @@ import "./Layout.css";
  */
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isSmallMobile, setIsSmallMobile] = useState(window.innerWidth < 480);
   const authContext = useAuthContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const moreMenuRef = useRef(null);
+
+  // Handle window resize for responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsSmallMobile(window.innerWidth < 480);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Close more menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
+        setMoreMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const links = [
     { name: "dashboard", label: "Feed", icon: "📰" },
@@ -30,7 +60,7 @@ const Layout = () => {
     try {
       // First call the API to logout from the server
       await logout();
-      
+
       // Then use the context logout to clear local state
       if (typeof authContext.logout === 'function') {
         authContext.logout();
@@ -39,7 +69,7 @@ const Layout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("userId");
       }
-      
+
       // Navigate to login page
       navigate('/login');
     } catch (error) {
@@ -56,19 +86,128 @@ const Layout = () => {
     }
   };
 
+  // Check if the current path matches a link
+  const isActive = (path) => {
+    // Handle special cases for nested routes
+    if (path === 'dashboard' && location.pathname === '/dashboard') {
+      return true;
+    }
+    // For other paths, check if the location pathname includes the path
+    return location.pathname.includes(`/${path}`);
+  };
+
+  // Close sidebar when clicking outside on mobile
+  const handleOverlayClick = () => {
+    if (sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
+
+  // Define primary links for mobile navigation (limited to 3 + More)
+  const primaryLinks = links.slice(0, 3); // First 3 links
+  const moreLinks = links.slice(3); // Remaining links
+
+  // Toggle more menu
+  const toggleMoreMenu = (e) => {
+    e.stopPropagation();
+    setMoreMenuOpen(!moreMenuOpen);
+  };
+
   return (
     <div className="dashboard-container">
+      {/* Hamburger menu for tablet */}
       <div className="hamburger-icon" onClick={toggleSidebar}>
         &#9776;
       </div>
+
+      {/* Overlay for tablet sidebar */}
+      {isMobile && sidebarOpen && (
+        <div
+          className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`}
+          onClick={handleOverlayClick}
+        />
+      )}
+
+      {/* Sidebar for desktop and tablet (when open) */}
       <Sidebar
         links={links}
         sidebarOpen={sidebarOpen}
         onLogout={handleLogout}
+        onClose={() => setSidebarOpen(false)}
       />
+
+      {/* Main content area */}
       <div className="main-content">
         <Outlet />
       </div>
+
+      {/* Mobile bottom navigation */}
+      {isMobile && (
+        <nav className="mobile-nav">
+          <ul className="mobile-nav-list">
+            {/* Primary navigation items */}
+            {primaryLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={`/${link.name}`}
+                className={`mobile-nav-item ${isActive(link.name) ? 'active' : ''}`}
+              >
+                <span className="mobile-nav-icon">{link.icon}</span>
+                <span className="mobile-nav-label">{link.label}</span>
+              </Link>
+            ))}
+
+            {/* More menu button */}
+            <button
+              className={`mobile-nav-item ${moreMenuOpen ? 'active' : ''}`}
+              onClick={toggleMoreMenu}
+              ref={moreMenuRef}
+            >
+              <span className="mobile-nav-icon">⋮</span>
+              <span className="mobile-nav-label">More</span>
+            </button>
+          </ul>
+        </nav>
+      )}
+
+      {/* More menu dropdown */}
+      {moreMenuOpen && (
+        <>
+          <div
+            className={`more-menu-overlay ${moreMenuOpen ? 'open' : ''}`}
+            onClick={() => setMoreMenuOpen(false)}
+          />
+          <div className={`more-menu ${moreMenuOpen ? 'open' : ''}`} ref={moreMenuRef}>
+            <ul className="more-menu-list">
+              {moreLinks.map((link) => (
+                <li key={link.name}>
+                  {link.name === 'logout' ? (
+                    <button
+                      className="more-menu-item"
+                      onClick={() => {
+                        setMoreMenuOpen(false);
+                        handleLogout();
+                      }}
+                    >
+                      <span className="more-menu-icon">{link.icon}</span>
+                      {link.label}
+                    </button>
+                  ) : (
+                    <Link
+                      to={`/${link.name}`}
+                      className="more-menu-item"
+                      onClick={() => setMoreMenuOpen(false)}
+                    >
+                      <span className="more-menu-icon">{link.icon}</span>
+                      {link.label}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
     </div>
   );
 };

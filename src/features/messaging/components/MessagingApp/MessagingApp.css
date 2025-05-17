@@ -30,6 +30,9 @@
   background: #ffffff;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
 
 /* Connection status banner - Ant Design Alert customization */
@@ -199,10 +202,13 @@
     height: 100%;
     width: 100%;
     z-index: 10;
+    padding-bottom: 60px; /* Make room for the bottom navigation */
   }
 
+  /* Fix for mobile view to ensure ChatList is visible */
   .messaging-content-container {
-    flex-direction: column;
+    display: flex;
+    flex-direction: row;
   }
 
   /* When chat is selected, hide the chat list on mobile */
@@ -224,8 +230,10 @@
     max-width: 100%;
     height: 100%;
     border-right: none;
+    display: block !important; /* Ensure ChatList is always visible when not in chat view */
   }
 
+  /* Ensure proper display of chat section */
   .chat-section {
     width: 100%;
     height: 100%;
@@ -233,9 +241,17 @@
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: 0; /* Remove bottom offset to allow full height */
+    padding-bottom: 60px; /* Add padding instead of bottom offset */
     z-index: 100;
     background-color: #fff;
+    display: none; /* Hide by default on mobile */
+    box-sizing: border-box; /* Ensure padding is included in height calculation */
+  }
+
+  /* Only show chat section when a chat is selected */
+  .messaging-app-layout.chat-selected .chat-section {
+    display: block;
   }
 
   /* Account for connection status banner if present */
@@ -244,7 +260,7 @@
   }
 
   .new-message-button {
-    bottom: 16px;
+    bottom: 76px; /* Adjusted for bottom navigation */
     right: 16px;
     width: 56px;
     height: 56px;
@@ -260,6 +276,27 @@
     justify-content: center;
     border: none;
     background: none;
+    color: #1d9bf0;
+    font-size: 20px;
+  }
+
+  /* Improve back button tap target */
+  .back-button-container {
+    display: flex;
+    align-items: center;
+    padding: 0px;
+    width: 30px;
+    height: 32px;
+  }
+
+  /* Fix for the "no chat selected" view on mobile */
+  .no-chat-selected {
+    display: none; /* Hide the "no chat selected" view on mobile */
+  }
+
+  /* Make sure the no-chat-selected view is hidden on mobile */
+  .messaging-app-layout .chat-section .no-chat-selected {
+    display: none;
   }
 }
 
@@ -295,7 +332,22 @@
     font-size: 14px;
   }
 
-  .input-container {
-    padding: 8px 12px;
+  /* Ensure chat section is properly displayed on mobile */
+  .chat-section {
+    height: 100vh; /* Use viewport height */
+    overflow: hidden; /* Prevent scrolling of the container itself */
+  }
+
+  /* Ensure the chat container takes full height */
+  .chat-section .chat-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Ensure messages container scrolls properly */
+  .chat-section .messages-container {
+    flex: 1;
+    overflow-y: auto;
   }
 }

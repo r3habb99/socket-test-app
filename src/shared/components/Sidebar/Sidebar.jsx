@@ -9,19 +9,33 @@ import "./Sidebar.css";
  * @param {Array} props.links - Navigation links
  * @param {boolean} props.sidebarOpen - Whether sidebar is open
  * @param {Function} props.onLogout - Logout function
+ * @param {Function} props.onClose - Function to close the sidebar
  * @returns {JSX.Element} Sidebar component
  */
-export const Sidebar = ({ links, sidebarOpen, onLogout }) => {
+export const Sidebar = ({ links, sidebarOpen, onLogout, onClose }) => {
   const location = useLocation();
+  const isMobile = window.innerWidth <= 768;
 
   const handleLinkClick = (name) => {
     if (name === "logout") {
       onLogout();
     }
+
+    // Close sidebar on mobile after clicking a link
+    if (isMobile && onClose) {
+      onClose();
+    }
   };
 
   return (
     <div className={`sidebar ${sidebarOpen ? "open" : ""}`}>
+      {/* Close button for mobile */}
+      {isMobile && onClose && (
+        <button className="sidebar-close" onClick={onClose}>
+          &times;
+        </button>
+      )}
+
       <div className="sidebar-header">
         <h2>Twitter Clone</h2>
       </div>
@@ -45,7 +59,7 @@ export const Sidebar = ({ links, sidebarOpen, onLogout }) => {
                 <Link
                   to={`/${link.name}`}
                   className={
-                    location.pathname === `/${link.name}` ? "active" : ""
+                    location.pathname.includes(`/${link.name}`) ? "active" : ""
                   }
                   onClick={() => handleLinkClick(link.name)}
                 >
