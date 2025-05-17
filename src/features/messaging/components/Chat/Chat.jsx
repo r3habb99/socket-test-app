@@ -37,7 +37,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState(null);
+  const [isAtTop, setIsAtTop] = useState(false);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   // Get current user ID from localStorage
   const userId = localStorage.getItem("userId");
@@ -51,7 +53,32 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
   // Function to scroll to the bottom of the messages
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      // Option 1: Use scrollIntoView on the end ref
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+      // Option 2: Set scrollTop directly (as a fallback)
+      // This ensures scrolling works even if the scrollIntoView doesn't work properly
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  }, []);
+
+  // Function to handle scrolling to the top (for loading older messages)
+  const handleScrollToTop = useCallback(() => {
+    if (messagesContainerRef.current && messagesContainerRef.current.scrollTop === 0) {
+      // We're at the top of the container, could load older messages here
+      console.log('Scrolled to top of messages, could load older messages');
+
+      // Add a visual indicator that we're at the top
+      messagesContainerRef.current.classList.add('at-top');
+      setIsAtTop(true);
+
+      // Future implementation: Load older messages when scrolled to top
+    }
   }, []);
 
   // Track the last loaded chat ID to prevent duplicate API calls
@@ -245,6 +272,15 @@ export const Chat = ({ selectedChat, onBackClick }) => {
   // Join chat room when selected chat changes - using a ref to prevent repeated joins
   const previousChatIdRef = useRef(null);
 
+  // Effect to ensure the messages container is properly sized when the component mounts
+  useEffect(() => {
+    // Force a resize event to ensure the messages container is properly sized
+    window.dispatchEvent(new Event('resize'));
+
+    // Scroll to bottom after a short delay to ensure the container is properly sized
+    setTimeout(scrollToBottom, 200);
+  }, [scrollToBottom]);
+
   useEffect(() => {
     // Extract chat ID to a variable for dependency array
     const chatId = selectedChat?._id || selectedChat?.id;
@@ -329,9 +365,70 @@ export const Chat = ({ selectedChat, onBackClick }) => {
   useEffect(() => {
     // Scroll to bottom when messages change
     if (socketContext.messages && socketContext.messages.length > 0) {
-      scrollToBottom();
+      // Ensure the messages container is properly sized before scrolling
+      if (messagesContainerRef.current) {
+        // Force a reflow to ensure the container has the correct dimensions
+        messagesContainerRef.current.style.display = 'none';
+        // eslint-disable-next-line no-unused-expressions
+        messagesContainerRef.current.offsetHeight; // Force reflow
+        messagesContainerRef.current.style.display = 'flex';
+
+        // Scroll to bottom after a short delay to ensure the container is properly sized
+        setTimeout(scrollToBottom, 50);
+      } else {
+        scrollToBottom();
+      }
     }
   }, [socketContext.messages, scrollToBottom]);
+
+  // Add scroll event listener to messages container and ensure proper sizing
+  useEffect(() => {
+    const messagesContainer = messagesContainerRef.current;
+    if (!messagesContainer) return;
+
+    // Function to ensure the messages container has the correct height
+    const updateContainerHeight = () => {
+      const chatContainer = messagesContainer.closest('.chat-container');
+      if (!chatContainer) return;
+
+      const headerHeight = chatContainer.querySelector('.chat-header-container')?.offsetHeight || 60;
+      const inputHeight = chatContainer.querySelector('.input-container')?.offsetHeight || 60;
+
+      // Calculate available height
+      const availableHeight = chatContainer.offsetHeight - headerHeight - inputHeight;
+
+      // Set the height of the messages container
+      messagesContainer.style.height = `${availableHeight}px`;
+      messagesContainer.style.maxHeight = `${availableHeight}px`;
+      messagesContainer.style.overflowY = 'auto';
+    };
+
+    // Add scroll event listener
+    const handleScroll = () => {
+      // Check if we're at the top of the container
+      if (messagesContainer.scrollTop === 0) {
+        // Add 'at-top' class to show the loading indicator
+        messagesContainer.classList.add('at-top');
+        setIsAtTop(true);
+        handleScrollToTop();
+      } else {
+        // Remove 'at-top' class when not at the top
+        messagesContainer.classList.remove('at-top');
+        setIsAtTop(false);
+      }
+    };
+
+    // Update container height initially and on window resize
+    updateContainerHeight();
+    window.addEventListener('resize', updateContainerHeight);
+    messagesContainer.addEventListener('scroll', handleScroll);
+
+    // Clean up event listeners
+    return () => {
+      messagesContainer.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', updateContainerHeight);
+    };
+  }, [handleScrollToTop]);
 
   // Effect to handle socket connection changes - simplified to avoid duplicate loading
   useEffect(() => {
@@ -826,7 +923,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         </div>
       </Layout.Header>
 
-      <div className="messages-container">
+      <div className="messages-container" ref={messagesContainerRef}>
         {loadingMessages ? (
           <div className="loading-messages">
             <Spin size="large" tip="Loading messages..." />
@@ -851,6 +948,22 @@ export const Chat = ({ selectedChat, onBackClick }) => {
           </div>
         ) : Array.isArray(socketContext.messages) ? (
           <ul className="messages-list">
+            {/* Load more messages button - only shown when at the top */}
+            {isAtTop && socketContext.messages && socketContext.messages.length > 0 && (
+              <div className="load-more-container">
+                <Button
+                  size="small"
+                  icon={<ReloadOutlined />}
+                  onClick={() => {
+                    console.log("Load more messages functionality would be implemented here");
+                    // Future implementation: Load older messages
+                  }}
+                >
+                  Load older messages
+                </Button>
+              </div>
+            )}
+
             {/* Connection status message */}
             <div className="special-message">
               {socketContext.connectionStatus === 'disconnected' && (
