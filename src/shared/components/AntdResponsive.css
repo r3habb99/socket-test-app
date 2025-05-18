@@ -1,0 +1,135 @@
+/* AntdResponsive.css - Global styles for Ant Design components to ensure mobile responsiveness */
+
+/* Modal responsiveness */
+@media (max-width: 768px) {
+  /* Make modals take full width on mobile */
+  .ant-modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .ant-modal-content {
+    border-radius: 0 !important;
+    padding: 16px !important;
+  }
+
+  .ant-modal-header {
+    padding: 16px !important;
+  }
+
+  .ant-modal-body {
+    padding: 16px !important;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+
+  .ant-modal-footer {
+    padding: 16px !important;
+  }
+
+  /* Image preview modal */
+  .ant-image-preview-mask,
+  .ant-image-preview-wrap {
+    z-index: 1050 !important;
+  }
+}
+
+/* Card responsiveness */
+@media (max-width: 768px) {
+  .ant-card {
+    border-radius: 0 !important;
+  }
+
+  .ant-card-body {
+    padding: 12px !important;
+  }
+}
+
+/* Button responsiveness */
+@media (max-width: 768px) {
+  .ant-btn {
+    font-size: 14px !important;
+    height: auto !important;
+    min-height: 36px !important;
+    padding: 4px 12px !important;
+  }
+
+  /* Ensure touch targets are at least 44x44px */
+  .ant-btn-icon-only {
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+}
+
+/* List responsiveness */
+@media (max-width: 768px) {
+  .ant-list-item {
+    padding: 12px !important;
+  }
+}
+
+/* Avatar responsiveness */
+@media (max-width: 768px) {
+  .ant-avatar-lg {
+    width: 40px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+  }
+}
+
+/* Tooltip responsiveness */
+@media (max-width: 768px) {
+  .ant-tooltip {
+    max-width: 90vw !important;
+  }
+}
+
+/* Popover responsiveness */
+@media (max-width: 768px) {
+  .ant-popover {
+    max-width: 90vw !important;
+  }
+
+  .ant-popover-inner-content {
+    padding: 12px !important;
+  }
+}
+
+/* Dropdown responsiveness */
+@media (max-width: 768px) {
+  .ant-dropdown-menu {
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+  }
+
+  .ant-dropdown-menu-item, 
+  .ant-dropdown-menu-submenu-title {
+    padding: 12px 16px !important;
+    min-height: 44px !important;
+  }
+}
+
+/* Form responsiveness */
+@media (max-width: 768px) {
+  .ant-form-item {
+    margin-bottom: 16px !important;
+  }
+
+  .ant-form-item-label {
+    padding-bottom: 4px !important;
+  }
+
+  .ant-input {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* Tabs responsiveness */
+@media (max-width: 768px) {
+  .ant-tabs-tab {
+    padding: 8px 12px !important;
+    margin: 0 4px !important;
+  }
+}

@@ -163,13 +163,13 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                 {postToRender.media.map((mediaUrl, index) => {
                   const placeholderImage = PLACEHOLDER_IMAGE;
                   const imageUrl = getImageUrl(mediaUrl, placeholderImage);
-                  const allImageUrls = postToRender.media.map(url => 
+                  const allImageUrls = postToRender.media.map(url =>
                     getImageUrl(url, placeholderImage)
                   );
-                  
+
                   return (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className="post-media"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -225,7 +225,7 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                     onClick={() => navigate(`/post/${postId}`)}
                   >
                     {renderPostContent(post)}
-                    
+
                     <div className="post-actions" onClick={(e) => e.stopPropagation()}>
                       <CommentButton
                         post={post}
@@ -275,28 +275,40 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                 );
               }}
             />
-            
+
             <Modal
               open={previewVisible}
               title={`Image ${previewIndex + 1} of ${previewImages.length}`}
               footer={null}
               onCancel={handlePreviewClose}
-              width="80%"
+              width="90%"
               centered
+              className="image-preview-modal"
+              closeIcon={<Button type="text" icon={<span>×</span>} className="close-modal-button" />}
             >
               <div style={{ textAlign: 'center' }}>
                 <img
                   alt="Preview"
-                  style={{ maxWidth: '100%', maxHeight: '70vh' }}
+                  style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
                   src={previewImage}
                 />
               </div>
               {previewImages.length > 1 && (
-                <div style={{ textAlign: 'center', marginTop: '16px' }}>
-                  <Button onClick={handlePrevImage} style={{ marginRight: '8px' }}>
+                <div style={{ textAlign: 'center', marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                  <Button
+                    onClick={handlePrevImage}
+                    type="primary"
+                    shape="round"
+                    size="middle"
+                  >
                     Previous
                   </Button>
-                  <Button onClick={handleNextImage}>
+                  <Button
+                    onClick={handleNextImage}
+                    type="primary"
+                    shape="round"
+                    size="middle"
+                  >
                     Next
                   </Button>
                 </div>

@@ -1,8 +1,9 @@
 /* Feed.css */
 .feed-container {
-  width: auto;
+  width: 100%;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 0;
+  background-color: #fff;
 }
 
 /* CreatePost styling */

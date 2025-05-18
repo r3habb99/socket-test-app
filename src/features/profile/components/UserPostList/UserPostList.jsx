@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Avatar, Typography, Button, List, Tooltip, Empty } from 'antd';
-import { FaRetweet, FaShare, FaReply } from 'react-icons/fa';
+import { Card, Avatar, Typography, Button, List, Tooltip, Empty, Modal } from 'antd';
+import { FaRetweet, FaShare, FaReply, FaEye } from 'react-icons/fa';
 import {
   DEFAULT_PROFILE_PIC,
   PLACEHOLDER_IMAGE
@@ -24,6 +24,10 @@ export const UserPostList = ({ userId, activeTab }) => {
   const [hasMore, setHasMore] = useState(false);
   const [nextMaxId, setNextMaxId] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
+  const [previewImages, setPreviewImages] = useState([]);
+  const [previewIndex, setPreviewIndex] = useState(0);
   const navigate = useNavigate();
 
   const fetchUserPosts = useCallback(async (maxId = null) => {
@@ -211,7 +215,12 @@ export const UserPostList = ({ userId, activeTab }) => {
                 const placeholderImage = PLACEHOLDER_IMAGE;
 
                 return (
-                  <div key={index} className="post-media">
+                  <div
+                    key={index}
+                    className="post-media"
+                    onClick={() => handlePreviewOpen(mediaUrl, postToRender.media)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <ImageProxy
                       src={getImageUrl(mediaUrl, placeholderImage)}
                       alt={`Post media ${index + 1}`}
@@ -222,6 +231,9 @@ export const UserPostList = ({ userId, activeTab }) => {
                         // Silent error handling - fallback to placeholder image
                       }}
                     />
+                    <div className="media-overlay">
+                      <FaEye className="view-icon" />
+                    </div>
                   </div>
                 );
               })}
@@ -230,6 +242,33 @@ export const UserPostList = ({ userId, activeTab }) => {
         </div>
       </>
     );
+  };
+
+  // Image preview handlers
+  const handlePreviewOpen = (mediaUrl, allMediaUrls) => {
+    const processedUrls = allMediaUrls.map(url => getImageUrl(url, PLACEHOLDER_IMAGE));
+    const index = processedUrls.indexOf(getImageUrl(mediaUrl, PLACEHOLDER_IMAGE));
+
+    setPreviewImage(getImageUrl(mediaUrl, PLACEHOLDER_IMAGE));
+    setPreviewImages(processedUrls);
+    setPreviewIndex(index >= 0 ? index : 0);
+    setPreviewVisible(true);
+  };
+
+  const handlePreviewClose = () => {
+    setPreviewVisible(false);
+  };
+
+  const handlePrevImage = () => {
+    const newIndex = (previewIndex - 1 + previewImages.length) % previewImages.length;
+    setPreviewIndex(newIndex);
+    setPreviewImage(previewImages[newIndex]);
+  };
+
+  const handleNextImage = () => {
+    const newIndex = (previewIndex + 1) % previewImages.length;
+    setPreviewIndex(newIndex);
+    setPreviewImage(previewImages[newIndex]);
   };
 
   // Function to load more posts
@@ -335,6 +374,46 @@ export const UserPostList = ({ userId, activeTab }) => {
               </Button>
             </div>
           )}
+
+          {/* Image Preview Modal */}
+          <Modal
+            open={previewVisible}
+            title={`Image ${previewIndex + 1} of ${previewImages.length}`}
+            footer={null}
+            onCancel={handlePreviewClose}
+            width="90%"
+            centered
+            className="image-preview-modal"
+            closeIcon={<Button type="text" icon={<span>×</span>} className="close-modal-button" />}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <img
+                alt="Preview"
+                style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+                src={previewImage}
+              />
+            </div>
+            {previewImages.length > 1 && (
+              <div style={{ textAlign: 'center', marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                <Button
+                  onClick={handlePrevImage}
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                >
+                  Previous
+                </Button>
+                <Button
+                  onClick={handleNextImage}
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+          </Modal>
         </>
       )}
     </div>

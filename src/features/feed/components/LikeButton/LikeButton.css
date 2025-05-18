@@ -48,3 +48,38 @@
   position: relative;
   z-index: 2;
 }
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .like-button-container {
+    min-width: auto;
+    max-width: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .like-button-container .post-action-count {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: 2px;
+  }
+
+  .like-button-container .like-button {
+    padding: 8px;
+    min-height: var(--mobile-touch-target);
+    min-width: var(--mobile-touch-target);
+  }
+
+  .like-button-container .like-button::before {
+    width: 36px;
+    height: 36px;
+  }
+
+  .like-button-container .like-button svg {
+    font-size: 16px;
+  }
+}

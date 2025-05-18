@@ -1,0 +1,13 @@
+/* Login form responsive styles */
+.login-form-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Tablet and desktop styles */
+@media (min-width: 769px) {
+  .login-form-container {
+    width: auto;
+    min-width: 400px;
+  }
+}

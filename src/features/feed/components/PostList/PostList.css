@@ -4,11 +4,13 @@
 .post-list-container {
   width: 100%;
   margin: 0 auto;
+  background-color: #fff;
 }
 
 .post-list-content {
   width: 100%;
-  padding: 0px;
+  padding: 0;
+  border-top: 1px solid #eff3f4;
 }
 
 /* CORS warning message */
@@ -41,10 +43,11 @@
   grid-template-columns: auto 1fr;
   grid-template-areas:
     "avatar header"
-    "space content"
-    "space media"
-    "space actions";
+    "avatar content"
+    "avatar media"
+    "actions actions";
   column-gap: 12px;
+  border-bottom: 1px solid #eff3f4;
 }
 
 .post-card:hover {
@@ -127,6 +130,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
+  border: none;
 }
 
 .post-user-info {
@@ -205,11 +209,15 @@
 /* Post Content Styles - Using Grid Areas */
 .post-content {
   grid-area: content;
-  color: #000;
+  color: #0f1419;
   margin: 4px 0 12px;
   line-height: 1.3;
   word-wrap: break-word;
   white-space: pre-wrap;
+  padding-left: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  font-size: 15px;
 }
 
 /* Typography styles for Ant Design */
@@ -244,8 +252,8 @@
   grid-area: actions;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  margin-top: 12px;
-  padding: 0 8px;
+  margin-top: 8px;
+  padding: 0;
 }
 
 .post-action-group {
@@ -253,6 +261,7 @@
   align-items: center;
   position: relative;
   min-width: 60px;
+  justify-content: flex-start;
 }
 
 /* Regular button styles */
@@ -262,8 +271,8 @@
   justify-content: center;
   background: transparent;
   border: none;
-  color: #6e767d;
-  font-size: 18px;
+  color: #536471;
+  font-size: 16px;
   padding: 8px;
   cursor: pointer;
   transition: color 0.2s;
@@ -273,8 +282,8 @@
 .post-action-button::before {
   content: "";
   position: absolute;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background-color: transparent;
   left: 50%;
@@ -285,7 +294,7 @@
 }
 
 .post-action-button svg {
-  font-size: 18px;
+  font-size: 16px;
   position: relative;
   z-index: 1;
 }
@@ -328,9 +337,11 @@
 .post-action-count {
   font-size: 13px;
   margin-left: 4px;
-  color: #6e767d;
+  color: #536471;
   position: relative;
   z-index: 2;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
 }
 
 /* Comment Button */
@@ -455,6 +466,30 @@
   object-fit: cover;
 }
 
+/* Image Preview Modal Styles */
+.image-preview-modal .ant-modal-content {
+  background-color: rgba(0, 0, 0, 0.85);
+  color: white;
+}
+
+.image-preview-modal .ant-modal-header {
+  background-color: rgba(0, 0, 0, 0.85);
+  border-bottom: 1px solid #333;
+}
+
+.image-preview-modal .ant-modal-title {
+  color: white;
+}
+
+.image-preview-modal .close-modal-button {
+  color: white;
+  font-size: 20px;
+}
+
+.image-preview-modal .ant-modal-body {
+  padding: 24px;
+}
+
 /* Ant Design List styles */
 .ant-list {
   width: 100%;
@@ -497,9 +532,32 @@
 
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
+  .post-list-container {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .post-list-content {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   .post-card {
     padding: 8px 10px;
     column-gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .post-content {
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
   }
 
   .avatar,
@@ -510,16 +568,24 @@
 
   .post-action-group {
     min-width: auto;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
   }
 
   .post-actions {
-    padding: 0 4px;
+    padding: 4px 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    justify-content: space-between;
+    margin-top: 8px;
   }
 
   .post-action-button {
     padding: 6px;
-    min-height: var(--mobile-touch-target);
-    min-width: var(--mobile-touch-target);
+    min-height: 36px;
+    min-width: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -531,11 +597,15 @@
   }
 
   .post-action-button svg {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .post-action-count {
     font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: 2px;
   }
 
   .post-media-image {
@@ -544,6 +614,29 @@
 
   .post-media .ant-image-img {
     height: 200px;
+  }
+
+  /* Mobile Image Preview Modal Styles */
+  .image-preview-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    top: 0 !important;
+  }
+
+  .image-preview-modal .ant-modal-content {
+    border-radius: 0 !important;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .image-preview-modal .ant-modal-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 16px !important;
   }
 
   .retweet-label,
@@ -556,7 +649,14 @@
     margin: 8px 0 10px 20px;
     padding: 10px 12px;
     max-width: calc(100% - 20px);
+    box-sizing: border-box;
   }
 
-  /* Styles for very small screens are now included in the main mobile breakpoint */
+  /* Ensure post content doesn't overflow */
+  .post-content-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
 }
