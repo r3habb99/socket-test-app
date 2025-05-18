@@ -499,18 +499,12 @@ li.receiver .message-timestamp {
   }
 
   li {
-    max-width: 80%;
-  }
-}
-
-@media (max-width: 480px) {
-  .messages-container {
-    padding: 12px;
-  }
-
-  li {
     max-width: 85%;
     margin-bottom: 16px;
+  }
+
+  .messages-container {
+    padding: 12px;
   }
 
   .message-bubble {

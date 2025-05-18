@@ -198,11 +198,15 @@
 /* Mobile styles - Twitter-like behavior */
 @media (max-width: 768px) {
   .messaging-app-container {
-    position: relative;
+    position: absolute;
     height: 100%;
     width: 100%;
     z-index: 10;
     padding-bottom: 60px; /* Make room for the bottom navigation */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
   }
 
   /* Fix for mobile view to ensure ChatList is visible */
@@ -236,7 +240,7 @@
   /* Ensure proper display of chat section */
   .chat-section {
     width: 100%;
-    height: 100%;
+    height: 100vh; /* Use viewport height */
     position: fixed;
     top: 0;
     left: 0;
@@ -247,6 +251,7 @@
     background-color: #fff;
     display: none; /* Hide by default on mobile */
     box-sizing: border-box; /* Ensure padding is included in height calculation */
+    overflow: hidden; /* Prevent scrolling of the container itself */
   }
 
   /* Only show chat section when a chat is selected */
@@ -298,19 +303,8 @@
   .messaging-app-layout .chat-section .no-chat-selected {
     display: none;
   }
-}
 
-/* For very small screens */
-@media (max-width: 480px) {
-  .messaging-app-container {
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-  }
-
+  /* Styles for smaller screens */
   .chat-avatar {
     width: 40px;
     height: 40px;
@@ -330,12 +324,6 @@
 
   .no-chat-selected p {
     font-size: 14px;
-  }
-
-  /* Ensure chat section is properly displayed on mobile */
-  .chat-section {
-    height: 100vh; /* Use viewport height */
-    overflow: hidden; /* Prevent scrolling of the container itself */
   }
 
   /* Ensure the chat container takes full height */

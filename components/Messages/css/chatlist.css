@@ -314,38 +314,36 @@
   }
 }
 
-/* Responsive adjustments for desktop */
-@media (min-width: 768px) {
-  .chatlist-container {
-    max-width: 380px;
-    min-width: 320px;
-    width: 100%;
-    border-right: 1px solid #eff3f4;
-    height: 100%;
-  }
-
-  .chatlist {
-    height: calc(100% - 110px);
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .chat-avatar {
-    width: 50px;
-    height: 50px;
-  }
-
-  .chat-name {
-    font-size: 16px;
-  }
-
-  .chat-preview {
-    font-size: 15px;
-  }
+/* Default styles for desktop (screens wider than 768px) */
+.chatlist-container {
+  max-width: 380px;
+  min-width: 320px;
+  width: 100%;
+  border-right: 1px solid #eff3f4;
+  height: 100%;
 }
 
-/* For mobile and small screens */
-@media (max-width: 767px) {
+.chatlist {
+  height: calc(100% - 110px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.chat-avatar {
+  width: 50px;
+  height: 50px;
+}
+
+.chat-name {
+  font-size: 16px;
+}
+
+.chat-preview {
+  font-size: 15px;
+}
+
+/* For mobile and tablet screens */
+@media (max-width: 768px) {
   .chatlist-container {
     height: 100%;
     overflow: hidden;

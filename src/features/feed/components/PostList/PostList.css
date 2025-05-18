@@ -8,6 +8,7 @@
 
 .post-list-content {
   width: 100%;
+  padding: 0px;
 }
 
 /* CORS warning message */
@@ -460,7 +461,7 @@
 }
 
 .ant-list-item {
-  padding: 0;
+  padding: 0px;
   margin-bottom: 12px;
 }
 
@@ -496,34 +497,6 @@
 
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
-  .post-card {
-    padding: 10px 12px;
-    column-gap: 10px;
-  }
-
-  .post-action-button {
-    padding: 6px;
-  }
-
-  .post-action-button::before {
-    width: 32px;
-    height: 32px;
-  }
-
-  .post-action-button svg {
-    font-size: 16px;
-  }
-
-  .post-media-image {
-    height: 250px;
-  }
-
-  .post-media .ant-image-img {
-    height: 250px;
-  }
-}
-
-@media (max-width: 480px) {
   .post-card {
     padding: 8px 10px;
     column-gap: 8px;
@@ -584,57 +557,6 @@
     padding: 10px 12px;
     max-width: calc(100% - 20px);
   }
-}
 
-@media (max-width: 375px) {
-  .post-card {
-    padding: 8px;
-    column-gap: 6px;
-  }
-
-  .avatar,
-  .avatar.ant-avatar {
-    width: 36px;
-    height: 36px;
-  }
-
-  .post-user-name {
-    font-size: 14px;
-  }
-
-  .post-user-handle,
-  .post-timestamp {
-    font-size: 12px;
-  }
-
-  .post-content,
-  .post-content.ant-typography {
-    font-size: 14px;
-    margin: 2px 0 8px;
-  }
-
-  .post-action-button {
-    padding: 4px;
-  }
-
-  .post-action-button::before {
-    width: 28px;
-    height: 28px;
-  }
-
-  .post-action-button svg {
-    font-size: 14px;
-  }
-
-  .post-action-count {
-    font-size: 11px;
-  }
-
-  .post-media-image {
-    height: 180px;
-  }
-
-  .post-media .ant-image-img {
-    height: 180px;
-  }
+  /* Styles for very small screens are now included in the main mobile breakpoint */
 }

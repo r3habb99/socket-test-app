@@ -10,10 +10,8 @@ import "./Layout.css";
  * @returns {JSX.Element} Layout component
  */
 const Layout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [isSmallMobile, setIsSmallMobile] = useState(window.innerWidth < 480);
   const authContext = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,7 +21,6 @@ const Layout = () => {
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
-      setIsSmallMobile(window.innerWidth < 480);
     };
 
     window.addEventListener("resize", handleResize);
@@ -52,9 +49,7 @@ const Layout = () => {
     { name: "logout", label: "Logout", icon: "🚪" },
   ];
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  // No sidebar toggle needed - using bottom navigation only
 
   const handleLogout = async () => {
     try {
@@ -96,12 +91,7 @@ const Layout = () => {
     return location.pathname.includes(`/${path}`);
   };
 
-  // Close sidebar when clicking outside on mobile
-  const handleOverlayClick = () => {
-    if (sidebarOpen) {
-      setSidebarOpen(false);
-    }
-  };
+  // No overlay click handler needed - using bottom navigation only
 
   // Define primary links for mobile navigation (limited to 3 + More)
   const primaryLinks = links.slice(0, 3); // First 3 links
@@ -115,26 +105,17 @@ const Layout = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Hamburger menu for tablet */}
-      <div className="hamburger-icon" onClick={toggleSidebar}>
-        &#9776;
-      </div>
+      {/* No hamburger menu - using bottom navigation only */}
 
-      {/* Overlay for tablet sidebar */}
-      {isMobile && sidebarOpen && (
-        <div
-          className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`}
-          onClick={handleOverlayClick}
+      {/* No sidebar overlay - using bottom navigation only */}
+
+      {/* Sidebar for desktop only */}
+      {!isMobile && (
+        <Sidebar
+          links={links}
+          onLogout={handleLogout}
         />
       )}
-
-      {/* Sidebar for desktop and tablet (when open) */}
-      <Sidebar
-        links={links}
-        sidebarOpen={sidebarOpen}
-        onLogout={handleLogout}
-        onClose={() => setSidebarOpen(false)}
-      />
 
       {/* Main content area */}
       <div className="main-content">

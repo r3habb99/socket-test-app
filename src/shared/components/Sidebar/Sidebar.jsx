@@ -4,38 +4,23 @@ import { Search } from "../Search";
 import "./Sidebar.css";
 
 /**
- * Sidebar component
+ * Sidebar component - Only used for desktop view
  * @param {Object} props - Component props
  * @param {Array} props.links - Navigation links
- * @param {boolean} props.sidebarOpen - Whether sidebar is open
  * @param {Function} props.onLogout - Logout function
- * @param {Function} props.onClose - Function to close the sidebar
  * @returns {JSX.Element} Sidebar component
  */
-export const Sidebar = ({ links, sidebarOpen, onLogout, onClose }) => {
+export const Sidebar = ({ links, onLogout }) => {
   const location = useLocation();
-  const isMobile = window.innerWidth <= 768;
 
   const handleLinkClick = (name) => {
     if (name === "logout") {
       onLogout();
     }
-
-    // Close sidebar on mobile after clicking a link
-    if (isMobile && onClose) {
-      onClose();
-    }
   };
 
   return (
-    <div className={`sidebar ${sidebarOpen ? "open" : ""}`}>
-      {/* Close button for mobile */}
-      {isMobile && onClose && (
-        <button className="sidebar-close" onClick={onClose}>
-          &times;
-        </button>
-      )}
-
+    <div className="sidebar">
       <div className="sidebar-header">
         <h2>Twitter Clone</h2>
       </div>

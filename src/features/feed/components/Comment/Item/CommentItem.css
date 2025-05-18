@@ -202,7 +202,7 @@
 }
 
 /* Mobile responsiveness */
-@media (max-width: 576px) {
+@media (max-width: 768px) {
   .comment-content,
   .comment-actions,
   .comment-replies-count,
