@@ -3,6 +3,15 @@ import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuthContext } from "../../../core/providers/AuthProvider";
 import { Sidebar } from "../Sidebar/Sidebar";
 import { logout } from "../../../features/auth/api/authApi";
+import {
+  HomeOutlined,
+  MessageOutlined,
+  UserOutlined,
+  LogoutOutlined,
+  MoreOutlined,
+  HomeFilled,
+  MessageFilled
+} from "@ant-design/icons";
 import "./Layout.css";
 
 /**
@@ -42,11 +51,30 @@ const Layout = () => {
   }, []);
 
   const links = [
-    { name: "dashboard", label: "Feed", icon: "📰" },
-    { name: "dashboard/messages", label: "Messages", icon: "✉️" },
-    { name: "profile", label: "Profile", icon: "👤" },
+    {
+      name: "dashboard",
+      label: "Feed",
+      icon: <HomeOutlined />,
+      activeIcon: <HomeFilled />
+    },
+    {
+      name: "dashboard/messages",
+      label: "Messages",
+      icon: <MessageOutlined />,
+      activeIcon: <MessageFilled />
+    },
+    {
+      name: "profile",
+      label: "Profile",
+      icon: <UserOutlined />,
+      activeIcon: <UserOutlined style={{ color: '#1d9bf0' }} />
+    },
     // { name: "toast-test", label: "Toast Tester", icon: "🔔" },
-    { name: "logout", label: "Logout", icon: "🚪" },
+    {
+      name: "logout",
+      label: "Logout",
+      icon: <LogoutOutlined />
+    },
   ];
 
   // No sidebar toggle needed - using bottom navigation only
@@ -105,10 +133,6 @@ const Layout = () => {
 
   return (
     <div className="dashboard-container">
-      {/* No hamburger menu - using bottom navigation only */}
-
-      {/* No sidebar overlay - using bottom navigation only */}
-
       {/* Sidebar for desktop only */}
       {!isMobile && (
         <Sidebar
@@ -133,7 +157,9 @@ const Layout = () => {
                 to={`/${link.name}`}
                 className={`mobile-nav-item ${isActive(link.name) ? 'active' : ''}`}
               >
-                <span className="mobile-nav-icon">{link.icon}</span>
+                <span className="mobile-nav-icon">
+                  {isActive(link.name) && link.activeIcon ? link.activeIcon : link.icon}
+                </span>
                 <span className="mobile-nav-label">{link.label}</span>
               </Link>
             ))}
@@ -144,7 +170,9 @@ const Layout = () => {
               onClick={toggleMoreMenu}
               ref={moreMenuRef}
             >
-              <span className="mobile-nav-icon">⋮</span>
+              <span className="mobile-nav-icon">
+                <MoreOutlined />
+              </span>
               <span className="mobile-nav-label">More</span>
             </button>
           </ul>

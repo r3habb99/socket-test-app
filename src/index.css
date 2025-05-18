@@ -112,12 +112,20 @@ button:disabled {
   --mobile-nav-height: 60px;
   --mobile-touch-target: 44px;
   --primary-color: #1d9bf0;
+  --primary-color-hover: #1a8cd8;
+  --primary-color-light: rgba(29, 155, 240, 0.1);
   --border-color: #eff3f4;
   --text-color: #0f1419;
   --secondary-text-color: #536471;
   --background-color: #ffffff;
   --mobile-padding: 12px;
   --mobile-small-padding: 8px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-bounce: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 /* Responsive Adjustments */
