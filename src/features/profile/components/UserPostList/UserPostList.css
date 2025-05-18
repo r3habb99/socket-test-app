@@ -175,8 +175,8 @@
 
 .post-actions {
   grid-area: actions;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  justify-content: space-between;
   margin-top: 8px;
   width: 100%;
   box-sizing: border-box;
@@ -189,6 +189,7 @@
   max-width: 100%;
   overflow: hidden;
   justify-content: flex-start;
+  flex: 1;
 }
 
 .post-action-button {
@@ -356,10 +357,11 @@
     margin-left: 0;
     width: 100%;
     padding: 4px 0;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
     justify-content: space-between;
     margin-top: 8px;
+    position: relative;
+    flex-wrap: nowrap;
   }
 
   .post-avatar {
@@ -369,8 +371,21 @@
   .post-action-group {
     min-width: auto;
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
+    flex: 1;
+  }
+
+  /* Ensure delete button is visible */
+  .post-action-group.delete-button-container {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 10;
   }
 
   .post-action-button {
@@ -393,6 +408,19 @@
     overflow: hidden;
     text-overflow: ellipsis;
     margin-left: 2px;
+  }
+
+  /* Delete button container */
+  .delete-button-container {
+    margin-left: auto;
+    flex: 0 0 auto !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: auto !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    z-index: 10 !important;
   }
 
   .original-post-container {
