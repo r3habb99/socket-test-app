@@ -22,6 +22,7 @@ import ProfileEdit from "./features/profile/components/ProfileEdit";
 import { CommentsPage } from "./features/feed/components/Comment";
 import { PostDetail } from "./features/feed/components/PostDetail";
 import ToastController from "./shared/components/ToastController/ToastController";
+import { Search } from "./shared/components";
 
 const App = () => {
   return (
@@ -58,6 +59,7 @@ const App = () => {
                 <Route path="post/:postId" element={<PostDetail />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="profile/:userId" element={<Profile />} />
+                <Route path="search" element={<Search />} />
                 <Route
                   path="user/:userId/followers"
                   element={<FollowersList />}

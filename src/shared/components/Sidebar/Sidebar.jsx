@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Search } from "../Search";
+// import { Search } from "../Search";
 import "./Sidebar.css";
 
 /**
@@ -22,11 +22,10 @@ export const Sidebar = ({ links, onLogout }) => {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <h2>Twitter Clone</h2>
+        <h2>ChatSphere</h2>
       </div>
 
       {/* Search Component */}
-      <Search />
 
       <nav className="sidebar-nav">
         <ul>

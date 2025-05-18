@@ -10,7 +10,8 @@ import {
   LogoutOutlined,
   MoreOutlined,
   HomeFilled,
-  MessageFilled
+  MessageFilled,
+  SearchOutlined
 } from "@ant-design/icons";
 import "./Layout.css";
 
@@ -69,6 +70,12 @@ const Layout = () => {
       icon: <UserOutlined />,
       activeIcon: <UserOutlined style={{ color: '#1d9bf0' }} />
     },
+    {
+      name: "search",
+      label: "Search",
+      icon: <SearchOutlined />,
+      activeIcon: <SearchOutlined style={{ color: '#1d9bf0' }} />
+    },
     // { name: "toast-test", label: "Toast Tester", icon: "🔔" },
     {
       name: "logout",
@@ -122,8 +129,8 @@ const Layout = () => {
   // No overlay click handler needed - using bottom navigation only
 
   // Define primary links for mobile navigation (limited to 3 + More)
-  const primaryLinks = links.slice(0, 3); // First 3 links
-  const moreLinks = links.slice(3); // Remaining links
+  const primaryLinks = links.slice(0, 4); // First 3 links
+  const moreLinks = links.slice(4); // Remaining links
 
   // Toggle more menu
   const toggleMoreMenu = (e) => {
