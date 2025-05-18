@@ -147,9 +147,9 @@ export const CreatePost = ({ onPostCreated, replyTo, isReply = false }) => {
 
   return (
     <div className={`${styles['cp-container']} ${isReply ? styles['reply-mode'] : ''}`}>
-      <div className={styles['cp-header']}>
+      {/* <div className={styles['cp-header']}>
         <h1 className={styles['cp-title']}>{isReply ? 'Reply' : 'Home'}</h1>
-      </div>
+      </div> */}
 
       {error && <Alert message={error} type="error" className={styles['cp-error']} />}
 
