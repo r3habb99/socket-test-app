@@ -203,6 +203,10 @@
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
+  .comment-item {
+    padding: 10px 0;
+  }
+
   .comment-content,
   .comment-actions,
   .comment-replies-count,
@@ -213,13 +217,43 @@
     margin-left: 40px;
   }
 
+  .comment-header {
+    margin-bottom: 2px;
+  }
+
   .comment-avatar {
     width: 32px;
     height: 32px;
+    margin-right: 8px;
+  }
+
+  .comment-user-name {
+    font-size: 14px;
+  }
+
+  .comment-user-handle,
+  .comment-timestamp {
+    font-size: 12px;
+  }
+
+  .comment-text {
+    font-size: 14px;
+    line-height: 1.4;
   }
 
   .comment-action-group {
     margin-right: 12px;
+  }
+
+  .comment-action-button {
+    min-height: 36px;
+    min-width: 36px;
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .comment-action-count {
+    font-size: 12px;
   }
 
   .edit-form-footer {
@@ -243,5 +277,11 @@
 
   .comment-media-image {
     max-height: 250px;
+  }
+
+  .load-more-replies .ant-btn {
+    font-size: 12px;
+    height: 32px;
+    padding: 4px 12px;
   }
 }

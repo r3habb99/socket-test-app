@@ -148,23 +148,118 @@
   border-color: #1d9bf0;
 }
 
+/* Close button styling */
+.close-modal-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  padding: 0;
+  margin: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
 /* Mobile responsiveness */
-@media (max-width: 576px) {
+@media (max-width: 768px) {
+  /* Modal container */
   .comment-modal {
     width: 100% !important;
     margin: 0;
     max-width: 100%;
+    top: 0;
   }
 
+  /* Modal content */
   .comment-modal .ant-modal-content {
     border-radius: 0;
+    margin: 0;
+    padding: 0;
   }
 
+  /* Modal header */
+  .comment-modal .ant-modal-header {
+    padding: 12px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Close button on mobile */
+  .close-modal-button {
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 24px;
+  }
+
+  /* Modal body */
+  .comment-modal .ant-modal-body {
+    padding: 12px 16px;
+    max-height: calc(100vh - 56px); /* Adjust for header height */
+  }
+
+  /* Post content in modal */
+  .comment-post-content {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  /* Author header */
+  .post-author-header {
+    margin-bottom: 8px;
+  }
+
+  /* Post content text */
+  .post-content {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  /* Comment form adjustments */
+  .comment-modal .comment-form-container {
+    padding: 8px;
+  }
+
+  /* Sort options */
   .comment-sort-options {
     flex-wrap: wrap;
+    margin: 12px 0;
+    padding-bottom: 6px;
+  }
+
+  .comment-sort-options .ant-typography {
+    margin-bottom: 6px;
+    width: 100%;
   }
 
   .comment-sort-options .ant-btn {
-    margin-top: 8px;
+    margin: 4px;
+    margin-left: 0;
+    padding: 4px 10px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  /* Loading container */
+  .comment-loading-container {
+    padding: 20px;
+  }
+
+  /* No comments message */
+  .no-comments-message {
+    padding: 20px 12px;
+    margin: 12px 0;
+    border-radius: 8px;
+  }
+
+  /* Error container */
+  .error-container {
+    padding: 20px 12px;
+    margin: 12px 0;
+    border-radius: 8px;
   }
 }

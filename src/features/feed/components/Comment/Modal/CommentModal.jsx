@@ -75,14 +75,30 @@ export const CommentModal = ({ visible, onClose, postId, onCommentAdded }) => {
     }
   };
 
+  // State to track if we're on mobile
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+
+  // Update isMobile state when window is resized
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   return (
     <Modal
       title="Comments"
       open={visible}
       onCancel={onClose}
       footer={null}
-      width={600}
+      width={isMobile ? "100%" : 600}
       className="comment-modal"
+      closeIcon={<Button type="text" icon={<span>×</span>} className="close-modal-button" />}
     >
       {postLoading ? (
         <div className="comment-loading-container">

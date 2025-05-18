@@ -67,9 +67,17 @@
 }
 
 /* Mobile responsiveness */
-@media (max-width: 576px) {
+@media (max-width: 768px) {
   .comment-form-container {
     padding: 8px;
+    margin-bottom: 12px;
+    border-radius: 0;
+  }
+
+  .comment-input {
+    padding: 6px 10px;
+    font-size: 14px;
+    min-height: 36px; /* Ensure touch target size */
   }
 
   .comment-form-footer {
@@ -80,5 +88,17 @@
   .char-counter {
     margin-bottom: 8px;
     align-self: flex-start;
+  }
+
+  .comment-form-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .submit-button,
+  .cancel-button {
+    min-height: 36px; /* Ensure touch target size */
+    padding: 4px 12px;
+    font-size: 14px;
   }
 }
