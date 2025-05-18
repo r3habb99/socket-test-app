@@ -49,6 +49,21 @@
   fill: white;
 }
 
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .cover-photo-uploader .upload-btn {
+    width: 44px;
+    height: 44px;
+    min-width: var(--mobile-touch-target, 44px);
+    min-height: var(--mobile-touch-target, 44px);
+  }
+
+  .cover-photo-uploader .upload-btn svg {
+    height: 20px;
+    width: 20px;
+  }
+}
+
 /* Loading spinner */
 .spinner {
   width: 16px;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaRegCommentDots, FaArrowLeft, FaEllipsisH } from "react-icons/fa";
+import { FaRegCommentDots, FaArrowLeft, FaEllipsisH, FaSearch } from "react-icons/fa";
 import { fetchUserProfileById, followUser, fetchUserStats } from "../../api/profileApi";
 import { createChat, getAllChats } from "../../../messaging/api/messagingApi";
 import { findExistingChat } from "../../../messaging/components/ChatList/ChatListHelpers";
@@ -16,6 +16,7 @@ import { ProfilePicUploader } from "../ProfilePicUploader";
 import { FollowButton } from "../FollowButton";
 import { ProfileTabs } from "../ProfileTabs";
 import { UserPostList } from "../UserPostList";
+import { ImagePreviewModal } from "../ImagePreviewModal";
 import "./Profile.css";
 
 export const Profile = () => {
@@ -26,6 +27,11 @@ export const Profile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
   const [userStats, setUserStats] = useState(null);
+
+  // Image preview state
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
+  const [previewType, setPreviewType] = useState('profile'); // 'profile' or 'cover'
 
   const loggedInUserId = localStorage.getItem("userId");
 
@@ -194,6 +200,17 @@ export const Profile = () => {
     navigate("/user/edit-profile");
   };
 
+  // Image preview handlers
+  const handlePreviewOpen = (imageUrl, type) => {
+    setPreviewImage(imageUrl);
+    setPreviewType(type);
+    setPreviewVisible(true);
+  };
+
+  const handlePreviewClose = () => {
+    setPreviewVisible(false);
+  };
+
   if (error) return <div className="error-message">{error}</div>;
   if (!user) return <div>Loading...</div>;
 
@@ -218,22 +235,43 @@ export const Profile = () => {
       </div>
 
       <div className="profile-header">
-        <ImageProxy
-          src={user.coverPhoto ? `${getImageUrl(user.coverPhoto, DEFAULT_COVER_PHOTO)}?t=${Date.now()}` : DEFAULT_COVER_PHOTO}
-          alt="Cover"
-          className="cover-photo"
-          defaultSrc={DEFAULT_COVER_PHOTO}
-          noCache={true}
-          onError={(e) => {
-            console.warn(`Failed to load cover photo: ${e.target.src}`);
+        <div
+          className="cover-photo-container"
+          onClick={() => {
+            const coverPhotoUrl = user.coverPhoto
+              ? `${getImageUrl(user.coverPhoto, DEFAULT_COVER_PHOTO)}?t=${Date.now()}`
+              : DEFAULT_COVER_PHOTO;
+            handlePreviewOpen(coverPhotoUrl, 'cover');
           }}
-        />
+        >
+          <ImageProxy
+            src={user.coverPhoto ? `${getImageUrl(user.coverPhoto, DEFAULT_COVER_PHOTO)}?t=${Date.now()}` : DEFAULT_COVER_PHOTO}
+            alt="Cover"
+            className="cover-photo"
+            defaultSrc={DEFAULT_COVER_PHOTO}
+            noCache={true}
+            onError={(e) => {
+              console.warn(`Failed to load cover photo: ${e.target.src}`);
+            }}
+          />
+          <div className="photo-overlay">
+            <FaSearch className="view-icon" />
+          </div>
+        </div>
         {isOwnProfile && <CoverPhotoUploader setUser={setUser} refreshProfile={triggerRefresh} />}
       </div>
 
       <div className="profile-content">
         <div className="profile-left">
-          <div className="profile-pic-container">
+          <div
+            className="profile-pic-container"
+            onClick={() => {
+              const profilePicUrl = user.profilePic
+                ? `${getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC)}?t=${Date.now()}`
+                : DEFAULT_PROFILE_PIC;
+              handlePreviewOpen(profilePicUrl, 'profile');
+            }}
+          >
             <ImageProxy
               src={user.profilePic ? `${getImageUrl(user.profilePic, DEFAULT_PROFILE_PIC)}?t=${Date.now()}` : DEFAULT_PROFILE_PIC}
               alt="Profile"
@@ -244,6 +282,9 @@ export const Profile = () => {
                 console.warn(`Failed to load profile image: ${e.target.src}`);
               }}
             />
+            <div className="photo-overlay">
+              <FaSearch className="view-icon" />
+            </div>
             {isOwnProfile && <ProfilePicUploader setUser={setUser} refreshProfile={triggerRefresh} />}
           </div>
         </div>
@@ -431,6 +472,14 @@ export const Profile = () => {
         <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} userId={userId} />
         <UserPostList userId={userId} activeTab={activeTab} />
       </div>
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        visible={previewVisible}
+        imageUrl={previewImage}
+        imageType={previewType}
+        onClose={handlePreviewClose}
+      />
     </div>
   );
 };

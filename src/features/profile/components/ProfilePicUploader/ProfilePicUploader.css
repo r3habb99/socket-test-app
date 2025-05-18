@@ -48,6 +48,27 @@
   fill: white;
 }
 
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .profile-pic-uploader {
+    bottom: 0;
+    right: 0;
+  }
+
+  .upload-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    border-width: 1px;
+  }
+
+  .upload-btn svg {
+    height: 14px;
+    width: 14px;
+  }
+}
+
 /* Loading spinner */
 .spinner {
   width: 16px;
