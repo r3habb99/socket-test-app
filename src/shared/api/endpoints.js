@@ -68,8 +68,8 @@ const endpoints = {
   notification: {
     getAll: (unreadOnly) => `/notification${unreadOnly ? '?unreadOnly=true' : ''}`,
     latest: "/notification/latest",
-    markAsRead: (id) => `/notification/${id}/read`,
-    markAllAsRead: "/notification/read-all",
+    markAsOpened: (id) => `/notification/${id}/markAsOpened`,
+    markAllAsOpened: "/notification/markAsOpened",
   },
 };
 

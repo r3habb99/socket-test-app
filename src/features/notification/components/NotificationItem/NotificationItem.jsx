@@ -76,13 +76,17 @@ const getNotificationLink = (type, entityId) => {
  * @param {Object} props - Component props
  * @param {Object} props.notification - Notification data
  * @param {Function} props.onMarkAsRead - Function to mark notification as read
+ * @param {Function} props.onMarkAsOpened - Function to mark notification as opened
  * @returns {JSX.Element} NotificationItem component
  */
-const NotificationItem = ({ notification, onMarkAsRead }) => {
+const NotificationItem = ({ notification, onMarkAsRead, onMarkAsOpened }) => {
   const { _id, notificationType, userFrom, opened, createdAt, entityId, message } = notification;
 
   const handleClick = () => {
-    if (!opened && onMarkAsRead) {
+    if (!opened && onMarkAsOpened) {
+      onMarkAsOpened(_id);
+    }
+    if (onMarkAsRead) {
       onMarkAsRead(_id);
     }
   };

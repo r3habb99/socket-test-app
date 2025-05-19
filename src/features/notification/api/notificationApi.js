@@ -58,3 +58,30 @@ export const markAllNotificationsAsRead = async () => {
     return handleApiError(error);
   }
 };
+
+/**
+ * Mark a notification as opened
+ * @param {string} notificationId - Notification ID
+ * @returns {Promise<Object>} Response object
+ */
+export const markNotificationAsOpened = async (notificationId) => {
+  try {
+    const response = await apiClient.put(endpoints.notification.markAsOpened(notificationId));
+    return handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+/**
+ * Mark all notifications as opened
+ * @returns {Promise<Object>} Response object
+ */
+export const markAllNotificationsAsOpened = async () => {
+  try {
+    const response = await apiClient.put(endpoints.notification.markAllAsOpened);
+    return handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};

@@ -20,7 +20,9 @@ import NotificationItem from "../NotificationItem/NotificationItem";
 import {
   getNotifications,
   markNotificationAsRead,
-  markAllNotificationsAsRead
+  markAllNotificationsAsRead,
+  markNotificationAsOpened,
+  markAllNotificationsAsOpened
 } from "../../api";
 import "./NotificationList.css";
 
@@ -123,6 +125,54 @@ const NotificationList = () => {
     }
   };
 
+  // Mark a notification as opened
+  const handleMarkAsOpened = async (notificationId) => {
+    try {
+      const response = await markNotificationAsOpened(notificationId);
+
+      if (response.error) {
+        console.error("Error marking notification as opened:", response.message);
+      } else {
+        // Update the notification in the state
+        setNotifications(prevNotifications =>
+          prevNotifications.map(notification =>
+            notification._id === notificationId
+              ? { ...notification, opened: true }
+              : notification
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error marking notification as opened:", error);
+    }
+  };
+
+  // Mark all notifications as opened
+  const handleMarkAllAsOpened = async () => {
+    try {
+      setLoading(true);
+      const response = await markAllNotificationsAsOpened();
+
+      if (response.error) {
+        toast.error(response.message || "Failed to mark all as opened");
+      } else {
+        // Update all notifications in the state
+        setNotifications(prevNotifications =>
+          prevNotifications.map(notification => ({
+            ...notification,
+            opened: true
+          }))
+        );
+        toast.success("All notifications marked as opened");
+      }
+    } catch (error) {
+      console.error("Error marking all notifications as opened:", error);
+      toast.error("Failed to mark all as opened");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Get unread notification count
   const getUnreadCount = () => {
     return notifications.filter(notification => !notification.opened).length;
@@ -202,6 +252,7 @@ const NotificationList = () => {
                           <NotificationItem
                             notification={notification}
                             onMarkAsRead={handleMarkAsRead}
+                            onMarkAsOpened={handleMarkAsOpened}
                           />
                         </List.Item>
                       )}
@@ -233,6 +284,7 @@ const NotificationList = () => {
                           <NotificationItem
                             notification={notification}
                             onMarkAsRead={handleMarkAsRead}
+                            onMarkAsOpened={handleMarkAsOpened}
                           />
                         </List.Item>
                       )}
