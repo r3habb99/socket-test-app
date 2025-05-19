@@ -7,7 +7,7 @@ const endpoints = {
   },
   user: {
     profile: "/user/profile",
-    updateProfile: "/user/profile",
+    updateProfile: "/user/update",
     getById: (id) => `/user/${id}`,
     stats: (id, options = {}) => {
       const {

@@ -17,6 +17,7 @@ const ProfileEdit = () => {
     lastName: "",
     username: "",
     email: "",
+    bio:""
   });
 
   // Reset Password state
@@ -50,6 +51,10 @@ const ProfileEdit = () => {
         // Case 1: Direct response with statusCode, message, data structure
         if (responseData?.statusCode && responseData?.data) {
           userData = responseData.data;
+          // Check if user is nested inside data
+          if (userData?.user) {
+            userData = userData.user;
+          }
         }
         // Case 2: Nested: { data: { user: {...} } }
         else if (responseData?.data?.user) {
@@ -68,6 +73,9 @@ const ProfileEdit = () => {
           userData = responseData;
         }
 
+        // Log the extracted user data to verify structure
+        console.log("Extracted user data:", userData);
+
 
         if (userData) {
           // Ensure we have all the required fields
@@ -76,9 +84,11 @@ const ProfileEdit = () => {
             lastName: userData.lastName || "",
             username: userData.username || "",
             email: userData.email || "",
+            bio: userData.bio || ""
           });
 
-
+          // Log the bio field to verify it's being loaded correctly
+          console.log("Loaded bio from profile:", userData.bio);
         } else {
           console.error("Invalid user data format:", responseData);
           setError("Failed to parse user data");
@@ -128,15 +138,33 @@ const ProfileEdit = () => {
           let userData = null;
           const responseData = profileResponse.data;
 
-          if (responseData?.data?.user) {
-            userData = responseData.data.user;
-          } else if (responseData?.data) {
+          // Case 1: Direct response with statusCode, message, data structure
+          if (responseData?.statusCode && responseData?.data) {
             userData = responseData.data;
-          } else if (responseData?.user) {
+            // Check if user is nested inside data
+            if (userData?.user) {
+              userData = userData.user;
+            }
+          }
+          // Case 2: Nested: { data: { user: {...} } }
+          else if (responseData?.data?.user) {
+            userData = responseData.data.user;
+          }
+          // Case 3: Nested: { data: {...} }
+          else if (responseData?.data) {
+            userData = responseData.data;
+          }
+          // Case 4: Nested: { user: {...} }
+          else if (responseData?.user) {
             userData = responseData.user;
-          } else {
+          }
+          // Case 5: Direct: {...}
+          else {
             userData = responseData;
           }
+
+          // Log the extracted user data to verify structure
+          console.log("Refreshed user data:", userData);
 
           if (userData) {
             setFormData({
@@ -144,7 +172,11 @@ const ProfileEdit = () => {
               lastName: userData.lastName || "",
               username: userData.username || "",
               email: userData.email || "",
+              bio: userData.bio || ""
             });
+
+            // Log the bio field to verify it's being refreshed correctly
+            console.log("Refreshed bio from profile:", userData.bio);
           }
         }
       } catch (refreshErr) {
@@ -286,6 +318,19 @@ const ProfileEdit = () => {
                 placeholder="Email"
                 disabled={true} // Email should not be editable
               />
+            </div>
+            <div className="form-group">
+              <Input
+                type="text"
+                name="bio"
+                value={formData.bio}
+                onChange={handleProfileChange}
+                placeholder="Bio"
+                maxLength={160} // Match the backend validation limit
+              />
+              <div className="bio-character-count">
+                {formData.bio ? formData.bio.length : 0}/160
+              </div>
             </div>
             <div className="form-actions">
               <button
