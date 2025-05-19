@@ -41,6 +41,8 @@ const MessagingApp = () => {
   // Handle socket reconnection if needed - only on mount
   useEffect(() => {
     if (!socketContext.connected) {
+      // Silent reconnection - no toast notifications
+      console.log("Silently reconnecting socket from MessagingApp component");
       socketContext.reconnect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -163,7 +165,11 @@ const MessagingApp = () => {
                 type="primary"
                 danger
                 icon={<ReloadOutlined />}
-                onClick={() => socketContext.reconnect()}
+                onClick={() => {
+                  // Silent reconnection - no toast notifications
+                  console.log("Silently reconnecting socket from MessagingApp component");
+                  socketContext.reconnect();
+                }}
               >
                 Reconnect
               </Button>
@@ -193,7 +199,11 @@ const MessagingApp = () => {
                 size="small"
                 type="primary"
                 icon={<ReloadOutlined />}
-                onClick={() => socketContext.reconnect()}
+                onClick={() => {
+                  // Silent reconnection - no toast notifications
+                  console.log("Silently reconnecting socket from MessagingApp component");
+                  socketContext.reconnect();
+                }}
               >
                 Try Now
               </Button>

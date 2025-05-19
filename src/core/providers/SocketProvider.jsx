@@ -18,8 +18,9 @@ export const SocketProvider = ({ children }) => {
   const [lastReconnectAttempt, setLastReconnectAttempt] = useState(0);
   const reconnectCooldown = 5000; // 5 seconds between reconnect attempts
 
-  // Use socket URL from constants with user information
-  const socket = useSocket(SOCKET_URL);
+  // Use socket URL from constants with user information and enable silent mode
+  // This will prevent connection-related toast notifications
+  const socket = useSocket(SOCKET_URL, { silentMode: true });
 
   // Log socket connection status changes
   useEffect(() => {
@@ -48,6 +49,7 @@ export const SocketProvider = ({ children }) => {
 
       if (socket.connected) {
         console.log("Socket connected successfully");
+        // We don't show toast notifications here since we're using silent mode
       }
     }
   }, [socket.connected, socket.connectionStatus, socket.error, isAuthenticated]);
@@ -76,17 +78,15 @@ export const SocketProvider = ({ children }) => {
       try {
         socket.reconnect();
 
-        // If we're on the messaging page, show a toast notification
+        // We're using silent mode, so we don't show toast notifications for reconnection attempts
+        // Only log to console
         if (isOnMessagingPage && socket.connectionStatus === 'disconnected') {
-          toast.info("Reconnecting to chat server...", {
-            autoClose: 2000,
-            hideProgressBar: false,
-          });
+          console.log("Reconnecting to chat server...");
         }
       } catch (error) {
         console.error("Error reconnecting socket:", error);
 
-        // If reconnection fails, show an error toast on the messaging page
+        // Only show error toasts for critical failures, even in silent mode
         if (isOnMessagingPage) {
           toast.error("Failed to reconnect to chat server. Will retry shortly.", {
             autoClose: 3000,

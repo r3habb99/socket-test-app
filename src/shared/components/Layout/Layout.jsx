@@ -11,7 +11,8 @@ import {
   MoreOutlined,
   HomeFilled,
   MessageFilled,
-  SearchOutlined
+  SearchOutlined,
+  BellOutlined
 } from "@ant-design/icons";
 import "./Layout.css";
 
@@ -62,13 +63,19 @@ const Layout = () => {
       name: "dashboard/messages",
       label: "Messages",
       icon: <MessageOutlined />,
-      activeIcon: <MessageFilled />
+      activeIcon: <MessageFilled style={{ color: '#1d9bf0' }}/>
     },
     {
       name: "profile",
       label: "Profile",
       icon: <UserOutlined />,
       activeIcon: <UserOutlined style={{ color: '#1d9bf0' }} />
+    },
+    {
+      name: "notifications",
+      label: "Notifications",
+      icon: <BellOutlined />,
+      activeIcon: <BellOutlined style={{ color: '#1d9bf0' }} />
     },
     {
       name: "search",
@@ -129,8 +136,8 @@ const Layout = () => {
   // No overlay click handler needed - using bottom navigation only
 
   // Define primary links for mobile navigation (limited to 3 + More)
-  const primaryLinks = links.slice(0, 4); // First 3 links
-  const moreLinks = links.slice(4); // Remaining links
+  const primaryLinks = links.slice(0, 5); // First 3 links
+  const moreLinks = links.slice(5); // Remaining links
 
   // Toggle more menu
   const toggleMoreMenu = (e) => {

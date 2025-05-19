@@ -1,11 +1,11 @@
 import React from 'react';
 import { Modal, Button } from 'antd';
-import { FaArrowLeft, FaArrowRight, FaTimes } from 'react-icons/fa';
+import { FaTimes } from 'react-icons/fa';
 import './ImagePreviewModal.css';
 
 /**
  * ImagePreviewModal component for displaying profile and cover photos in a larger format
- * 
+ *
  * @param {Object} props - Component props
  * @param {boolean} props.visible - Whether the modal is visible
  * @param {string} props.imageUrl - URL of the image to display
@@ -15,7 +15,7 @@ import './ImagePreviewModal.css';
  */
 const ImagePreviewModal = ({ visible, imageUrl, imageType, onClose }) => {
   const title = imageType === 'profile' ? 'Profile photo' : 'Cover photo';
-  
+
   return (
     <Modal
       open={visible}

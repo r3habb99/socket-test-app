@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useMessaging } from "../../hooks";
-import { useSocketContext } from "../../../../core/providers/SocketProvider";
+// import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { getImageUrl, customToast } from "../../../../shared/utils";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
 import UserStatus from "../UserStatus";
@@ -37,7 +37,8 @@ export const ChatList = ({
 }) => {
   const { chats, loading, fetchChats, createChat, createGroupChat } =
     useMessaging();
-  const socketContext = useSocketContext();
+  // Socket context is imported but not used in this component
+  // const socketContext = useSocketContext();
   const [newUserId, setNewUserId] = useState(prefillUserId);
   const [groupName, setGroupName] = useState(prefillGroupName);
   const [groupUsers, setGroupUsers] = useState(prefillGroupUsers);

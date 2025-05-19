@@ -24,7 +24,7 @@ import {
   MailOutlined,
   DisconnectOutlined,
   LoadingOutlined,
-  CheckCircleOutlined,
+  // CheckCircleOutlined, // Removed as we no longer show the success connection status
   // WarningOutlined,
   ReloadOutlined
 } from "@ant-design/icons";
@@ -441,6 +441,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       return;
     }
 
+    // Silently handle connection - no toast notifications
     console.log("Socket connected, checking if messages need to be loaded");
 
     // If we have a selected chat but no messages, try to load messages
@@ -978,20 +979,18 @@ export const Chat = ({ selectedChat, onBackClick }) => {
                     type="primary"
                     danger
                     icon={<ReloadOutlined />}
-                    onClick={() => socketContext.reconnect()}
+                    onClick={() => {
+                      // Use silent reconnect
+                      console.log("Manual reconnection initiated from Chat component");
+                      socketContext.reconnect();
+                    }}
                   >
                     Reconnect
                   </Button>
                 </div>
               )}
 
-              {socketContext.connectionStatus === 'connecting' && (
-                <div className="connection-status warning">
-                  <LoadingOutlined spin className="status-icon" />
-                  <span>Connecting to chat server...</span>
-                </div>
-              )}
-
+              {/* Only show connection status for disconnected state or when actively reconnecting */}
               {socketContext.connectionStatus === 'reconnecting' && (
                 <div className="connection-status warning">
                   <LoadingOutlined spin className="status-icon" />
@@ -1000,19 +999,18 @@ export const Chat = ({ selectedChat, onBackClick }) => {
                     size="small"
                     type="primary"
                     icon={<ReloadOutlined />}
-                    onClick={() => socketContext.reconnect()}
+                    onClick={() => {
+                      // Use silent reconnect
+                      console.log("Manual reconnection initiated from Chat component");
+                      socketContext.reconnect();
+                    }}
                   >
                     Try Now
                   </Button>
                 </div>
               )}
 
-              {socketContext.connectionStatus === 'connected' && (
-                <div className="connection-status success">
-                  <CheckCircleOutlined className="status-icon" />
-                  <span>Connected to chat</span>
-                </div>
-              )}
+              {/* Don't show connection success message to avoid visual noise */}
             </div>
 
             {/* Group messages by date */}

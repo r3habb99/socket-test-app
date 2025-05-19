@@ -745,8 +745,8 @@ li.receiver .message-info {
 
 /* Mobile Input Container - Specific class for mobile view */
 .mobile-input-container {
-  position: fixed !important;
-  bottom: 60px !important; /* Fixed position above the mobile navigation */
+  position: absolute;
+  bottom: 70px; /* Fixed position above the mobile navigation */
   left: 0 !important;
   right: 0 !important;
   background-color: #fff !important;
@@ -812,33 +812,6 @@ li.receiver .message-info {
   /* Adjust messages container to account for fixed input */
   .messages-container {
     padding-bottom: 120px; /* Add extra padding to prevent messages from being hidden */
-    margin-bottom: 60px; /* Additional margin to ensure messages don't get hidden */
-  }
-}
-
-/* Tablet-specific adjustments */
-@media (min-width: 481px) and (max-width: 768px) {
-  .chat-container {
-    position: relative;
-    height: 100%;
-    overflow: hidden;
-    width: 100%;
-  }
-
-  /* Use the same mobile input container styles for tablet */
-  .mobile-input-container {
-    /* Styles already defined in the mobile-input-container class */
-  }
-
-  /* Hide the default input container in tablet view */
-  .input-container:not(.mobile-input-container) {
-    display: none;
-  }
-
-  .messages-container {
-    height: calc(100% - 130px); /* Adjust for header and input container */
-    overflow-y: auto;
-    padding-bottom: 120px; /* Match mobile padding */
     margin-bottom: 60px; /* Additional margin to ensure messages don't get hidden */
   }
 }

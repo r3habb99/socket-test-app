@@ -21,11 +21,17 @@ import {
 /**
  * Custom hook for socket.io functionality
  * @param {string} url - Socket server URL
+ * @param {Object} options - Additional options for socket behavior
+ * @param {boolean} options.silentMode - If true, connection-related toast notifications will be suppressed
  * @returns {Object} Socket methods and state
  */
 export const useSocket = (
-  url = SOCKET_URL
+  url = SOCKET_URL,
+  options = {}
 ) => {
+  // Extract options with defaults
+  const { silentMode = false } = options;
+
   // Socket connection state
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
@@ -37,7 +43,6 @@ export const useSocket = (
   const [currentChatId, setCurrentChatId] = useState(null);
   const [typingUsers, setTypingUsers] = useState({});
   const [recentlySentMessages, setRecentlySentMessages] = useState({});
-  const [offlineQueue, setOfflineQueue] = useState([]);
 
   // User presence state
   const [onlineUsers, setOnlineUsers] = useState({});
@@ -73,7 +78,7 @@ export const useSocket = (
     const queue = getOfflineQueue();
     if (queue.length > 0) {
       console.log(`Loaded ${queue.length} messages from offline queue`);
-      setOfflineQueue(queue);
+      // Process offline queue directly instead of setting state
     }
 
     // Load online users from localStorage
@@ -232,8 +237,7 @@ export const useSocket = (
           }
         });
 
-        // Update offline queue state
-        setOfflineQueue(getOfflineQueue());
+        // Offline queue is processed, no need to update state
       }
     });
 
@@ -751,8 +755,8 @@ export const useSocket = (
           // Join the chat room now that we're connected
           socket.emit("join room", chatId);
 
-          // Only show success toast if we're in the chat section
-          if (window.location.pathname.includes('/messages')) {
+          // Only show success toast if we're in the chat section and not in silent mode
+          if (window.location.pathname.includes('/messages') && !silentMode) {
             toast.success("Connected to chat server");
           }
         });
@@ -807,8 +811,8 @@ export const useSocket = (
             }
           }, 300);
 
-          // Only show success toast if we're in the chat section
-          if (window.location.pathname.includes('/messages')) {
+          // Only show success toast if we're in the chat section and not in silent mode
+          if (window.location.pathname.includes('/messages') && !silentMode) {
             toast.success("Reconnected to chat server");
           }
         });
@@ -1035,7 +1039,7 @@ export const useSocket = (
             const queue = getOfflineQueue();
             if (queue.length > 0) {
               console.log(`Processing ${queue.length} messages from offline queue after reconnection`);
-              toast.success(`Sending ${queue.length} queued messages...`);
+              // No toast notification for queued messages - handled silently
 
               // The queue will be processed by the connect event handler
             }
@@ -1083,7 +1087,7 @@ export const useSocket = (
         });
       } catch (error) {
         console.error("Failed to send message:", error);
-        // Only show error toast if we're in the chat section
+        // Always show error toasts, even in silent mode, but only if we're in the chat section
         if (window.location.pathname.includes('/messages')) {
           toast.error("Failed to send message");
         }
@@ -1235,10 +1239,7 @@ export const useSocket = (
           socketRef.current.emit("join room", currentChatIdRef.current);
         }
 
-        // Show success toast if we're in the chat section
-        if (window.location.pathname.includes('/messages')) {
-          toast.success("Reconnected to chat server");
-        }
+        // No toast notification for reconnection - handled silently
       });
 
       return true;
@@ -1266,8 +1267,8 @@ export const useSocket = (
         socket.emit("join room", currentChatIdRef.current);
       }
 
-      // Show success toast if we're in the chat section
-      if (window.location.pathname.includes('/messages')) {
+      // Show success toast if we're in the chat section and not in silent mode
+      if (window.location.pathname.includes('/messages') && !silentMode) {
         toast.success("Connected to chat server");
       }
     });
@@ -1275,7 +1276,7 @@ export const useSocket = (
     // Store the socket in the ref
     socketRef.current = socket;
     return true;
-  }, [createSocketConnection]);
+  }, [createSocketConnection, silentMode]);
 
   // Get the socket instance (for direct access if needed)
   const getSocket = useCallback(() => socketRef.current, []);
