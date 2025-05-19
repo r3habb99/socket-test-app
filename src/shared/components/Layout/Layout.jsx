@@ -66,10 +66,10 @@ const Layout = () => {
       activeIcon: <MessageFilled style={{ color: '#1d9bf0' }}/>
     },
     {
-      name: "profile",
-      label: "Profile",
-      icon: <UserOutlined />,
-      activeIcon: <UserOutlined style={{ color: '#1d9bf0' }} />
+      name: "search",
+      label: "Search",
+      icon: <SearchOutlined />,
+      activeIcon: <SearchOutlined style={{ color: '#1d9bf0' }} />
     },
     {
       name: "notifications",
@@ -78,12 +78,11 @@ const Layout = () => {
       activeIcon: <BellOutlined style={{ color: '#1d9bf0' }} />
     },
     {
-      name: "search",
-      label: "Search",
-      icon: <SearchOutlined />,
-      activeIcon: <SearchOutlined style={{ color: '#1d9bf0' }} />
+      name: "profile",
+      label: "Profile",
+      icon: <UserOutlined />,
+      activeIcon: <UserOutlined style={{ color: '#1d9bf0' }} />
     },
-    // { name: "toast-test", label: "Toast Tester", icon: "🔔" },
     {
       name: "logout",
       label: "Logout",

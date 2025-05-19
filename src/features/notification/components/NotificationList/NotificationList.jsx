@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   List,
@@ -22,7 +22,6 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   markNotificationAsOpened,
-  markAllNotificationsAsOpened
 } from "../../api";
 import "./NotificationList.css";
 
@@ -39,13 +38,10 @@ const NotificationList = () => {
   const [activeTab, setActiveTab] = useState("all");
   const navigate = useNavigate();
 
-  // Fetch notifications on component mount and when tab changes
-  useEffect(() => {
-    fetchNotifications();
-  }, [activeTab]);
+
 
   // Fetch notifications from API
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
       const unreadOnly = activeTab === "unread";
@@ -75,7 +71,12 @@ const NotificationList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+  
+  // Fetch notifications on component mount and when tab changes
+  useEffect(() => {
+    fetchNotifications();
+  }, [activeTab, fetchNotifications]);
 
   // Mark a notification as read
   const handleMarkAsRead = async (notificationId) => {
@@ -144,32 +145,6 @@ const NotificationList = () => {
       }
     } catch (error) {
       console.error("Error marking notification as opened:", error);
-    }
-  };
-
-  // Mark all notifications as opened
-  const handleMarkAllAsOpened = async () => {
-    try {
-      setLoading(true);
-      const response = await markAllNotificationsAsOpened();
-
-      if (response.error) {
-        toast.error(response.message || "Failed to mark all as opened");
-      } else {
-        // Update all notifications in the state
-        setNotifications(prevNotifications =>
-          prevNotifications.map(notification => ({
-            ...notification,
-            opened: true
-          }))
-        );
-        toast.success("All notifications marked as opened");
-      }
-    } catch (error) {
-      console.error("Error marking all notifications as opened:", error);
-      toast.error("Failed to mark all as opened");
-    } finally {
-      setLoading(false);
     }
   };
 
