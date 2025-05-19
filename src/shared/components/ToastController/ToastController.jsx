@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ToastContainer, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./ToastController.css"; // Make sure this file includes the improved CSS
@@ -14,6 +14,18 @@ const CloseButton = ({ closeToast }) => (
 );
 
 const ToastController = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // Handle window resize to detect mobile viewport
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <ToastContainer
       toastClassName={({ type }) =>
@@ -31,7 +43,7 @@ const ToastController = () => {
       }
       bodyClassName="toast-body"
       closeButton={<CloseButton />}
-      position="top-right"
+      position={isMobile ? "top-center" : "top-right"}
       autoClose={3000}
       hideProgressBar={false}
       newestOnTop={false}
@@ -42,7 +54,7 @@ const ToastController = () => {
       pauseOnHover
       theme="light"
       transition={Bounce}
-      limit={3}
+      limit={isMobile ? 2 : 3}
     />
   );
 };

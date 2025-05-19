@@ -19,6 +19,7 @@
   width: auto;
   max-width: 350px;
   padding: 0;
+  z-index: 9999; /* Ensure toasts appear above other elements */
 }
 
 .Toastify__toast {
@@ -114,4 +115,43 @@
 /* Warning toast progress bar */
 .toast-warning .Toastify__progress-bar {
   background-color: #ef6c00 !important;
+}
+
+/* Mobile viewport styles */
+@media (max-width: 768px) {
+  /* Adjust toast container for mobile */
+  .Toastify__toast-container {
+    width: 90%;
+    max-width: 90%;
+    padding: 0;
+    left: 50% !important;
+    transform: translateX(-50%);
+    top: var(--mobile-small-padding, 8px) !important;
+  }
+
+  /* Make toasts more compact on mobile */
+  .toast {
+    padding: 12px;
+    font-size: 13px;
+    min-height: auto;
+    border-radius: 6px;
+  }
+
+  .Toastify__toast {
+    margin-bottom: 8px;
+    border-radius: 6px;
+  }
+
+  /* Smaller close button for mobile */
+  .toast-close-button {
+    font-size: 18px;
+    height: 20px;
+    width: 20px;
+    margin-left: 4px;
+  }
+
+  /* Thinner progress bar for mobile */
+  .Toastify__progress-bar {
+    height: 3px;
+  }
 }

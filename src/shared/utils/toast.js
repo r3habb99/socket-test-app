@@ -1,8 +1,11 @@
 import { toast, Bounce } from "react-toastify";
 
+// Detect if we're on a mobile device
+const isMobileDevice = () => window.innerWidth <= 768;
+
 // Default toast configuration
 const defaultOptions = {
-  position: "top-right",
+  position: isMobileDevice() ? "top-center" : "top-right",
   autoClose: 3000,
   hideProgressBar: false,
   closeOnClick: true,
@@ -23,7 +26,13 @@ export const customToast = {
    * @param {Object} options - Optional toast configuration to override defaults
    */
   info: (message, options = {}) => {
-    toast.info(message, { ...defaultOptions, ...options });
+    // Check for mobile viewport again in case window was resized
+    const currentOptions = {
+      ...defaultOptions,
+      position: isMobileDevice() ? "top-center" : "top-right",
+      ...options
+    };
+    toast.info(message, currentOptions);
   },
 
   /**
@@ -32,7 +41,13 @@ export const customToast = {
    * @param {Object} options - Optional toast configuration to override defaults
    */
   success: (message, options = {}) => {
-    toast.success(message, { ...defaultOptions, ...options });
+    // Check for mobile viewport again in case window was resized
+    const currentOptions = {
+      ...defaultOptions,
+      position: isMobileDevice() ? "top-center" : "top-right",
+      ...options
+    };
+    toast.success(message, currentOptions);
   },
 
   /**
@@ -41,7 +56,13 @@ export const customToast = {
    * @param {Object} options - Optional toast configuration to override defaults
    */
   warn: (message, options = {}) => {
-    toast.warn(message, { ...defaultOptions, ...options });
+    // Check for mobile viewport again in case window was resized
+    const currentOptions = {
+      ...defaultOptions,
+      position: isMobileDevice() ? "top-center" : "top-right",
+      ...options
+    };
+    toast.warn(message, currentOptions);
   },
 
   /**
@@ -50,7 +71,13 @@ export const customToast = {
    * @param {Object} options - Optional toast configuration to override defaults
    */
   error: (message, options = {}) => {
-    toast.error(message, { ...defaultOptions, ...options });
+    // Check for mobile viewport again in case window was resized
+    const currentOptions = {
+      ...defaultOptions,
+      position: isMobileDevice() ? "top-center" : "top-right",
+      ...options
+    };
+    toast.error(message, currentOptions);
   },
 };
 
