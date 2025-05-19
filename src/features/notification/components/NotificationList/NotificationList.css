@@ -2,6 +2,8 @@
   height: 100%;
   width: 100%;
   background-color: var(--background-color, #fff);
+  max-width: 600px; /* Set max-width for desktop */
+  margin: 0 auto; /* Center on larger screens */
 }
 
 .notification-header {
@@ -51,6 +53,8 @@
 .notification-content {
   padding: 0;
   overflow-y: auto;
+  width: 100%;
+  max-width: 100%;
 }
 
 .notification-tabs {
@@ -59,6 +63,7 @@
 
 .notification-list {
   margin-top: 8px;
+  width: 100%;
 }
 
 .notification-list-item {
@@ -75,8 +80,14 @@
 
 /* Mobile styles */
 @media (max-width: 768px) {
+  .notification-list-container {
+    max-width: 100%; /* Full width on mobile */
+    padding-bottom: var(--mobile-nav-height, 60px); /* Space for mobile nav */
+  }
+
   .notification-header {
     padding: 0 12px;
+    height: 53px;
   }
 
   .notification-title {
@@ -95,5 +106,12 @@
 
   .mark-all-read-button span:last-child {
     display: none;
+  }
+
+  /* Ensure touch targets are large enough */
+  .back-button,
+  .refresh-button {
+    min-height: var(--mobile-touch-target, 44px);
+    min-width: var(--mobile-touch-target, 44px);
   }
 }

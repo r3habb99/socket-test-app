@@ -333,15 +333,11 @@ export const Profile = () => {
                                 existingChats = chatsResponse.data;
                               }
                             }
-
-                            console.log("Existing chats:", existingChats);
-
                             // Use the findExistingChat helper function to check if a chat already exists
                             const existingChat = findExistingChat(existingChats, userId);
 
                             if (existingChat) {
-                              console.log("Chat already exists, navigating to existing chat:", existingChat);
-
+                              
                               // Ensure the chat object has the expected structure
                               const normalizedChat = {
                                 ...existingChat,
@@ -362,10 +358,8 @@ export const Profile = () => {
                             }
                           }
 
-                          // If no existing chat was found, create a new one
-                          console.log("Creating new chat with user ID:", userId);
+                      
                           const response = await createChat({ userId });
-                          console.log("Create chat response:", response);
 
                           if (response.error) {
                             console.error(
@@ -451,17 +445,17 @@ export const Profile = () => {
             <div>
               <button
                 className="link-button"
-                onClick={() => navigate(`/user/${user.id || user._id}/following`)}
+                onClick={() => navigate(`/user/${user.id || user._id}/followers`)}
               >
-                <strong className="count">{user.following?.length || 0}</strong> Following
+                <strong className="count">{user.followers?.length || 0}</strong> Followers
               </button>
             </div>
             <div>
               <button
                 className="link-button"
-                onClick={() => navigate(`/user/${user.id || user._id}/followers`)}
+                onClick={() => navigate(`/user/${user.id || user._id}/following`)}
               >
-                <strong className="count">{user.followers?.length || 0}</strong> Followers
+                <strong className="count">{user.following?.length || 0}</strong> Following
               </button>
             </div>
           </div>
