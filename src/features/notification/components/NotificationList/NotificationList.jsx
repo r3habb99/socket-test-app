@@ -19,9 +19,8 @@ import { toast } from "react-toastify";
 import NotificationItem from "../NotificationItem/NotificationItem";
 import {
   getNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
   markNotificationAsOpened,
+  markAllNotificationsAsOpened,
 } from "../../api";
 import "./NotificationList.css";
 
@@ -78,33 +77,13 @@ const NotificationList = () => {
     fetchNotifications();
   }, [activeTab, fetchNotifications]);
 
-  // Mark a notification as read
-  const handleMarkAsRead = async (notificationId) => {
-    try {
-      const response = await markNotificationAsRead(notificationId);
 
-      if (response.error) {
-        console.error("Error marking notification as read:", response.message);
-      } else {
-        // Update the notification in the state
-        setNotifications(prevNotifications =>
-          prevNotifications.map(notification =>
-            notification._id === notificationId
-              ? { ...notification, opened: true }
-              : notification
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-    }
-  };
 
   // Mark all notifications as read
   const handleMarkAllAsRead = async () => {
     try {
       setLoading(true);
-      const response = await markAllNotificationsAsRead();
+      const response = await markAllNotificationsAsOpened();
 
       if (response.error) {
         toast.error(response.message || "Failed to mark all as read");
@@ -226,7 +205,6 @@ const NotificationList = () => {
                         <List.Item className="notification-list-item" key={notification._id}>
                           <NotificationItem
                             notification={notification}
-                            onMarkAsRead={handleMarkAsRead}
                             onMarkAsOpened={handleMarkAsOpened}
                           />
                         </List.Item>
@@ -258,7 +236,6 @@ const NotificationList = () => {
                         <List.Item className="notification-list-item" key={notification._id}>
                           <NotificationItem
                             notification={notification}
-                            onMarkAsRead={handleMarkAsRead}
                             onMarkAsOpened={handleMarkAsOpened}
                           />
                         </List.Item>
