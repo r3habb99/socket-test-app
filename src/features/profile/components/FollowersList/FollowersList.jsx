@@ -29,51 +29,50 @@ export const FollowersList = () => {
   const [loading, setLoading] = useState(true);
   const [profileUser, setProfileUser] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Fetch the profile user's information
-        const profileResponse = await fetchUserProfileById(userId);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch the profile user's information
+      const profileResponse = await fetchUserProfileById(userId);
 
-        if (profileResponse.error) {
-          setError(profileResponse.message || "Failed to fetch user profile");
-          return;
-        }
+      if (profileResponse.error) {
+        setError(profileResponse.message || "Failed to fetch user profile");
+        return;
+      }
 
-        // Process profile data
-        console.log("Profile response for followers list:", profileResponse);
+      // Process profile data
+      console.log("Profile response for followers list:", profileResponse);
 
-        // Handle different response structures
-        let userData = null;
+      // Handle different response structures
+      let userData = null;
 
-        // Case 1: Direct response with statusCode, message, data structure
-        if (profileResponse.data && profileResponse.data.statusCode && profileResponse.data.data) {
-          userData = profileResponse.data.data;
-        }
-        // Case 2: Nested data.data structure
-        else if (profileResponse.data && profileResponse.data.data) {
-          userData = profileResponse.data.data;
-        }
-        // Case 3: Direct data structure
-        else if (profileResponse.data) {
-          userData = profileResponse.data;
-        }
+      // Case 1: Direct response with statusCode, message, data structure
+      if (profileResponse.data && profileResponse.data.statusCode && profileResponse.data.data) {
+        userData = profileResponse.data.data;
+      }
+      // Case 2: Nested data.data structure
+      else if (profileResponse.data && profileResponse.data.data) {
+        userData = profileResponse.data.data;
+      }
+      // Case 3: Direct data structure
+      else if (profileResponse.data) {
+        userData = profileResponse.data;
+      }
 
-        if (userData) {
-          setProfileUser({
-            ...userData,
-            id: userData.id || userData._id,
-            _id: userData._id || userData.id,
-          });
-        } else {
-          console.error(
-            "Invalid profile data structure:",
-            profileResponse
-          );
-          setError("Failed to parse profile data");
-          return;
-        }
+      if (userData) {
+        setProfileUser({
+          ...userData,
+          id: userData.id || userData._id,
+          _id: userData._id || userData.id,
+        });
+      } else {
+        console.error(
+          "Invalid profile data structure:",
+          profileResponse
+        );
+        setError("Failed to parse profile data");
+        return;
+      }
 
         // Fetch followers of the profile we're viewing
         const followersResponse = await getUserFollowers(userId);
@@ -249,30 +248,41 @@ export const FollowersList = () => {
       }
     };
 
+  useEffect(() => {
     fetchData();
-    // We don't include followers and following in the dependency array
-    // because they're set inside the fetchData function
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, loggedInUserId]);
 
-  const toggleFollow = async (userId) => {
+  const toggleFollow = async (targetUserId) => {
     try {
-      const response = await followUser(userId);
+      const response = await followUser(targetUserId);
 
       if (response.error) {
-        console.error("Error following/unfollowing user:", response.message);
+        console.error("Error toggling follow status:", response.message);
         return;
       }
 
+      // Determine if this was a follow or unfollow action
+      const wasFollowing = followingStates[targetUserId];
+      const isNowFollowing = !wasFollowing;
+
       // Update the following state for this user
-      setFollowingStates((prev) => ({
+      setFollowingStates(prev => ({
         ...prev,
-        [userId]: !prev[userId],
+        [targetUserId]: isNowFollowing
       }));
 
-      // If we're unfollowing a user in the "following" tab, we might want to refetch the data
-      // to ensure the UI is consistent, but we'll keep the user in the list until a refresh
-      // for better UX
+      // If we're removing a follow in the "following" tab, remove them from the list
+      if (wasFollowing && activeTab === "following") {
+        setFollowing(prevFollowing =>
+          prevFollowing.filter(user => user.id !== targetUserId)
+        );
+      }
+
+      // If we're viewing our own profile and we remove a follow
+      if (wasFollowing && profileUser && profileUser.id === loggedInUserId && activeTab === "following") {
+        // We've already handled this case above
+      }
     } catch (err) {
       console.error("Error toggling follow:", err);
     }

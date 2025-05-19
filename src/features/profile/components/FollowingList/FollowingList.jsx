@@ -252,19 +252,36 @@ export const FollowingList = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, loggedInUserId]);
 
-  const toggleFollow = async (userId) => {
+  const toggleFollow = async (targetUserId) => {
     try {
-      const response = await followUser(userId);
+      const response = await followUser(targetUserId);
 
       if (response.error) {
-        console.error("Error following/unfollowing user:", response.message);
+        console.error("Error toggling follow status:", response.message);
         return;
       }
 
-      setFollowingStates((prev) => ({
+      // Determine if this was a follow or unfollow action
+      const wasFollowing = followingStates[targetUserId];
+      const isNowFollowing = !wasFollowing;
+
+      // Update the following state for this user
+      setFollowingStates(prev => ({
         ...prev,
-        [userId]: !prev[userId],
+        [targetUserId]: isNowFollowing
       }));
+
+      // If we're removing a follow in the "following" tab, remove them from the list
+      if (wasFollowing && activeTab === "following") {
+        setFollowing(prevFollowing =>
+          prevFollowing.filter(user => user.id !== targetUserId)
+        );
+      }
+
+      // If we're viewing our own profile and we remove a follow
+      if (wasFollowing && profileUser && profileUser.id === loggedInUserId && activeTab === "following") {
+        // We've already handled this case above
+      }
     } catch (err) {
       console.error("Error toggling follow:", err);
     }
