@@ -340,14 +340,7 @@
     font-size: 20px;
   }
 
-  /* Improve back button tap target */
-  .back-button-container {
-    display: flex;
-    align-items: center;
-    padding: 0px;
-    width: 30px;
-    height: 32px;
-  }
+
 
   /* Fix for the "no chat selected" view on mobile */
   .no-chat-selected {

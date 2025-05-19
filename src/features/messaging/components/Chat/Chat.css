@@ -38,6 +38,8 @@
   align-items: center;
   flex: 1;
   gap: 0;
+  min-width: 0; /* Ensure content can shrink properly */
+  overflow: hidden; /* Prevent overflow */
 }
 
 /* Ant Design Button customization for back button */
@@ -64,14 +66,23 @@
 .back-button .anticon {
   font-size: 16px;
 }
+/* Improve back button tap target */
+.back-button-container {
+  display: flex;
+  align-items: center;
+  padding: 0px;
+  width: 30px;
+  height: 30px;
+  margin-top: 10px;
+  justify-content: center;
+}
 
 /* Ant Design Avatar customization */
 .chat-header-avatar.ant-avatar {
   margin-right: 8px;
   flex-shrink: 0;
   position: relative;
-  overflow: visible;
-  /*Changedfromhiddentovisibletoshowtheonlineindicator*/
+  overflow: hidden; /* Changed back to hidden as we're using UserStatus component instead */
   border: 2px solid #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -96,50 +107,38 @@
   border-radius: 25px !important;
 }
 
-/* Online status indicator */
-.chat-header-avatar.ant-avatar::after {
-  content: "";
-  position: absolute;
-  bottom: 0px;
-  right: 0px;
-  width: 12px;
-  height: 12px;
-  background-color: #4caf50;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  z-index: 20;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
 .chat-header-details {
   flex: 1;
   min-width: 0; /* Ensures text truncation works */
   display: flex;
   flex-direction: column;
   justify-content: center;
+  padding-left: 2px; /* Add slight padding for better alignment */
+  max-width: calc(100% - 100px); /* Prevent overlap with header actions */
 }
 
 .chat-header-name {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px; /* Slightly increased font size for better readability */
+  font-weight: 700; /* Increased font weight for better visibility */
   color: #0f1419;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.2;
+  line-height: 1.3; /* Improved line height for better text spacing */
   border-bottom: none;
+  padding-bottom: 2px; /* Add slight padding between name and status */
 }
 
 .chat-header-status {
-  color: #65676b;
+  color: #536471; /* Updated color for better contrast */
   font-size: 13px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  opacity: 0.8;
-  line-height: 1.2;
-  margin-top: 2px;
+  opacity: 1; /* Full opacity for better readability */
+  line-height: 1.3; /* Improved line height */
+  margin-top: 1px; /* Reduced margin for tighter layout */
   display: flex;
   align-items: center;
 }
@@ -152,11 +151,19 @@
 /* Override UserStatus component styles in chat header */
 .chat-header-status .user-status-container {
   margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.chat-header-status .status-indicator {
+  margin-right: 4px;
 }
 
 .chat-header-status .status-text {
   font-size: 13px;
   color: #536471;
+  margin-left: 2px;
 }
 
 /* Typing indicator */
@@ -794,8 +801,31 @@ li.receiver .message-info {
     position: relative;
   }
 
+  .chat-header-container.ant-layout-header {
+    height: 56px; /* Slightly smaller header for mobile */
+    padding: 8px 12px; /* Reduced padding for mobile */
+  }
+
+  .chat-header-left {
+    gap: 0;
+  }
+
+  .chat-header-details {
+    max-width: calc(
+      100% - 80px
+    ); /* Ensure details don't overlap with actions on mobile */
+  }
+
   .chat-header-name {
     font-size: 16px;
+  }
+
+  .chat-header-status {
+    font-size: 12px;
+  }
+
+  .chat-header-status .status-text {
+    font-size: 12px;
   }
 
   li {
@@ -813,6 +843,7 @@ li.receiver .message-info {
     padding-bottom: 120px; /* Add extra padding to prevent messages from being hidden */
     margin-bottom: 60px; /* Additional margin to ensure messages don't get hidden */
   }
+
   .mobile-input-container {
     position: fixed;
     bottom: 70px; /* Fixed position above the mobile navigation */
