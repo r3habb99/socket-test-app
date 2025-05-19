@@ -63,9 +63,10 @@ export const refreshToken = async () => {
 };
 
 /**
- * Login user with email and password
+ * Login user with email/username and password
  * @param {Object} credentials - User credentials
- * @param {string} credentials.email - User email
+ * @param {string} [credentials.email] - User email (either email or username must be provided)
+ * @param {string} [credentials.username] - Username (either email or username must be provided)
  * @param {string} credentials.password - User password
  * @returns {Promise<Object>} Response object
  */
@@ -94,10 +95,10 @@ export const login = async (credentials) => {
         message: "Network Error: Unable to connect to the server. Please check your internet connection.",
       };
     } else if (error.response.status === 401) {
-      toast.error("Invalid email or password");
+      toast.error("Invalid credentials");
       return {
         error: true,
-        message: "Invalid email or password",
+        message: "Invalid credentials",
       };
     }
 

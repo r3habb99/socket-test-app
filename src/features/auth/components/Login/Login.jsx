@@ -13,7 +13,18 @@ const Login = () => {
 
   const handleLogin = async (values) => {
     try {
-      const result = await login(values);
+      // Determine if the identifier is an email or username
+      const { identifier, password } = values;
+      let loginData = { password };
+
+      // Check if the identifier looks like an email
+      if (identifier.includes('@')) {
+        loginData.email = identifier;
+      } else {
+        loginData.username = identifier;
+      }
+
+      const result = await login(loginData);
 
       if (result.success) {
         navigate("/dashboard");
@@ -48,18 +59,21 @@ const Login = () => {
           layout="vertical"
           className="w-full"
           size="large"
+          validateTrigger={['onChange', 'onBlur']}
         >
           <Form.Item
-            name="email"
+            name="identifier"
             rules={[
-              { required: true, message: 'Please input your email!' },
-              { type: 'email', message: 'Please enter a valid email!' }
+              {
+                required: true,
+                message: 'Please input your email or username!'
+              }
             ]}
             className="mb-5"
           >
             <Input
               prefix={<UserOutlined className="text-gray-400 mr-2" />}
-              placeholder="Email"
+              placeholder="Email or Username"
               size="large"
               className="rounded-lg py-2 border border-gray-200 hover:border-blue-400 focus:border-blue-500 shadow-sm min-h-[44px]"
             />
