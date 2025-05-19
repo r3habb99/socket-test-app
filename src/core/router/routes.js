@@ -50,6 +50,11 @@ const ProfileEdit = React.lazy(() =>
     (module) => ({ default: module.default || module })
   )
 );
+const NotificationList = React.lazy(() =>
+  import("../../features/notification/components/NotificationList").then(
+    (module) => ({ default: module.default || module })
+  )
+);
 
 /**
  * Application routes configuration
@@ -89,6 +94,10 @@ export const routes = [
       {
         path: "profile/:userId",
         element: <Profile />,
+      },
+      {
+        path: "notifications",
+        element: <NotificationList />,
       },
       {
         path: "user/:userId/followers",

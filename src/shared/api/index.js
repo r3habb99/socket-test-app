@@ -31,12 +31,6 @@ export const handleApiResponse = (response) => {
     };
   }
 
-  // Log the response for debugging
-  console.log("API Response:", {
-    status: response.status,
-    data: response.data,
-    headers: response.headers
-  });
 
   // If response.data is null or undefined, return an error
   if (response.data === null || response.data === undefined) {
@@ -85,7 +79,7 @@ export const handleApiResponse = (response) => {
 
     // Case 3: { statusCode: 200, message: "...", data: {...} }
     if (response.data.statusCode && response.data.data) {
-      return {
+     return {
         error: false,
         data: response.data,  // Return the whole object to preserve the structure
         message: response.data.message || "Operation successful",

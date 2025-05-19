@@ -65,6 +65,12 @@ const endpoints = {
     update: (id) => `/message/${id}`,
     delete: (id) => `/message/${id}`,
   },
+  notification: {
+    getAll: (unreadOnly) => `/notification${unreadOnly ? '?unreadOnly=true' : ''}`,
+    latest: "/notification/latest",
+    markAsRead: (id) => `/notification/${id}/read`,
+    markAllAsRead: "/notification/read-all",
+  },
 };
 
 export default endpoints;
