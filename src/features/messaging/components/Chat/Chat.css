@@ -621,6 +621,7 @@ li.receiver .message-info {
   box-sizing: border-box;
   max-width: 100%;
   z-index: 950; /* Ensure input is above other elements but below navigation (z-index: 999) */
+  height: 60px; /* Fixed height to match reference image */
 }
 
 .message-actions {
@@ -628,12 +629,13 @@ li.receiver .message-info {
   align-items: center;
   margin-right: 12px;
   flex-shrink: 0;
+  gap: 8px; /* Add gap between action buttons */
 }
 
 /* Ant Design Button customization for message action buttons */
 .message-action-button.ant-btn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -644,8 +646,8 @@ li.receiver .message-info {
   background-color: transparent;
   border: none;
   padding: 0;
-  margin-right: 4px;
   flex-shrink: 0;
+  font-size: 20px; /* Match icon size in reference image */
 }
 
 .message-action-button.ant-btn:hover {
@@ -668,6 +670,8 @@ li.receiver .message-info {
   box-sizing: border-box;
   outline: none;
   min-width: 0; /* Ensures input can shrink properly */
+  color: #0f1419; /* Match text color in reference image */
+  height: 36px; /* Fixed height to match reference image */
 }
 
 /* Ant Design Button customization for send button */
@@ -677,7 +681,7 @@ li.receiver .message-info {
   padding: 0;
   font-size: 16px;
   border-radius: 50%;
-  background-color: #1d9bf0;
+  background-color: #1d9bf0; /* Twitter blue */
   color: white;
   border: none;
   cursor: pointer;
@@ -687,6 +691,7 @@ li.receiver .message-info {
   transition: background-color 0.2s ease;
   flex-shrink: 0;
   margin-left: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Add subtle shadow to match reference */
 }
 
 .send-btn.ant-btn:hover {
@@ -738,11 +743,55 @@ li.receiver .message-info {
   font-size: 13px;
 }
 
+/* Mobile Input Container - Specific class for mobile view */
+.mobile-input-container {
+  position: fixed !important;
+  bottom: 60px !important; /* Fixed position above the mobile navigation */
+  left: 0 !important;
+  right: 0 !important;
+  background-color: #fff !important;
+  border-top: 1px solid #eff3f4 !important;
+  z-index: 9999 !important; /* Very high z-index to ensure visibility */
+  width: 100% !important;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1) !important;
+  height: 60px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 10px 16px !important;
+  justify-content: space-between !important;
+  margin: 0 !important; /* Reset any margins */
+  opacity: 1 !important; /* Ensure visibility */
+  visibility: visible !important; /* Ensure visibility */
+}
+
+/* Style the input field in mobile view to match reference image */
+.mobile-input-container .message-input {
+  flex: 1 !important;
+  height: 36px !important;
+  font-size: 15px !important;
+  color: #0f1419 !important;
+}
+
+/* Style the send button in mobile view to match reference image */
+.mobile-input-container .send-btn {
+  width: 36px !important;
+  height: 36px !important;
+  background-color: #1d9bf0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Style the message actions in mobile view */
+.mobile-input-container .message-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .chat-container {
     width: 100%;
-    padding-bottom: 60px; /* Make room for the bottom navigation */
+    padding-bottom: 120px; /* Make room for both input container and bottom navigation */
     position: relative;
   }
 
@@ -755,21 +804,15 @@ li.receiver .message-info {
     margin-bottom: 16px;
   }
 
-  .input-container {
-    padding: 10px;
-    position: absolute;
-    bottom: 0px; /* Position above the bottom navigation */
-    left: 0;
-    right: 0;
-    background-color: #fff;
-    border-top: 1px solid #eff3f4;
-    z-index: 950;
-    width: 100%;
+  /* Hide the default input container in mobile view */
+  .input-container:not(.mobile-input-container) {
+    display: none;
   }
 
   /* Adjust messages container to account for fixed input */
   .messages-container {
-    padding-bottom: 70px; /* Add extra padding to prevent messages from being hidden behind input */
+    padding-bottom: 120px; /* Add extra padding to prevent messages from being hidden */
+    margin-bottom: 60px; /* Additional margin to ensure messages don't get hidden */
   }
 }
 
@@ -782,18 +825,20 @@ li.receiver .message-info {
     width: 100%;
   }
 
-  .input-container {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    left: 0;
-    right: 0;
-    z-index: 10;
+  /* Use the same mobile input container styles for tablet */
+  .mobile-input-container {
+    /* Styles already defined in the mobile-input-container class */
+  }
+
+  /* Hide the default input container in tablet view */
+  .input-container:not(.mobile-input-container) {
+    display: none;
   }
 
   .messages-container {
     height: calc(100% - 130px); /* Adjust for header and input container */
     overflow-y: auto;
-    padding-bottom: 70px; /* Add extra padding to prevent messages from being hidden behind input */
+    padding-bottom: 120px; /* Match mobile padding */
+    margin-bottom: 60px; /* Additional margin to ensure messages don't get hidden */
   }
 }

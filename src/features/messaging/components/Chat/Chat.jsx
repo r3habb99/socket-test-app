@@ -1110,7 +1110,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         )}
       </div>
 
-      <div className="input-container">
+      <div className="input-container mobile-input-container">
         <div className="message-actions">
           <Button
             type="text"

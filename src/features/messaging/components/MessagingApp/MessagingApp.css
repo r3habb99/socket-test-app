@@ -203,7 +203,9 @@
     height: 100%;
     width: 100%;
     z-index: 10;
-    padding-bottom: 60px; /* Make room for the bottom navigation */
+    padding-bottom: var(
+      --mobile-nav-height
+    ); /* Make room for the bottom navigation using CSS variable */
     top: 0;
     left: 0;
     right: 0;
@@ -256,14 +258,7 @@
     overflow: hidden;
   }
 
-  /* Ensure input container stays within chat section */
-  .chat-section .input-container {
-    position: absolute;
-    width: 100%;
-    left: 0;
-    right: 0;
-    bottom: 0;
-  }
+  /* Input container styles are now defined in Chat.css */
 
   /* Override mobile fixed positioning for tablet */
   .chat-section {
@@ -304,7 +299,9 @@
     left: 0;
     right: 0;
     bottom: 0; /* Remove bottom offset to allow full height */
-    padding-bottom: 60px; /* Add padding instead of bottom offset */
+    padding-bottom: calc(
+      var(--mobile-nav-height) + 60px
+    ); /* Room for both input container and navigation */
     z-index: 100;
     background-color: #fff;
     display: none; /* Hide by default on mobile */
