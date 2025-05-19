@@ -743,25 +743,24 @@ li.receiver .message-info {
   font-size: 13px;
 }
 
-/* Mobile Input Container - Specific class for mobile view */
 .mobile-input-container {
   position: absolute;
-  bottom: 70px; /* Fixed position above the mobile navigation */
-  left: 0 !important;
-  right: 0 !important;
-  background-color: #fff !important;
-  border-top: 1px solid #eff3f4 !important;
-  z-index: 9999 !important; /* Very high z-index to ensure visibility */
-  width: 100% !important;
-  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1) !important;
-  height: 60px !important;
-  display: flex !important;
-  align-items: center !important;
-  padding: 10px 16px !important;
-  justify-content: space-between !important;
-  margin: 0 !important; /* Reset any margins */
-  opacity: 1 !important; /* Ensure visibility */
-  visibility: visible !important; /* Ensure visibility */
+  bottom: 10px; /* Fixed position above the mobile navigation */
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  border-top: 1px solid #eff3f4;
+  z-index: 9999; /* Very high z-index to ensure visibility */
+  width: 100%;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  justify-content: space-between;
+  margin: 0; /* Reset any margins */
+  opacity: 1; /* Ensure visibility */
+  visibility: visible; /* Ensure visibility */
 }
 
 /* Style the input field in mobile view to match reference image */
@@ -813,5 +812,24 @@ li.receiver .message-info {
   .messages-container {
     padding-bottom: 120px; /* Add extra padding to prevent messages from being hidden */
     margin-bottom: 60px; /* Additional margin to ensure messages don't get hidden */
+  }
+  .mobile-input-container {
+    position: fixed;
+    bottom: 70px; /* Fixed position above the mobile navigation */
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border-top: 1px solid #eff3f4;
+    z-index: 9999; /* Very high z-index to ensure visibility */
+    width: 100%;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    justify-content: space-between;
+    margin: 0; /* Reset any margins */
+    opacity: 1; /* Ensure visibility */
+    visibility: visible; /* Ensure visibility */
   }
 }
