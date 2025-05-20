@@ -1,0 +1,290 @@
+/* Transitions.css - Styles for transition components */
+
+/* Page transition container */
+.page-transition {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  will-change: opacity, transform;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  isolation: isolate; /* Create a new stacking context */
+  contain: content; /* Improve performance by containing the layout */
+}
+
+/* Component transition container */
+.component-transition {
+  position: relative;
+  will-change: opacity, transform;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Transition durations */
+:root {
+  --transition-fast: 0.2s;
+  --transition-normal: 0.3s;
+  --transition-slow: 0.5s;
+  --transition-very-slow: 0.8s;
+  --transition-bounce: cubic-bezier(0.25, 1, 0.5, 1);
+  --transition-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-ease-in: cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  --transition-ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+/* Global transition classes that can be applied to any element */
+.transition-opacity {
+  transition: opacity var(--transition-normal) var(--transition-ease-out);
+}
+
+.transition-transform {
+  transition: transform var(--transition-normal) var(--transition-ease-out);
+}
+
+.transition-all {
+  transition: all var(--transition-normal) var(--transition-ease-out);
+}
+
+.transition-colors {
+  transition: background-color var(--transition-normal)
+      var(--transition-ease-out),
+    color var(--transition-normal) var(--transition-ease-out),
+    border-color var(--transition-normal) var(--transition-ease-out);
+}
+
+.transition-scale {
+  transition: transform var(--transition-normal) var(--transition-bounce);
+}
+
+/* Hover effect classes */
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+.hover-shadow:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Active state transitions */
+.active-shrink:active {
+  transform: scale(0.98);
+}
+
+/* Loading state animations */
+.loading-pulse {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* Fade in animation */
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Slide up animation */
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide down animation */
+.slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide in from right animation */
+.slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Slide in from left animation */
+.slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scale animation */
+.scale-in {
+  animation: scaleIn 0.3s var(--transition-bounce);
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Pop animation */
+.pop-in {
+  animation: popIn 0.4s var(--transition-bounce);
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive adjustments */
+/* TransitionButton styles */
+.transition-button {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-weight: 500;
+  font-size: 14px;
+  background-color: var(--primary-color, #1d9bf0);
+  color: white;
+  transition: background-color 0.3s ease, transform 0.3s ease,
+    box-shadow 0.3s ease;
+  will-change: transform;
+}
+
+.transition-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.transition-button.loading {
+  cursor: wait;
+}
+
+/* Loading indicator */
+.loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.loading-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: currentColor;
+  margin: 0 2px;
+  opacity: 0.7;
+  animation: loadingDot 1.4s infinite ease-in-out;
+}
+
+.loading-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loadingDot {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --transition-normal: 0.25s; /* Slightly faster on mobile */
+  }
+
+  .transition-button {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}

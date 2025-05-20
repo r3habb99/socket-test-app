@@ -78,8 +78,6 @@ export const performUserSearch = createAsyncThunk(
 
       // Check if we have any results
       if (results.length === 0) {
-        console.log('No search results found for query:', query);
-        // Return empty results but don't set an error - this is a valid "no results" state
         return {
           results: [],
           resultCount: 0,

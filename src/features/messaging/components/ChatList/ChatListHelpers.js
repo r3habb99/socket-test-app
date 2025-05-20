@@ -98,9 +98,6 @@ export const handleUserSearch = async (query) => {
 
     const response = await searchUsers(searchParams);
 
-    // Log the full response to see its structure
-    console.log("Search response:", response);
-
     // Handle nested data structure
     let results = [];
 
@@ -181,7 +178,6 @@ export const startChatWithUser = async (user, chats, createChat, onSelectChat, c
     const existingChat = findExistingChat(chats, userId);
 
     if (existingChat) {
-      console.log("Chat already exists, navigating to existing chat");
       // If chat exists, just select it
       onSelectChat(existingChat);
       

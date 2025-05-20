@@ -10,6 +10,9 @@ import { AuthProvider } from "./core/providers";
 import { PrivateRoute } from "./core/router";
 import { SocketProviderCompat } from "./features/socket/components";
 
+// Import transition components
+import { TransitionLayout, TransitionProvider } from "./shared/components/Transitions";
+
 // Import components directly
 import Login from "./features/auth/components/Login/Login";
 import Register from "./features/auth/components/Register/Register";
@@ -27,6 +30,9 @@ import { Search } from "./shared/components";
 import { NotificationList } from "./features/notification/components";
 import { GlobalModals } from "./features/ui/components";
 
+// Import global transition styles
+import "./shared/components/Transitions/Transitions.css";
+
 const App = () => {
   return (
     <ConfigProvider
@@ -42,45 +48,93 @@ const App = () => {
       <AuthProvider>
         <SocketProviderCompat>
           <Router>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+            <TransitionProvider>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={
+                  <TransitionLayout transitionType="fade">
+                    <Login />
+                  </TransitionLayout>
+                } />
+                <Route path="/register" element={
+                  <TransitionLayout transitionType="fade">
+                    <Register />
+                  </TransitionLayout>
+                } />
 
-              {/* Private routes with children */}
-              <Route
-                path="/*"
-                element={
-                  <PrivateRoute>
-                    <Layout />
-                  </PrivateRoute>
-                }
-              >
-              <Route path="dashboard" element={<Feed />} />
-              <Route path="dashboard/messages" element={<MessagingApp />} />
-              <Route path="comments/:postId" element={<CommentsPage />} />
-              <Route path="post/:postId" element={<PostDetail />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="profile/:userId" element={<Profile />} />
-              <Route path="search" element={<Search />} />
-              <Route path="notifications" element={<NotificationList />} />
-              <Route
-                path="user/:userId/followers"
-                element={<FollowersList />}
-              />
-              <Route
-                path="user/:userId/following"
-                element={<FollowingList />}
-              />
-              <Route path="user/edit-profile" element={<ProfileEdit />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Route>
+                {/* Private routes with children */}
+                <Route
+                  path="/*"
+                  element={
+                    <PrivateRoute>
+                      <Layout />
+                    </PrivateRoute>
+                  }
+                >
+                  <Route path="dashboard" element={
+                    <TransitionLayout transitionType="fade">
+                      <Feed />
+                    </TransitionLayout>
+                  } />
+                  <Route path="dashboard/messages" element={
+                    <TransitionLayout transitionType="fade">
+                      <MessagingApp />
+                    </TransitionLayout>
+                  } />
+                  <Route path="comments/:postId" element={
+                    <TransitionLayout transitionType="fade">
+                      <CommentsPage />
+                    </TransitionLayout>
+                  } />
+                  <Route path="post/:postId" element={
+                    <TransitionLayout transitionType="fade">
+                      <PostDetail />
+                    </TransitionLayout>
+                  } />
+                  <Route path="profile" element={
+                    <TransitionLayout transitionType="fade">
+                      <Profile />
+                    </TransitionLayout>
+                  } />
+                  <Route path="profile/:userId" element={
+                    <TransitionLayout transitionType="fade">
+                      <Profile />
+                    </TransitionLayout>
+                  } />
+                  <Route path="search" element={
+                    <TransitionLayout transitionType="fade">
+                      <Search />
+                    </TransitionLayout>
+                  } />
+                  <Route path="notifications" element={
+                    <TransitionLayout transitionType="fade">
+                      <NotificationList />
+                    </TransitionLayout>
+                  } />
+                  <Route path="user/:userId/followers" element={
+                    <TransitionLayout transitionType="fade">
+                      <FollowersList />
+                    </TransitionLayout>
+                  } />
+                  <Route path="user/:userId/following" element={
+                    <TransitionLayout transitionType="fade">
+                      <FollowingList />
+                    </TransitionLayout>
+                  } />
+                  <Route path="user/edit-profile" element={
+                    <TransitionLayout transitionType="fade">
+                      <ProfileEdit />
+                    </TransitionLayout>
+                  } />
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Route>
 
-            {/* Default route */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-            <ToastController />
-            <GlobalModals />
+                {/* Default route */}
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+              <ToastController />
+              <GlobalModals />
+            </TransitionProvider>
           </Router>
         </SocketProviderCompat>
       </AuthProvider>

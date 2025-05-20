@@ -28,6 +28,13 @@
   border-left: 1px solid #eff3f4;
   border-right: 1px solid #eff3f4;
   position: relative;
+  will-change: transform, opacity;
+  transition: background-color 0.3s ease;
+}
+
+/* Smooth scrolling for better experience */
+.main-content {
+  scroll-behavior: smooth;
 }
 
 .widgets-column {

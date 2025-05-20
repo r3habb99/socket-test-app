@@ -95,7 +95,6 @@ export const SocketProviderCompat = ({ children }) => {
     if (!chatId && !currentChatId) return;
 
     try {
-      console.log(`Refreshing messages for chat: ${chatId || currentChatId}`);
       // This would typically call an API to get messages
       // For now, we'll just use the existing messages
       return messages;

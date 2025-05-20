@@ -154,8 +154,7 @@ export const FollowersList = () => {
         if (followingResponse.message &&
             (followingResponse.message.includes("No following") ||
              followingResponse.message.includes("not found"))) {
-          console.log("API explicitly indicates no following users found");
-          // Already set to empty array above
+         // Already set to empty array above
         }
         // Check if the response data contains a message about no following
         else if (followingResponse.data &&

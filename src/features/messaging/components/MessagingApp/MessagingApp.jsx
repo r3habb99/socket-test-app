@@ -41,9 +41,7 @@ const MessagingApp = () => {
   // Handle socket reconnection if needed - only on mount
   useEffect(() => {
     if (!socketContext.connected) {
-      // Silent reconnection - no toast notifications
-      console.log("Silently reconnecting socket from MessagingApp component");
-      socketContext.reconnect();
+     socketContext.reconnect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Intentionally omitting socketContext to prevent reconnection loops
@@ -64,7 +62,6 @@ const MessagingApp = () => {
     const isExistingChat = location.state?.isExistingChat || false;
 
     if (initialChatData && !initialChatProcessed.current && chats.length > 0) {
-      console.log("Processing initial chat:", initialChatData);
       initialChatProcessed.current = true;
 
       // Check if we have a valid chat object
@@ -90,8 +87,6 @@ const MessagingApp = () => {
 
       if (normalizedChat._id) {
         if (isExistingChat) {
-          // If it's an existing chat, find it in the chats list and use that instance
-          console.log("Using existing chat from chats list");
           const existingChat = chats.find(
             chat =>
               (chat._id === normalizedChat._id) ||
@@ -104,13 +99,9 @@ const MessagingApp = () => {
             // Use the chat from the list to ensure consistency
             setSelectedChat(existingChat);
           } else {
-            // If not found (unlikely), use the normalized chat
-            console.log("Existing chat not found in list, using provided chat");
-            setSelectedChat(normalizedChat);
+              setSelectedChat(normalizedChat);
           }
         } else {
-          // For new chats, just use the normalized chat
-          console.log("Using new chat");
           setSelectedChat(normalizedChat);
         }
       } else {
@@ -166,9 +157,7 @@ const MessagingApp = () => {
                 danger
                 icon={<ReloadOutlined />}
                 onClick={() => {
-                  // Silent reconnection - no toast notifications
-                  console.log("Silently reconnecting socket from MessagingApp component");
-                  socketContext.reconnect();
+                   socketContext.reconnect();
                 }}
               >
                 Reconnect
@@ -200,9 +189,7 @@ const MessagingApp = () => {
                 type="primary"
                 icon={<ReloadOutlined />}
                 onClick={() => {
-                  // Silent reconnection - no toast notifications
-                  console.log("Silently reconnecting socket from MessagingApp component");
-                  socketContext.reconnect();
+                   socketContext.reconnect();
                 }}
               >
                 Try Now

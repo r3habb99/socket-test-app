@@ -55,8 +55,7 @@ export const CoverPhotoUploader = ({ setUser, refreshProfile }) => {
     if (e.target.files && e.target.files[0]) {
       const selectedImage = e.target.files[0];
       setImage(selectedImage);
-      console.log("Cover photo selected:", selectedImage.name);
-
+    
       // Automatically upload the image after selection
       await handleUpload(selectedImage);
     }
@@ -69,8 +68,7 @@ export const CoverPhotoUploader = ({ setUser, refreshProfile }) => {
     if (imageFile) {
       try {
         setIsUploading(true);
-        console.log("Starting cover photo upload...");
-
+      
         const response = await uploadCoverPhoto(imageFile);
 
         if (response.error) {
@@ -85,23 +83,19 @@ export const CoverPhotoUploader = ({ setUser, refreshProfile }) => {
         // Case 1: Direct response.data.coverPhoto
         if (response.data?.coverPhoto) {
           coverPhotoUrl = response.data.coverPhoto;
-          console.log("Found cover photo in response.data.coverPhoto:", coverPhotoUrl);
         }
         // Case 2: Nested in response.data.user.coverPhoto
         else if (response.data?.user?.coverPhoto) {
           coverPhotoUrl = response.data.user.coverPhoto;
-          console.log("Found cover photo in response.data.user.coverPhoto:", coverPhotoUrl);
         }
         // Case 3: Nested in response.data.data.coverPhoto
         else if (response.data?.data?.coverPhoto) {
           coverPhotoUrl = response.data.data.coverPhoto;
-          console.log("Found cover photo in response.data.data.coverPhoto:", coverPhotoUrl);
         }
         // Case 4: Nested in response.data.data.user.coverPhoto
         else if (response.data?.data?.user?.coverPhoto) {
           coverPhotoUrl = response.data.data.user.coverPhoto;
-          console.log("Found cover photo in response.data.data.user.coverPhoto:", coverPhotoUrl);
-        }
+       }
 
         if (coverPhotoUrl) {
           // Add a timestamp to the URL to prevent caching
@@ -110,8 +104,7 @@ export const CoverPhotoUploader = ({ setUser, refreshProfile }) => {
             ? `${coverPhotoUrl}&t=${timestamp}`
             : `${coverPhotoUrl}?t=${timestamp}`;
 
-          console.log("Updating user state with new cover photo:", updatedUrl);
-
+       
           // Update user state with new cover photo
           setUser((prevUser) => ({
             ...prevUser,
@@ -129,14 +122,12 @@ export const CoverPhotoUploader = ({ setUser, refreshProfile }) => {
 
         // If refreshProfile function is provided, use it
         if (refreshProfile) {
-          console.log("Using provided refreshProfile function");
-          // Wait for toast to disappear (3 seconds) then refresh
+         // Wait for toast to disappear (3 seconds) then refresh
           setTimeout(() => {
             refreshProfile();
           }, 3000);
         } else {
-          console.log("Using fallback refresh method");
-          // Fallback to the old refresh method
+        // Fallback to the old refresh method
           setRefreshTrigger(true);
         }
 

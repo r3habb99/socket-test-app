@@ -263,8 +263,7 @@ export const Profile = () => {
 
                           // First check if a chat already exists with this user
                           const chatsResponse = await getAllChats();
-                          console.log("Chats response:", chatsResponse);
-
+                        
                           if (chatsResponse.error) {
                             console.error("Failed to fetch chats:", chatsResponse.message);
                             // Continue with creating a new chat as fallback
@@ -338,8 +337,7 @@ export const Profile = () => {
                             return;
                           }
 
-                          console.log("Extracted chat data:", chatData);
-
+                       
                           // Create a normalized chat object with _id property
                           const normalizedChat = {
                             ...chatData,

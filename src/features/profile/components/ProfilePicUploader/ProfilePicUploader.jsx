@@ -55,8 +55,6 @@ export const ProfilePicUploader = ({ setUser, refreshProfile }) => {
     if (e.target.files && e.target.files[0]) {
       const selectedImage = e.target.files[0];
       setImage(selectedImage);
-      console.log("Image selected:", selectedImage.name);
-
       // Automatically upload the image after selection
       await handleUpload(selectedImage);
     }
@@ -69,12 +67,8 @@ export const ProfilePicUploader = ({ setUser, refreshProfile }) => {
     if (imageFile) {
       try {
         setIsUploading(true);
-        console.log("Starting profile picture upload...");
-
         const response = await uploadProfilePic(imageFile);
-        console.log("Upload response:", response);
-
-        if (response.error) {
+       if (response.error) {
           toast.error(`Failed to upload profile picture: ${response.message}`);
           console.error("Error uploading profile pic:", response.message);
           return;
@@ -86,22 +80,18 @@ export const ProfilePicUploader = ({ setUser, refreshProfile }) => {
         // Case 1: Direct response.data.profilePic
         if (response.data?.profilePic) {
           profilePicUrl = response.data.profilePic;
-          console.log("Found profile pic in response.data.profilePic:", profilePicUrl);
         }
         // Case 2: Nested in response.data.user.profilePic
         else if (response.data?.user?.profilePic) {
           profilePicUrl = response.data.user.profilePic;
-          console.log("Found profile pic in response.data.user.profilePic:", profilePicUrl);
-        }
+       }
         // Case 3: Nested in response.data.data.profilePic
         else if (response.data?.data?.profilePic) {
           profilePicUrl = response.data.data.profilePic;
-          console.log("Found profile pic in response.data.data.profilePic:", profilePicUrl);
         }
         // Case 4: Nested in response.data.data.user.profilePic
         else if (response.data?.data?.user?.profilePic) {
           profilePicUrl = response.data.data.user.profilePic;
-          console.log("Found profile pic in response.data.data.user.profilePic:", profilePicUrl);
         }
 
         if (profilePicUrl) {
@@ -110,8 +100,6 @@ export const ProfilePicUploader = ({ setUser, refreshProfile }) => {
           const updatedUrl = profilePicUrl.includes('?')
             ? `${profilePicUrl}&t=${timestamp}`
             : `${profilePicUrl}?t=${timestamp}`;
-
-          console.log("Updating user state with new profile picture:", updatedUrl);
 
           // Update user state with new profile picture
           setUser((prevUser) => ({
@@ -126,13 +114,11 @@ export const ProfilePicUploader = ({ setUser, refreshProfile }) => {
 
           // If refreshProfile function is provided, use it
           if (refreshProfile) {
-            console.log("Using provided refreshProfile function");
-            // Wait for toast to disappear (3 seconds) then refresh
+            // Wait for toast to disappear (2 seconds) then refresh
             setTimeout(() => {
               refreshProfile();
-            }, 3000);
+            }, 2000);
           } else {
-            console.log("Using fallback refresh method");
             // Fallback to the old refresh method
             setRefreshTrigger(true);
           }
@@ -144,7 +130,7 @@ export const ProfilePicUploader = ({ setUser, refreshProfile }) => {
           if (refreshProfile) {
             setTimeout(() => {
               refreshProfile();
-            }, 3000);
+            }, 2000);
           } else {
             setRefreshTrigger(true);
           }

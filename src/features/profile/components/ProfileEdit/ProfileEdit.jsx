@@ -73,9 +73,7 @@ const ProfileEdit = () => {
           userData = responseData;
         }
 
-        // Log the extracted user data to verify structure
-        console.log("Extracted user data:", userData);
-
+   
 
         if (userData) {
           // Ensure we have all the required fields
@@ -87,8 +85,6 @@ const ProfileEdit = () => {
             bio: userData.bio || ""
           });
 
-          // Log the bio field to verify it's being loaded correctly
-          console.log("Loaded bio from profile:", userData.bio);
         } else {
           console.error("Invalid user data format:", responseData);
           setError("Failed to parse user data");
@@ -163,9 +159,7 @@ const ProfileEdit = () => {
             userData = responseData;
           }
 
-          // Log the extracted user data to verify structure
-          console.log("Refreshed user data:", userData);
-
+       
           if (userData) {
             setFormData({
               firstName: userData.firstName || "",
@@ -175,9 +169,7 @@ const ProfileEdit = () => {
               bio: userData.bio || ""
             });
 
-            // Log the bio field to verify it's being refreshed correctly
-            console.log("Refreshed bio from profile:", userData.bio);
-          }
+           }
         }
       } catch (refreshErr) {
         console.error("Error refreshing profile data:", refreshErr);
