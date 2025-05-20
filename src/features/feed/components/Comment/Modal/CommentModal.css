@@ -1,36 +1,45 @@
 .comment-modal .ant-modal-content {
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 0 15px rgba(101, 119, 134, 0.2);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
 .comment-modal .ant-modal-header {
-  border-bottom: 1px solid #eff3f4;
-  padding: 16px 24px;
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(5px);
+  border-bottom: 1px solid #dbdbdb;
+  padding: 12px 16px;
+  background-color: #fff;
+  text-align: center;
+  position: relative;
+}
+
+.comment-modal .ant-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
 }
 
 .comment-modal .ant-modal-body {
-  padding: 16px 24px;
+  padding: 0;
   max-height: 70vh;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .comment-post-content {
   padding: 16px;
-  border-bottom: 1px solid #eff3f4;
-  margin-bottom: 16px;
+  border-bottom: 1px solid #efefef;
+  margin-bottom: 0;
 }
 
 .post-author-header {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .post-avatar {
-  margin-right: 12px;
+  margin-right: 10px;
   flex-shrink: 0;
 }
 
@@ -44,8 +53,9 @@
   line-height: 1.2 !important;
   display: flex;
   align-items: center;
-  font-weight: 700 !important;
-  color: #0f1419 !important;
+  font-weight: 600 !important;
+  color: #262626 !important;
+  font-size: 14px;
 }
 
 .verified-badge {
@@ -54,16 +64,16 @@
   justify-content: center;
   margin-left: 4px;
   color: #fff;
-  background-color: #1d9bf0;
+  background-color: #0095f6;
   border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  font-size: 10px;
+  width: 12px;
+  height: 12px;
+  font-size: 8px;
 }
 
 .post-author-username {
-  font-size: 14px;
-  color: #536471;
+  font-size: 12px;
+  color: #8e8e8e;
   margin-top: 2px !important;
 }
 
@@ -71,56 +81,70 @@
   margin-top: 8px;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #0f1419;
-  font-size: 20px;
-  line-height: 1.5;
+  color: #262626;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .comment-loading-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 32px;
+  padding: 24px;
+  flex: 1;
 }
 
 .comment-sort-options {
   display: flex;
   align-items: center;
-  margin: 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eff3f4;
+  padding: 12px 16px;
+  border-bottom: 1px solid #efefef;
+  background-color: #fafafa;
 }
 
 .comment-sort-options .ant-btn {
   margin-left: 8px;
-  border-radius: 20px;
+  border: none;
+  background: none;
+  color: #8e8e8e;
+  padding: 0;
+  height: auto;
+  font-size: 12px;
+}
+
+.comment-sort-options .ant-btn:hover {
+  color: #262626;
 }
 
 .comment-sort-options .ant-typography {
   margin-right: 8px;
-  color: #536471;
-  font-size: 14px;
+  color: #8e8e8e;
+  font-size: 12px;
 }
 
 .comment-sort-options .ant-btn-primary {
-  background-color: #1d9bf0;
-  border-color: #1d9bf0;
+  color: #0095f6;
+  font-weight: 600;
 }
 
 .comment-sort-options .ant-btn-primary:hover {
-  background-color: #1a8cd8;
-  border-color: #1a8cd8;
+  color: #00376b;
+}
+
+.comments-section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px;
 }
 
 .no-comments-message {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 32px 16px;
+  padding: 24px 16px;
   text-align: center;
-  background-color: #f7f9fa;
-  border-radius: 16px;
   margin: 16px 0;
+  color: #8e8e8e;
 }
 
 .error-container {
@@ -128,37 +152,51 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 32px 16px;
+  padding: 24px 16px;
   text-align: center;
-  background-color: #fff0f0;
-  border-radius: 16px;
   margin: 16px 0;
-  border: 1px solid #ffccc7;
+  color: #ed4956;
 }
 
 .error-container .ant-typography {
-  margin-bottom: 16px;
-  font-size: 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #ed4956;
 }
 
 .error-container .ant-btn {
   margin-top: 8px;
-  border-radius: 20px;
-  background-color: #1d9bf0;
-  border-color: #1d9bf0;
+  border: none;
+  background: none;
+  color: #0095f6;
+  font-weight: 600;
 }
 
 /* Close button styling */
 .close-modal-button {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 16px;
   padding: 0;
   margin: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  color: #262626;
+}
+
+/* Comment form container at bottom */
+.comment-form-fixed-container {
+  border-top: 1px solid #efefef;
+  padding: 8px 16px;
+  background-color: #fff;
+  width: 100%;
 }
 
 /* Mobile responsiveness */
@@ -169,6 +207,7 @@
     margin: 0;
     max-width: 100%;
     top: 0;
+    height: 100%;
   }
 
   /* Modal content */
@@ -176,6 +215,9 @@
     border-radius: 0;
     margin: 0;
     padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 
   /* Modal header */
@@ -184,28 +226,32 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  }
+
+  .comment-modal .ant-modal-title {
+    font-size: 14px;
   }
 
   /* Close button on mobile */
   .close-modal-button {
-    min-height: 44px;
-    min-width: 44px;
-    font-size: 24px;
+    min-height: 32px;
+    min-width: 32px;
+    font-size: 18px;
+    left: 8px;
   }
 
   /* Modal body */
   .comment-modal .ant-modal-body {
-    padding: 12px 16px;
-    max-height: calc(100vh - 56px); /* Adjust for header height */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 45px); /* Adjust for header height */
   }
 
   /* Post content in modal */
   .comment-post-content {
     padding: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 0;
   }
 
   /* Author header */
@@ -215,51 +261,52 @@
 
   /* Post content text */
   .post-content {
-    font-size: 16px;
-    line-height: 1.4;
+    font-size: 14px;
+    line-height: 1.3;
   }
 
-  /* Comment form adjustments */
-  .comment-modal .comment-form-container {
-    padding: 8px;
+  /* Comments section */
+  .comments-section {
+    padding: 0 12px;
   }
 
   /* Sort options */
   .comment-sort-options {
-    flex-wrap: wrap;
-    margin: 12px 0;
-    padding-bottom: 6px;
+    padding: 8px 12px;
   }
 
   .comment-sort-options .ant-typography {
-    margin-bottom: 6px;
-    width: 100%;
+    font-size: 11px;
   }
 
   .comment-sort-options .ant-btn {
-    margin: 4px;
-    margin-left: 0;
-    padding: 4px 10px;
-    height: 32px;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   /* Loading container */
   .comment-loading-container {
-    padding: 20px;
+    padding: 16px;
   }
 
   /* No comments message */
   .no-comments-message {
-    padding: 20px 12px;
+    padding: 16px 12px;
     margin: 12px 0;
-    border-radius: 8px;
+    font-size: 13px;
   }
 
   /* Error container */
   .error-container {
-    padding: 20px 12px;
+    padding: 16px 12px;
     margin: 12px 0;
-    border-radius: 8px;
+    font-size: 13px;
+  }
+
+  /* Comment form fixed at bottom */
+  .comment-form-fixed-container {
+    padding: 6px 12px;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
   }
 }

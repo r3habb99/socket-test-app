@@ -85,6 +85,7 @@ export const CommentList = ({
               postId={postId}
               onCommentUpdated={onCommentUpdated}
               replies={repliesByParentId[comment._id || comment.id] || []}
+              isNested={isNested}
             />
           )}
         />

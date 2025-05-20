@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, Typography, Button, Tooltip, Popconfirm, Form, Input, Spin } from "antd";
 import {
@@ -6,7 +6,9 @@ import {
   HeartFilled,
   MessageOutlined,
   DeleteOutlined,
-  EditOutlined
+  EditOutlined,
+  DownOutlined,
+  UpOutlined
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { DEFAULT_PROFILE_PIC } from "../../../../../constants";
@@ -32,15 +34,18 @@ const { TextArea } = Input;
  * @param {Array} props.replies - Array of reply comments
  * @returns {JSX.Element} CommentItem component
  */
-export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
+export const CommentItem = ({ comment, postId, onCommentUpdated, isNested = false }) => {
   const navigate = useNavigate();
   const [isReplying, setIsReplying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [editCharCount, setEditCharCount] = useState(comment.content ? comment.content.length : 0);
   const [actionInProgress, setActionInProgress] = useState(false);
+  const [heartAnimation, setHeartAnimation] = useState(false);
+  const [showReplies, setShowReplies] = useState(true);
+  const likeButtonRef = useRef(null);
 
-  const MAX_CHARS = 280; // Twitter-like character limit
+  const MAX_CHARS = 280; // Character limit
 
   // Get current user ID from localStorage
   const currentUserId = localStorage.getItem("userId");
@@ -52,7 +57,8 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
     loading: loadingReplies,
     addReply,
     loadMoreReplies,
-    pagination: replyPagination
+    pagination: replyPagination,
+    toggleReplies: toggleRepliesHook
   } = useReplies(commentId, postId);
 
 
@@ -108,6 +114,12 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
     // Optimistically update the UI for immediate feedback
     const wasLiked = hasLiked;
     setHasLiked(!wasLiked);
+
+    // Trigger heart animation when liking
+    if (!wasLiked) {
+      setHeartAnimation(true);
+      setTimeout(() => setHeartAnimation(false), 500);
+    }
 
     // If the user is liking the comment, optimistically increment the like count
     // If the user is unliking the comment, optimistically decrement the like count
@@ -171,10 +183,19 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
     // Add the reply using our custom hook
     addReply(newReply);
 
+    // Make sure replies are visible when a new reply is added
+    setShowReplies(true);
+
     // Update the comment in the parent component
     if (onCommentUpdated) {
       onCommentUpdated();
     }
+  };
+
+  // Toggle showing/hiding replies
+  const handleToggleReplies = () => {
+    setShowReplies(!showReplies);
+    toggleRepliesHook();
   };
 
   // Handle edit comment
@@ -265,10 +286,10 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
 
 
   return (
-    <div className="comment-item">
-      <div className="comment-header">
+    <div className={`comment-item ${isNested ? 'nested-comment-item' : ''}`}>
+      <div className="comment-layout">
         <Avatar
-          size={40}
+          size={32}
           src={
             <ImageProxy
               src={getImageUrl(author.profilePic, DEFAULT_PROFILE_PIC)}
@@ -280,138 +301,138 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
           onClick={navigateToUserProfile}
         />
 
-        <div className="comment-user-info">
-          <div className="comment-user-name-container">
-            <Text
-              strong
-              className="comment-user-name clickable"
-              onClick={navigateToUserProfile}
-            >
-              {author.firstName || author.username || "User"}{" "}
-              {author.lastName || ""}
-              {author.isVerified && <span className="verified-badge">✓</span>}
-            </Text>
-
-            <Text
-              type="secondary"
-              className="comment-user-handle clickable"
-              onClick={navigateToUserProfile}
-            >
-              @{author.username || "user"}
-            </Text>
-
-            <Text type="secondary" className="comment-timestamp">
-              {formatTimestamp(comment.createdAt)}
-            </Text>
-          </div>
-        </div>
-      </div>
-
-      <div className="comment-content">
-        {isEditing ? (
-          <Form className="edit-comment-form">
-            <Form.Item>
-              <TextArea
-                value={editContent}
-                onChange={handleEditContentChange}
-                autoSize={{ minRows: 2, maxRows: 6 }}
-                maxLength={MAX_CHARS + 1} // Allow one extra character to trigger validation
-              />
-            </Form.Item>
-            <div className="edit-form-footer">
-              <div className="char-counter">
+        <div className="comment-content-wrapper">
+          {isEditing ? (
+            <Form className="edit-comment-form">
+              <Form.Item>
+                <TextArea
+                  value={editContent}
+                  onChange={handleEditContentChange}
+                  autoSize={{ minRows: 2, maxRows: 6 }}
+                  maxLength={MAX_CHARS + 1} // Allow one extra character to trigger validation
+                />
+              </Form.Item>
+              <div className="edit-form-footer">
+                <div className="char-counter">
+                  <Text
+                    type={editCharCount > MAX_CHARS ? "danger" : editCharCount > MAX_CHARS * 0.8 ? "warning" : "secondary"}
+                  >
+                    {editCharCount}/{MAX_CHARS}
+                  </Text>
+                </div>
+                <div className="edit-actions">
+                  <Button onClick={() => setIsEditing(false)}>Cancel</Button>
+                  <Button
+                    type="primary"
+                    onClick={handleEditSubmit}
+                    loading={actionInProgress}
+                    disabled={!editContent.trim() || editCharCount > MAX_CHARS}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            </Form>
+          ) : (
+            <>
+              <div className="comment-content-row">
                 <Text
-                  type={editCharCount > MAX_CHARS ? "danger" : editCharCount > MAX_CHARS * 0.8 ? "warning" : "secondary"}
+                  strong
+                  className="comment-user-name clickable"
+                  onClick={navigateToUserProfile}
                 >
-                  {editCharCount}/{MAX_CHARS}
+                  {author.username || "user"}
+                  {author.isVerified && <span className="verified-badge">✓</span>}
                 </Text>
+
+                <Paragraph className="comment-text">{comment.content}</Paragraph>
               </div>
-              <div className="edit-actions">
-                <Button onClick={() => setIsEditing(false)}>Cancel</Button>
-                <Button
-                  type="primary"
-                  onClick={handleEditSubmit}
-                  loading={actionInProgress}
-                  disabled={!editContent.trim() || editCharCount > MAX_CHARS}
+
+              {/* Display media if available */}
+              {comment.media && comment.media.length > 0 && (
+                <div className="comment-media-container">
+                  {comment.media.map((mediaUrl, index) => {
+                    const placeholderImage = "https://via.placeholder.com/400x300?text=Image+Loading...";
+
+                    return (
+                      <div key={index} className="comment-media">
+                        <ImageProxy
+                          src={getImageUrl(mediaUrl, placeholderImage)}
+                          alt={`Comment media ${index + 1}`}
+                          className="comment-media-image"
+                          defaultSrc={placeholderImage}
+                          onError={() => {
+                            // Silent error handling - fallback to placeholder image
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="comment-metadata">
+                <span className="comment-timestamp">
+                  {formatTimestamp(comment.createdAt)}
+                </span>
+
+                {/* Like count if any */}
+                {(comment.likes?.length > 0) && (
+                  <span className="comment-likes-count">
+                    {comment.likes.length} {comment.likes.length === 1 ? 'like' : 'likes'}
+                  </span>
+                )}
+
+                {/* Reply button text */}
+                <span
+                  className="comment-reply-text clickable"
+                  onClick={handleReplyClick}
                 >
-                  Save
-                </Button>
+                  Reply
+                </span>
               </div>
-            </div>
-          </Form>
-        ) : (
-          <>
-            <Paragraph className="comment-text">{comment.content}</Paragraph>
-
-            {/* Display media if available */}
-            {comment.media && comment.media.length > 0 && (
-              <div className="comment-media-container">
-                {comment.media.map((mediaUrl, index) => {
-                  const placeholderImage = "https://via.placeholder.com/400x300?text=Image+Loading...";
-
-                  return (
-                    <div key={index} className="comment-media">
-                      <ImageProxy
-                        src={getImageUrl(mediaUrl, placeholderImage)}
-                        alt={`Comment media ${index + 1}`}
-                        className="comment-media-image"
-                        defaultSrc={placeholderImage}
-                        onError={() => {
-                          // Silent error handling - fallback to placeholder image
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       <div className="comment-actions">
         {/* Like button */}
         <div className="comment-action-group">
-          <Tooltip title={hasLiked ? "Unlike" : "Like"}>
-            <Button
-              type="text"
-              onClick={handleLikeToggle}
-              className="comment-action-button like-button"
-              aria-label={hasLiked ? "Unlike" : "Like"}
-              icon={hasLiked ? <HeartFilled style={{ color: '#e0245e' }} /> : <HeartOutlined />}
-              disabled={actionInProgress}
-            />
-          </Tooltip>
-          <span className="comment-action-count">{comment.likes?.length || 0}</span>
+          <Button
+            type="text"
+            onClick={handleLikeToggle}
+            className={`comment-action-button ${hasLiked ? 'like-button-active' : 'like-button'} ${heartAnimation ? 'heart-animation' : ''}`}
+            aria-label={hasLiked ? "Unlike" : "Like"}
+            icon={hasLiked ? <HeartFilled /> : <HeartOutlined />}
+            disabled={actionInProgress}
+            ref={likeButtonRef}
+          />
         </div>
 
         {/* Reply button */}
         <div className="comment-action-group">
-          <Tooltip title="Reply">
-            <Button
-              type="text"
-              onClick={handleReplyClick}
-              className="comment-action-button"
-              aria-label="Reply"
-              icon={<MessageOutlined />}
-              disabled={actionInProgress}
-            />
-          </Tooltip>
+          <Button
+            type="text"
+            onClick={handleReplyClick}
+            className="comment-action-button"
+            aria-label="Reply"
+            icon={<MessageOutlined />}
+            disabled={actionInProgress}
+          />
         </div>
 
         {/* Edit button (only for author) */}
         {isAuthor && (
           <div className="comment-action-group">
-            <Tooltip title="Edit">
-              <Button
-                type="text"
-                onClick={handleEditClick}
-                className="comment-action-button"
-                aria-label="Edit"
-                icon={<EditOutlined />}
-                disabled={actionInProgress}
-              />
-            </Tooltip>
+            <Button
+              type="text"
+              onClick={handleEditClick}
+              className="comment-action-button"
+              aria-label="Edit"
+              icon={<EditOutlined />}
+              disabled={actionInProgress}
+            />
           </div>
         )}
 
@@ -426,15 +447,13 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
               cancelText="Cancel"
               okButtonProps={{ danger: true }}
             >
-              <Tooltip title="Delete">
-                <Button
-                  type="text"
-                  className="comment-action-button delete-button"
-                  aria-label="Delete"
-                  icon={<DeleteOutlined />}
-                  disabled={actionInProgress}
-                />
-              </Tooltip>
+              <Button
+                type="text"
+                className="comment-action-button delete-button"
+                aria-label="Delete"
+                icon={<DeleteOutlined />}
+                disabled={actionInProgress}
+              />
             </Popconfirm>
           </div>
         )}
@@ -452,56 +471,61 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
         </div>
       )}
 
-      {/* Replies count indicator */}
+      {/* View replies button - only show if there are replies */}
       {(replies.length > 0 || comment.replyCount > 0 || comment.replies?.length > 0) && (
-        <div className="comment-replies-count">
-          <Text type="secondary">
-            {`${replies.length || comment.replyCount || comment.replies?.length || 0} ${(replies.length === 1 || comment.replyCount === 1 || comment.replies?.length === 1) ? 'reply' : 'replies'}`}
-          </Text>
-        </div>
+        <button
+          className="view-replies-button"
+          onClick={handleToggleReplies}
+        >
+          <span className="reply-line"></span>
+          {showReplies
+            ? `Hide ${replies.length || comment.replyCount || comment.replies?.length || 0} ${(replies.length === 1 || comment.replyCount === 1 || comment.replies?.length === 1) ? 'reply' : 'replies'}`
+            : `View ${replies.length || comment.replyCount || comment.replies?.length || 0} ${(replies.length === 1 || comment.replyCount === 1 || comment.replies?.length === 1) ? 'reply' : 'replies'}`
+          }
+        </button>
       )}
 
-      {/* Replies - always visible */}
-      <>
-        {loadingReplies && replies.length === 0 ? (
-          <div className="comment-loading-container">
-            <Spin size="small" />
-          </div>
-        ) : (
-          <>
+      {/* Replies */}
+      {showReplies && (
+        <>
+          {loadingReplies && replies.length === 0 ? (
+            <div className="comment-loading-container">
+              <Spin size="small" />
+            </div>
+          ) : (
+            <>
+              {replies.length > 0 && (
+                <div className="comment-replies-container">
+                  <CommentList
+                    comments={replies}
+                    postId={postId}
+                    onCommentUpdated={onCommentUpdated}
+                    isNested={true}
+                  />
 
+                  {replyPagination.hasMore && (
+                    <div className="load-more-replies">
+                      <Button
+                        type="link"
+                        onClick={loadMoreReplies}
+                        loading={loadingReplies}
+                      >
+                        Load more replies
+                      </Button>
+                    </div>
+                  )}
 
-            {replies.length > 0 && (
-              <div className="comment-replies-container">
-                <CommentList
-                  comments={replies}
-                  postId={postId}
-                  onCommentUpdated={onCommentUpdated}
-                  isNested={true}
-                />
-
-                {replyPagination.hasMore && (
-                  <div className="load-more-replies">
-                    <Button
-                      type="link"
-                      onClick={loadMoreReplies}
-                      loading={loadingReplies}
-                    >
-                      Load more replies
-                    </Button>
-                  </div>
-                )}
-
-                {loadingReplies && replies.length > 0 && (
-                  <div className="comment-loading-container">
-                    <Spin size="small" />
-                  </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </>
+                  {loadingReplies && replies.length > 0 && (
+                    <div className="comment-loading-container">
+                      <Spin size="small" />
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 };

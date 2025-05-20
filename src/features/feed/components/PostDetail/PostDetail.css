@@ -335,6 +335,7 @@
 .post-detail-comment-form .char-counter {
   color: #536471;
   font-size: 14px;
+  margin-bottom: 10px;
 }
 
 .post-detail-comment-form button {

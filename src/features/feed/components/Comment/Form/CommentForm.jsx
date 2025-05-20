@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Form, Input, Button, Typography } from "antd";
 import { SendOutlined } from "@ant-design/icons";
 import { useCommentForm } from "../hooks";
@@ -18,7 +18,8 @@ const { Text } = Typography;
  */
 
 export const CommentForm = ({ postId, replyToId, onCommentAdded, onCancel }) => {
-  const MAX_CHARS = 280; // Twitter-like character limit
+  const MAX_CHARS = 280; // Character limit
+  const [showCharCounter, setShowCharCounter] = useState(false);
 
   // Use our custom hook for form handling
   const {
@@ -38,11 +39,24 @@ export const CommentForm = ({ postId, replyToId, onCommentAdded, onCancel }) => 
   });
 
   // Focus the text area when the component mounts (useful for reply forms)
-  React.useEffect(() => {
+  useEffect(() => {
     if (textAreaRef.current) {
       textAreaRef.current.focus();
     }
   }, [textAreaRef]);
+
+  // Show character counter when approaching the limit
+  useEffect(() => {
+    setShowCharCounter(charCount > MAX_CHARS * 0.8);
+  }, [charCount, MAX_CHARS]);
+
+  // Get placeholder text - if replying to a comment, include @username
+  const getPlaceholder = () => {
+    if (replyToId) {
+      return "Reply...";
+    }
+    return "Add a comment...";
+  };
 
   return (
     <div className="comment-form-container">
@@ -55,8 +69,8 @@ export const CommentForm = ({ postId, replyToId, onCommentAdded, onCancel }) => 
         <Form.Item name="content" className="comment-input-container">
           <TextArea
             ref={textAreaRef}
-            placeholder={replyToId ? "Write a reply..." : "Write a comment..."}
-            autoSize={{ minRows: 1, maxRows: 4 }}
+            placeholder={getPlaceholder()}
+            autoSize={{ minRows: 1, maxRows: 3 }}
             value={content}
             onChange={handleContentChange}
             maxLength={MAX_CHARS + 1} // Allow one extra character to trigger validation
@@ -64,33 +78,30 @@ export const CommentForm = ({ postId, replyToId, onCommentAdded, onCancel }) => 
           />
         </Form.Item>
 
-        <div className="comment-form-footer">
-          <div className="char-counter">
-            <Text
-              type={charCount > MAX_CHARS ? "danger" : charCount > MAX_CHARS * 0.8 ? "warning" : "secondary"}
-            >
-              {charCount}/{MAX_CHARS}
-            </Text>
-          </div>
+        <div className={`char-counter ${showCharCounter ? 'show' : ''}`}>
+          <Text
+            type={charCount > MAX_CHARS ? "danger" : charCount > MAX_CHARS * 0.8 ? "warning" : "secondary"}
+          >
+            {charCount}/{MAX_CHARS}
+          </Text>
+        </div>
 
-          <div className="comment-form-actions">
-            {replyToId && onCancel && (
-              <Button onClick={onCancel} className="cancel-button">
-                Cancel
-              </Button>
-            )}
-
-            <Button
-              type="primary"
-              htmlType="submit"
-              icon={<SendOutlined />}
-              loading={submitting}
-              disabled={!content.trim() || charCount > MAX_CHARS}
-              className="submit-button"
-            >
-              {replyToId ? "Reply" : "Comment"}
+        <div className="comment-form-actions">
+          {replyToId && onCancel && (
+            <Button onClick={onCancel} className="cancel-button">
+              Cancel
             </Button>
-          </div>
+          )}
+
+          <Button
+            htmlType="submit"
+            icon={<SendOutlined/>}
+            loading={submitting}
+            disabled={!content.trim() || charCount > MAX_CHARS}
+            className="submit-button"
+          >
+            {replyToId ? "Reply" : "Post"}
+          </Button>
         </div>
       </Form>
     </div>
