@@ -3,7 +3,7 @@ import { FaTrash } from "react-icons/fa";
 import { Button, Tooltip, Spin, Popconfirm } from "antd";
 import { toast } from "react-toastify";
 import { deletePost } from "../../api/postApi";
-import { useSocketContext } from "../../../../core/providers/SocketProvider";
+import { useSocketContext } from "../../../../features/socket/components/SocketProviderCompat";
 import "./DeleteButton.css";
 
 /**
@@ -160,19 +160,6 @@ export const DeleteButton = ({
 
   // Only render the delete button if it's the user's own post
   const canDelete = isOwnPost(post);
-
-  // For debugging - log post ownership details
-  console.log('Delete button visibility check:', {
-    postId: getPostId(post),
-    canDelete,
-    userId: localStorage.getItem('userId'),
-    username: localStorage.getItem('username'),
-    postDetails: {
-      postedBy: post.postedBy,
-      userId: post.userId,
-      user: post.user
-    }
-  });
 
   if (!canDelete) {
     return null;

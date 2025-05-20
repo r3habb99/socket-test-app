@@ -1,0 +1,298 @@
+/**
+ * Theme styles
+ */
+
+/* Base theme */
+:root {
+  --primary-color: #1d9bf0;
+  --primary-color-hover: #1a8cd8;
+  --primary-color-light: rgba(29, 155, 240, 0.1);
+  --border-color: #eff3f4;
+  --text-color: #0f1419;
+  --secondary-text-color: #536471;
+  --background-color: #ffffff;
+  --secondary-background: #f7f9fa;
+  --hover-background: #f5f8fa;
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  --error-color: #e0245e;
+  --success-color: #17bf63;
+  --warning-color: #ffad1f;
+  --info-color: #1da1f2;
+}
+
+/* Apply theme variables to elements */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Card styles */
+.ant-card {
+  background-color: var(--background-color);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+/* Input styles */
+.ant-input,
+.ant-input-affix-wrapper {
+  background-color: var(--background-color);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+.ant-input-affix-wrapper:hover,
+.ant-input:hover {
+  border-color: var(--primary-color);
+}
+
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input:focus,
+.ant-input-focused {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-color-light);
+}
+
+/* Button styles */
+.ant-btn {
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+.ant-btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.ant-btn-primary:hover {
+  background-color: var(--primary-color-hover);
+  border-color: var(--primary-color-hover);
+}
+
+/* Menu styles */
+.ant-menu {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.ant-menu-item:hover {
+  background-color: var(--hover-background);
+}
+
+.ant-menu-item-selected {
+  background-color: var(--primary-color-light) !important;
+  color: var(--primary-color) !important;
+}
+
+/* Modal styles */
+.ant-modal-content {
+  background-color: var(--background-color);
+}
+
+.ant-modal-header {
+  background-color: var(--background-color);
+  border-color: var(--border-color);
+}
+
+.ant-modal-title {
+  color: var(--text-color);
+}
+
+.ant-modal-footer {
+  border-color: var(--border-color);
+}
+
+/* Dropdown styles */
+.ant-dropdown-menu {
+  background-color: var(--background-color);
+  border-color: var(--border-color);
+}
+
+.ant-dropdown-menu-item {
+  color: var(--text-color);
+}
+
+.ant-dropdown-menu-item:hover {
+  background-color: var(--hover-background);
+}
+
+/* List styles */
+.ant-list {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.ant-list-item {
+  border-color: var(--border-color);
+}
+
+.ant-list-item:hover {
+  background-color: var(--hover-background);
+}
+
+/* Tabs styles */
+.ant-tabs-tab {
+  color: var(--secondary-text-color);
+}
+
+.ant-tabs-tab:hover {
+  color: var(--primary-color);
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--primary-color);
+}
+
+.ant-tabs-ink-bar {
+  background-color: var(--primary-color);
+}
+
+/* Avatar styles */
+.ant-avatar {
+  background-color: var(--primary-color);
+}
+
+/* Badge styles */
+.ant-badge-count {
+  background-color: var(--error-color);
+}
+
+/* Typography styles */
+.ant-typography {
+  color: var(--text-color);
+}
+
+h1.ant-typography,
+h2.ant-typography,
+h3.ant-typography,
+h4.ant-typography,
+h5.ant-typography {
+  color: var(--text-color);
+}
+
+.ant-typography-secondary {
+  color: var(--secondary-text-color);
+}
+
+/* Divider styles */
+.ant-divider {
+  border-color: var(--border-color);
+}
+
+/* Notification styles */
+.ant-notification-notice {
+  background-color: var(--background-color);
+  border-color: var(--border-color);
+}
+
+.ant-notification-notice-message {
+  color: var(--text-color);
+}
+
+.ant-notification-notice-description {
+  color: var(--secondary-text-color);
+}
+
+/* Toast styles */
+.Toastify__toast {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.Toastify__toast--success {
+  background-color: var(--success-color);
+}
+
+.Toastify__toast--error {
+  background-color: var(--error-color);
+}
+
+.Toastify__toast--warning {
+  background-color: var(--warning-color);
+}
+
+.Toastify__toast--info {
+  background-color: var(--info-color);
+}
+
+/* Checkbox styles */
+.ant-checkbox-wrapper {
+  color: var(--text-color);
+}
+
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Radio styles */
+.ant-radio-wrapper {
+  color: var(--text-color);
+}
+
+.ant-radio-checked .ant-radio-inner {
+  border-color: var(--primary-color);
+}
+
+.ant-radio-inner::after {
+  background-color: var(--primary-color);
+}
+
+/* Select styles */
+.ant-select {
+  color: var(--text-color);
+}
+
+.ant-select-dropdown {
+  background-color: var(--background-color);
+}
+
+.ant-select-item {
+  color: var(--text-color);
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background-color: var(--primary-color-light);
+  color: var(--primary-color);
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background-color: var(--hover-background);
+}
+
+/* Pagination styles */
+.ant-pagination-item {
+  background-color: var(--background-color);
+  border-color: var(--border-color);
+}
+
+.ant-pagination-item a {
+  color: var(--text-color);
+}
+
+.ant-pagination-item-active {
+  border-color: var(--primary-color);
+}
+
+.ant-pagination-item-active a {
+  color: var(--primary-color);
+}
+
+/* Switch styles */
+.ant-switch {
+  background-color: var(--secondary-text-color);
+}
+
+.ant-switch-checked {
+  background-color: var(--primary-color);
+}
+
+/* Tooltip styles */
+.ant-tooltip-inner {
+  background-color: var(--secondary-background);
+  color: var(--text-color);
+}

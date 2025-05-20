@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSocketContext } from "../../../../core/providers/SocketProvider";
+import { useSocketContext } from "../../../../features/socket/components/SocketProviderCompat";
 import { useAuthContext } from "../../../../core/providers/AuthProvider";
 import { getPosts } from "../../api/postApi";
 import { CreatePost } from "../CreatePost";

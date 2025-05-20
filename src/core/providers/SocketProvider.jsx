@@ -4,17 +4,30 @@ import { useSocket } from "../../features/messaging/hooks";
 import { useAuthContext } from "./AuthProvider";
 import { toast } from "react-toastify";
 import { SOCKET_URL } from "../../constants";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  setSocket,
+  setConnectionStatus,
+  setOnlineUser,
+  setLastSeen,
+  selectConnectionStatus
+} from "../../features/messaging/store/messagingSlice";
 
 // Create context
 const SocketContext = createContext(null);
 
 /**
  * Socket Provider component
+ * Uses Redux for state management but maintains the same context API
+ * for backward compatibility with existing components
+ *
  * @param {Object} props - Component props
  * @param {React.ReactNode} props.children - Child components
  */
 export const SocketProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuthContext();
+  const dispatch = useAppDispatch();
+  const connectionStatus = useAppSelector(selectConnectionStatus);
   const [lastReconnectAttempt, setLastReconnectAttempt] = useState(0);
   const reconnectCooldown = 5000; // 5 seconds between reconnect attempts
 
@@ -22,8 +35,18 @@ export const SocketProvider = ({ children }) => {
   // This will prevent connection-related toast notifications
   const socket = useSocket(SOCKET_URL, { silentMode: true });
 
-  // Log socket connection status changes
+  // Store socket instance in Redux
   useEffect(() => {
+    if (socket) {
+      dispatch(setSocket(socket));
+    }
+  }, [socket, dispatch]);
+
+  // Log socket connection status changes and update Redux state
+  useEffect(() => {
+    // Update connection status in Redux
+    dispatch(setConnectionStatus(socket.connectionStatus));
+
     // Only show socket errors if the user is authenticated and we're not on the login page
     if (isAuthenticated() && socket.error && window.location.pathname !== '/login') {
       console.error("Socket connection error:", socket.error);
@@ -52,7 +75,7 @@ export const SocketProvider = ({ children }) => {
         // We don't show toast notifications here since we're using silent mode
       }
     }
-  }, [socket.connected, socket.connectionStatus, socket.error, isAuthenticated]);
+  }, [socket.connected, socket.connectionStatus, socket.error, isAuthenticated, dispatch]);
 
   // Improved reconnection logic with better conditions and error handling
   useEffect(() => {
@@ -112,13 +135,34 @@ export const SocketProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isAuthenticated]);
 
+  // Update online users and last seen times in Redux
+  useEffect(() => {
+    if (socket.onlineUsers) {
+      Object.entries(socket.onlineUsers).forEach(([userId, isOnline]) => {
+        dispatch(setOnlineUser({ userId, isOnline }));
+      });
+    }
+
+    if (socket.lastSeenTimes) {
+      Object.entries(socket.lastSeenTimes).forEach(([userId, timestamp]) => {
+        dispatch(setLastSeen({ userId, timestamp }));
+      });
+    }
+  }, [socket.onlineUsers, socket.lastSeenTimes, dispatch]);
+
   // Only provide socket context if authenticated
   if (!isAuthenticated()) {
     return children;
   }
 
+  // Create enhanced socket object that includes Redux connection status
+  const enhancedSocket = {
+    ...socket,
+    connectionStatus: connectionStatus || socket.connectionStatus,
+  };
+
   return (
-    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
+    <SocketContext.Provider value={enhancedSocket}>{children}</SocketContext.Provider>
   );
 };
 

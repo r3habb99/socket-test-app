@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip } from 'antd';
-import { useSocketContext } from '../../../../core/providers/SocketProvider';
+import { useSocketContext } from '../../../../features/socket/components/SocketProviderCompat';
 import './UserStatus.css';
 
 /**
@@ -12,40 +12,40 @@ import './UserStatus.css';
  * @param {boolean} props.showLastSeen - Whether to show last seen time
  * @returns {JSX.Element} UserStatus component
  */
-const UserStatus = ({ 
-  userId, 
-  size = 'medium', 
+const UserStatus = ({
+  userId,
+  size = 'medium',
   showText = false,
   showLastSeen = false
 }) => {
   const socketContext = useSocketContext();
-  
+
   if (!userId) return null;
-  
+
   // Check if user is online
   const isOnline = socketContext.isUserOnline(userId);
-  
+
   // Get last seen time if user is offline and showLastSeen is true
-  const lastSeen = !isOnline && showLastSeen 
-    ? socketContext.getLastSeen(userId) 
+  const lastSeen = !isOnline && showLastSeen
+    ? socketContext.getLastSeen(userId)
     : null;
-  
+
   // Format last seen time
-  const formattedLastSeen = lastSeen 
+  const formattedLastSeen = lastSeen
     ? socketContext.formatLastSeen(lastSeen)
     : null;
-  
+
   // Determine status text
-  const statusText = isOnline 
-    ? 'Online' 
-    : formattedLastSeen 
-      ? `Last seen ${formattedLastSeen}` 
+  const statusText = isOnline
+    ? 'Online'
+    : formattedLastSeen
+      ? `Last seen ${formattedLastSeen}`
       : 'Offline';
-  
+
   // Determine CSS classes
   const statusClass = isOnline ? 'online' : 'offline';
   const sizeClass = `size-${size}`;
-  
+
   return (
     <Tooltip title={statusText}>
       <div className="user-status-container">

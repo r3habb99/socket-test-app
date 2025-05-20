@@ -1,37 +1,43 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaRegCommentDots, FaArrowLeft, FaEllipsisH, FaSearch } from "react-icons/fa";
-import { fetchUserProfileById, followUser, fetchUserStats } from "../../api/profileApi";
+import { useAppDispatch, useAppSelector } from "../../../../core/store/hooks";
+import {
+  fetchUserProfile,
+  followUserProfile,
+  unfollowUserProfile,
+  selectCurrentProfile
+} from "../../store/profileSlice";
+import { selectLoading, selectError, openImagePreviewModal } from "../../../../features/ui/store/uiSlice";
 import { createChat, getAllChats } from "../../../messaging/api/messagingApi";
 import { findExistingChat } from "../../../messaging/components/ChatList/ChatListHelpers";
+import { fetchUserStats } from "../../api/profileApi";
 import {
   DEFAULT_COVER_PHOTO,
   DEFAULT_PROFILE_PIC,
 } from "../../../../constants";
 import { getImageUrl } from "../../../../shared/utils/imageUtils";
 import { ImageProxy } from "../../../../shared/components";
-import { useAutoRefresh } from "../../../../shared/hooks";
 import { CoverPhotoUploader } from "../CoverPhotoUploader";
 import { ProfilePicUploader } from "../ProfilePicUploader";
 import { FollowButton } from "../FollowButton";
 import { ProfileTabs } from "../ProfileTabs";
 import { UserPostList } from "../UserPostList";
-import { ImagePreviewModal } from "../ImagePreviewModal";
 import "./Profile.css";
 
 export const Profile = () => {
   const { userId: urlUserId } = useParams(); // ID from route, if available
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [error, setError] = useState(null);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState('posts');
   const [userStats, setUserStats] = useState(null);
 
-  // Image preview state
-  const [previewVisible, setPreviewVisible] = useState(false);
-  const [previewImage, setPreviewImage] = useState('');
-  const [previewType, setPreviewType] = useState('profile'); // 'profile' or 'cover'
+  // Redux state
+  const user = useAppSelector(selectCurrentProfile);
+  const isLoading = useAppSelector(state => selectLoading(state, 'profile'));
+  const reduxError = useAppSelector(state => selectError(state, 'profile'));
+
+  // Redux UI state for image preview is managed in the UI slice
 
   const loggedInUserId = localStorage.getItem("userId");
 
@@ -92,83 +98,14 @@ export const Profile = () => {
     }
   }, [activeTab]);
 
-  // Define the fetchProfile function as a callback so it can be used with useAutoRefresh
-  const fetchProfile = useCallback(async () => {
-    if (!userId) {
-      setError("User ID not found. Please log in again.");
-      return;
-    }
 
-    try {
-      // Fetch user profile data
-      const response = await fetchUserProfileById(userId);
-
-      if (response.error) {
-        setError(response.message || "Failed to fetch user profile");
-        return;
-      }
-
-      // Handle different response structures
-      let userDataObj = null;
-
-      // Case 1: Direct response.data with statusCode, message, data structure
-      if (response.data && response.data.statusCode && response.data.data) {
-        userDataObj = response.data.data;
-        console.log("Found user data in response.data.data", userDataObj);
-      }
-      // Case 2: Nested response.data.data structure
-      else if (response.data && response.data.data) {
-        userDataObj = response.data.data;
-        console.log("Found user data in response.data.data", userDataObj);
-      }
-      // Case 3: Direct response.data structure
-      else if (response.data) {
-        userDataObj = response.data;
-      }
-
-      // Check if we have valid user data
-      if (userDataObj) {
-        // Check if we have either id or _id
-        if (userDataObj.id || userDataObj._id) {
-          // Normalize the user object to ensure it has both id and _id properties
-          const normalizedUser = {
-            ...userDataObj,
-            id: userDataObj.id || userDataObj._id, // Ensure id is available
-            _id: userDataObj._id || userDataObj.id, // Ensure _id is available
-          };
-
-          setUser(normalizedUser);
-          // Check if the logged-in user is in the followers array
-          const followersArray = normalizedUser.followers || [];
-          setIsFollowing(followersArray.includes(loggedInUserId));
-
-          // Fetch user stats with posts
-          fetchUserStatsData(normalizedUser.id || normalizedUser._id);
-        } else {
-          console.error("User data missing id/_id:", userDataObj);
-          setError("User profile data missing ID.");
-        }
-      } else {
-        console.error("User data missing or invalid:", response);
-        setError("User profile data not found.");
-      }
-    } catch (err) {
-      console.error("Error fetching user profile:", err);
-      setError("An error occurred while fetching the profile.");
-    }
-  }, [userId, loggedInUserId, fetchUserStatsData]);
-
-  // Use our custom hook for auto-refreshing
-  const { triggerRefresh } = useAutoRefresh(
-    fetchProfile,
-    3000, // 3 seconds delay after toast
-    [userId, loggedInUserId] // Dependencies for the refresh function
-  );
 
   // Initial data fetch
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (userId) {
+      dispatch(fetchUserProfile(userId));
+    }
+  }, [dispatch, userId]);
 
   // Refresh stats when active tab changes
   useEffect(() => {
@@ -182,17 +119,19 @@ export const Profile = () => {
       // Get the user ID (either id or _id)
       const userId = user.id || user._id;
 
-      const response = await followUser(userId);
-
-      if (response.error) {
-        setError(response.message || "Failed to follow/unfollow user");
+      if (!userId) {
+        console.error("User ID is missing");
         return;
       }
 
-      setIsFollowing(!isFollowing);
+      // Dispatch the appropriate action based on current following status
+      if (user.isFollowing) {
+        await dispatch(unfollowUserProfile(userId));
+      } else {
+        await dispatch(followUserProfile(userId));
+      }
     } catch (err) {
       console.error("Error toggling follow:", err);
-      setError("An error occurred while following/unfollowing.");
     }
   };
 
@@ -202,17 +141,14 @@ export const Profile = () => {
 
   // Image preview handlers
   const handlePreviewOpen = (imageUrl, type) => {
-    setPreviewImage(imageUrl);
-    setPreviewType(type);
-    setPreviewVisible(true);
+    dispatch(openImagePreviewModal({
+      imageUrl,
+      title: type === 'profile' ? 'Profile Picture' : 'Cover Photo'
+    }));
   };
 
-  const handlePreviewClose = () => {
-    setPreviewVisible(false);
-  };
-
-  if (error) return <div className="error-message">{error}</div>;
-  if (!user) return <div>Loading...</div>;
+  if (reduxError) return <div className="error-message">{reduxError}</div>;
+  if (isLoading || !user) return <div>Loading...</div>;
 
   // Check if this is the logged-in user's profile by comparing IDs
   // Convert both to strings to handle potential type mismatches
@@ -258,7 +194,7 @@ export const Profile = () => {
             <FaSearch className="view-icon" />
           </div>
         </div>
-        {isOwnProfile && <CoverPhotoUploader setUser={setUser} refreshProfile={triggerRefresh} />}
+        {isOwnProfile && <CoverPhotoUploader refreshProfile={() => dispatch(fetchUserProfile(userId))} />}
       </div>
 
       <div className="profile-content">
@@ -285,7 +221,7 @@ export const Profile = () => {
             <div className="photo-overlay">
               <FaSearch className="view-icon" />
             </div>
-            {isOwnProfile && <ProfilePicUploader setUser={setUser} refreshProfile={triggerRefresh} />}
+            {isOwnProfile && <ProfilePicUploader refreshProfile={() => dispatch(fetchUserProfile(userId))} />}
           </div>
         </div>
 
@@ -337,7 +273,7 @@ export const Profile = () => {
                             const existingChat = findExistingChat(existingChats, userId);
 
                             if (existingChat) {
-                              
+
                               // Ensure the chat object has the expected structure
                               const normalizedChat = {
                                 ...existingChat,
@@ -358,7 +294,7 @@ export const Profile = () => {
                             }
                           }
 
-                      
+
                           const response = await createChat({ userId });
 
                           if (response.error) {
@@ -416,7 +352,7 @@ export const Profile = () => {
                       <FaRegCommentDots size={16} />
                     </button>
                     <FollowButton
-                      isFollowing={isFollowing}
+                      isFollowing={user.isFollowing}
                       toggleFollow={toggleFollow}
                     />
                   </div>
@@ -466,14 +402,6 @@ export const Profile = () => {
         <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} userId={userId} />
         <UserPostList userId={userId} activeTab={activeTab} />
       </div>
-
-      {/* Image Preview Modal */}
-      <ImagePreviewModal
-        visible={previewVisible}
-        imageUrl={previewImage}
-        imageType={previewType}
-        onClose={handlePreviewClose}
-      />
     </div>
   );
 };

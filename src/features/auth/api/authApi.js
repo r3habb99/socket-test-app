@@ -222,7 +222,6 @@ export const searchUsers = async (searchParams) => {
     const response = await apiClient.get(endpoints.user.search, { params: searchParams });
     return handleApiResponse(response);
   } catch (error) {
-    console.error("Error searching users:", error);
     return handleApiError(error);
   }
 };

@@ -1,32 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthContext } from "../../../../core/providers/AuthProvider";
-import { Form, Input, Button, Alert } from "antd";
+import { useAppDispatch, useAppSelector } from "../../../../core/store/hooks";
+import { registerUser, selectIsAuthenticated } from "../../store/authSlice";
+import { selectLoading, selectError } from "../../../../features/ui/store/uiSlice";
+import { Form, Input, Button, Alert, Spin } from "antd";
 import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
 import './Register.css';
 
 const Register = () => {
   const [form] = Form.useForm();
-  const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const navigate = useNavigate();
-  const { register } = useAuthContext();
+  const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const isLoading = useAppSelector(state => selectLoading(state, 'auth'));
+  const reduxError = useAppSelector(state => selectError(state, 'auth'));
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleRegister = async (values) => {
-    setError(null);
     setSuccess(null);
 
     try {
-      const result = await register(values);
+      // Dispatch register action
+      const resultAction = await dispatch(registerUser(values));
 
-      if (result.success) {
+      // Check if registration was successful
+      if (registerUser.fulfilled.match(resultAction)) {
         setSuccess("Registration successful! Redirecting to login...");
         setTimeout(() => navigate("/login"), 2000);
-      } else {
-        setError(result.message || "Registration failed. Please try again.");
       }
     } catch (err) {
-      setError(err.message || "Registration failed. Please try again.");
+      console.error("Registration error details:", err);
     }
   };
 
@@ -35,10 +45,16 @@ const Register = () => {
       <div className="bg-white p-6 md:p-10 rounded-lg shadow-md w-full mx-4 md:w-auto md:max-w-1/3 register-form-container">
         <h2 className="text-[22px] md:text-[25px] font-semibold mb-[10px] text-center text-gray-800">Create Your Account</h2>
 
-        {error && (
+        {isLoading && (
+          <div className="flex justify-center my-4">
+            <Spin size="large" />
+          </div>
+        )}
+
+        {reduxError && (
           <Alert
             message="Error"
-            description={error}
+            description={reduxError}
             type="error"
             showIcon
             className="mb-6"

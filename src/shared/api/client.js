@@ -48,16 +48,6 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error) => {
-    // Log the error for debugging
-    console.error('API Error:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      message: error.message,
-      responseData: error.response?.data
-    });
-
     // Handle common errors here (e.g., 401 Unauthorized)
     if (error.response && error.response.status === 401) {
       console.warn('401 Unauthorized response received');

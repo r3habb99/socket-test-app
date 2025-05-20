@@ -1,15 +1,26 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthContext } from "../../../../core/providers/AuthProvider";
-import { Input, Button, Form, Alert } from "antd";
+import { useAppDispatch, useAppSelector } from "../../../../core/store/hooks";
+import { loginUser, selectIsAuthenticated } from "../../store/authSlice";
+import { selectLoading, selectError } from "../../../../features/ui/store/uiSlice";
+import { Input, Button, Form, Alert, Spin } from "antd";
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import './Login.css';
 
 const Login = () => {
   const [form] = Form.useForm();
-  const [error, setError] = useState(null);
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { login } = useAuthContext();
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const isLoading = useAppSelector(state => selectLoading(state, 'auth'));
+  const reduxError = useAppSelector(state => selectError(state, 'auth'));
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (values) => {
     try {
@@ -24,16 +35,15 @@ const Login = () => {
         loginData.username = identifier;
       }
 
-      const result = await login(loginData);
+      // Dispatch login action
+      const resultAction = await dispatch(loginUser(loginData));
 
-      if (result.success) {
+      // Check if login was successful
+      if (loginUser.fulfilled.match(resultAction)) {
         navigate("/dashboard");
-      } else {
-        setError(result.message || "Login failed");
       }
     } catch (err) {
       console.error("Login error details:", err);
-      setError(err.message || "Login failed");
     }
   };
 
@@ -42,10 +52,16 @@ const Login = () => {
       <div className="bg-white p-6 md:p-10 rounded-lg shadow-md w-full mx-4 md:w-auto md:max-w-1/3 login-form-container">
         <h2 className="text-[22px] md:text-[25px] font-semibold mb-[10px] text-center text-gray-800">Login</h2>
 
-        {error && (
+        {isLoading && (
+          <div className="flex justify-center my-4">
+            <Spin size="large" />
+          </div>
+        )}
+
+        {reduxError && (
           <Alert
             message="Error"
-            description={error}
+            description={reduxError}
             type="error"
             showIcon
             className="mb-6"
@@ -106,7 +122,7 @@ const Login = () => {
 
         <div className="mt-8 text-center text-gray-500 text-sm">
           <p>
-            Don't have an account? <a href="/register" className="text-blue-500 hover:text-blue-600 font-medium">Sign up</a>
+            Don't have an account? <a href="/register" className="text-blue-500 hover:text-green-600 font-medium">Sign up</a>
           </p>
         </div>
       </div>

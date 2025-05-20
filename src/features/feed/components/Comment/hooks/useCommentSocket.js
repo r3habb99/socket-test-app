@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { useSocketContext } from '../../../../../core/providers/SocketProvider';
+import { useSocketContext } from '../../../../../features/socket/components/SocketProviderCompat';
 import { getCommentId } from '../utils/commentHelpers';
 
 /**

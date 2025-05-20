@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Input, List, Avatar, Empty, Spin, Typography } from 'antd';
 import { SearchOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { searchUsers } from '../../../features/auth/api/authApi';
 import { getImageUrl } from '../../utils/imageUtils';
 import { ImageProxy } from '../ImageProxy';
 import { DEFAULT_PROFILE_PIC } from '../../../constants';
+import { useSearch } from '../../../features/search/hooks';
 import './Search.css';
 
 const { Text } = Typography;
@@ -15,19 +15,31 @@ const { Text } = Typography;
  * @returns {JSX.Element} Search component
  */
 export const Search = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showSearchResults, setShowSearchResults] = useState(false);
-  const searchTimeoutRef = useRef(null);
   const searchContainerRef = useRef(null);
   const navigate = useNavigate();
+
+  // Use the search hook from Redux
+  const {
+    query,
+    results,
+    isLoading,
+    error,
+    showResults,
+    noResultsFound,
+    setShowResults,
+    handleSearchChange,
+    performSearch,
+    clearSearch
+  } = useSearch({
+    debounceTime: 500,
+    initialType: 'users'
+  });
 
   // Handle click outside to close search results
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
-        setShowSearchResults(false);
+        setShowResults(false);
       }
     };
 
@@ -35,101 +47,23 @@ export const Search = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
-
-  // Cleanup search timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, []);
+  }, [setShowResults]);
 
   /**
-   * Handle search for users
-   * @param {string} query - Search query
-   */
-  const handleSearch = async (query) => {
-    // If called from onSearch, use the current searchQuery if no query is provided
-    const searchTerm = query || searchQuery;
-
-    if (!searchTerm.trim()) {
-      setSearchResults([]);
-      setShowSearchResults(false);
-      return;
-    }
-
-    setIsSearching(true);
-    setShowSearchResults(true);
-
-    try {
-      // Create search params object based on the query
-      // This allows searching by firstName, lastName, username, or email
-      const searchParams = {
-        firstName: searchTerm,
-        lastName: searchTerm,
-        username: searchTerm,
-        email: searchTerm
-      };
-
-      const response = await searchUsers(searchParams);
-
-      // Log the full response to see its structure
-      console.log("Full search response:", response);
-
-      // Handle nested data structure
-      let results = [];
-
-      if (!response.error) {
-        if (response.data && response.data.statusCode === 200 && Array.isArray(response.data.data)) {
-          // API returns { statusCode: 200, message: "...", data: [...] }
-          results = response.data.data;
-        } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
-          // API returns { data: { data: [...] } }
-          results = response.data.data;
-        } else if (Array.isArray(response.data)) {
-          // API returns { data: [...] }
-          results = response.data;
-        } else {
-          console.warn("Unexpected search results format:", response.data);
-        }
-      }
-
-      // Log the extracted results
-      console.log("Extracted search results:", results);
-
-      // Log the first result if available to see its structure
-      if (results.length > 0) {
-        console.log("First result structure:", results[0]);
-      }
-
-      setSearchResults(Array.isArray(results) ? results : []);
-    } catch (error) {
-      console.error("Error searching users:", error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  /**
-   * Handle search input change with debounce
+   * Handle search input change
    * @param {Event} e - Input change event
    */
   const handleSearchInputChange = (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
+    handleSearchChange(e.target.value);
+  };
 
-    // Clear any existing timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
+  /**
+   * Handle search button click or Enter key
+   */
+  const handleSearchSubmit = () => {
+    if (query.trim()) {
+      performSearch(query);
     }
-
-    // Set a new timeout to delay the search
-    searchTimeoutRef.current = setTimeout(() => {
-      handleSearch(query);
-    }, 500); // 500ms delay
   };
 
   /**
@@ -145,8 +79,8 @@ export const Search = () => {
     }
 
     navigate(`/profile/${userId}`);
-    setShowSearchResults(false);
-    setSearchQuery('');
+    setShowResults(false);
+    clearSearch();
   };
 
   return (
@@ -155,10 +89,10 @@ export const Search = () => {
         <Input.Search
           placeholder="Search Users"
           prefix={<SearchOutlined style={{ color: '#536471' }} />}
-          value={searchQuery}
+          value={query}
           onChange={handleSearchInputChange}
-          onSearch={handleSearch}
-          onFocus={() => setShowSearchResults(true)}
+          onSearch={handleSearchSubmit}
+          onFocus={() => setShowResults(true)}
           className="sidebar-search-input"
           allowClear
           enterButton={<SearchOutlined style={{ color: '#ffffff' }} />}
@@ -166,21 +100,33 @@ export const Search = () => {
       </div>
 
       {/* Search Results */}
-      {showSearchResults && (
+      {showResults && (
         <div className="sidebar-search-results">
-          {isSearching ? (
+          {isLoading ? (
             <div className="sidebar-search-loading">
               <Spin size="small" tip="Searching..." />
             </div>
-          ) : searchQuery.trim() === "" ? (
+          ) : query.trim() === "" ? (
             <div className="sidebar-search-instructions">
               <Text type="secondary">Try searching for people by name, username, or email</Text>
             </div>
-          ) : searchResults.length > 0 ? (
+          ) : noResultsFound ? (
+            <Empty
+              description={
+                <div className="sidebar-search-no-results-text">
+                  <Text strong>No users found for "{query}"</Text>
+                  <Text type="secondary">Try searching with a different name, username, or email</Text>
+                  <Text type="secondary">Make sure the spelling is correct</Text>
+                </div>
+              }
+              className="sidebar-search-no-results"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          ) : results && results.length > 0 ? (
             <List
               className="sidebar-search-results-list"
               itemLayout="horizontal"
-              dataSource={searchResults}
+              dataSource={results}
               renderItem={(user) => (
                 <List.Item
                   key={user._id || user.id}
@@ -221,17 +167,11 @@ export const Search = () => {
                 </List.Item>
               )}
             />
-          ) : (
-            <Empty
-              description={
-                <div className="sidebar-search-no-results-text">
-                  <Text strong>No users found</Text>
-                  <Text type="secondary">Try searching for a different term</Text>
-                </div>
-              }
-              className="sidebar-search-no-results"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
+          ) : null}
+          {error && (
+            <div className="sidebar-search-error">
+              <Text type="danger">Error: {error}</Text>
+            </div>
           )}
         </div>
       )}

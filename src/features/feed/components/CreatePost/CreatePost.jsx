@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { useSocketContext } from "../../../../core/providers/SocketProvider";
+import { useSocketContext } from "../../../../features/socket/components/SocketProviderCompat";
 // import { useAuthContext } from "../../../../core/providers/AuthProvider";
 import { createPost } from "../../api/postApi";
 import { toast } from "react-toastify";

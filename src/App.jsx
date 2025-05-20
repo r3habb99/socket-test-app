@@ -6,8 +6,9 @@ import {
   Navigate,
 } from "react-router-dom";
 import { ConfigProvider } from "antd";
-import { AuthProvider, SocketProvider } from "./core/providers";
+import { AuthProvider } from "./core/providers";
 import { PrivateRoute } from "./core/router";
+import { SocketProviderCompat } from "./features/socket/components";
 
 // Import components directly
 import Login from "./features/auth/components/Login/Login";
@@ -24,6 +25,7 @@ import { PostDetail } from "./features/feed/components/PostDetail";
 import ToastController from "./shared/components/ToastController/ToastController";
 import { Search } from "./shared/components";
 import { NotificationList } from "./features/notification/components";
+import { GlobalModals } from "./features/ui/components";
 
 const App = () => {
   return (
@@ -38,7 +40,7 @@ const App = () => {
       }}
     >
       <AuthProvider>
-        <SocketProvider>
+        <SocketProviderCompat>
           <Router>
             <Routes>
               {/* Public routes */}
@@ -54,32 +56,33 @@ const App = () => {
                   </PrivateRoute>
                 }
               >
-                <Route path="dashboard" element={<Feed />} />
-                <Route path="dashboard/messages" element={<MessagingApp />} />
-                <Route path="comments/:postId" element={<CommentsPage />} />
-                <Route path="post/:postId" element={<PostDetail />} />
-                <Route path="profile" element={<Profile />} />
-                <Route path="profile/:userId" element={<Profile />} />
-                <Route path="search" element={<Search />} />
-                <Route path="notifications" element={<NotificationList />} />
-                <Route
-                  path="user/:userId/followers"
-                  element={<FollowersList />}
-                />
-                <Route
-                  path="user/:userId/following"
-                  element={<FollowingList />}
-                />
-                <Route path="user/edit-profile" element={<ProfileEdit />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Route>
+              <Route path="dashboard" element={<Feed />} />
+              <Route path="dashboard/messages" element={<MessagingApp />} />
+              <Route path="comments/:postId" element={<CommentsPage />} />
+              <Route path="post/:postId" element={<PostDetail />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="profile/:userId" element={<Profile />} />
+              <Route path="search" element={<Search />} />
+              <Route path="notifications" element={<NotificationList />} />
+              <Route
+                path="user/:userId/followers"
+                element={<FollowersList />}
+              />
+              <Route
+                path="user/:userId/following"
+                element={<FollowingList />}
+              />
+              <Route path="user/edit-profile" element={<ProfileEdit />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Route>
 
-              {/* Default route */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
+            {/* Default route */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
             <ToastController />
+            <GlobalModals />
           </Router>
-        </SocketProvider>
+        </SocketProviderCompat>
       </AuthProvider>
     </ConfigProvider>
   );

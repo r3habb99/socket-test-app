@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useSocketContext } from "../../../../core/providers/SocketProvider";
+import { useSocketContext } from "../../../../features/socket/components/SocketProviderCompat";
 import { getMessagesForChat } from "../../api/messagingApi";
 import { UserProfileModal } from "../UserProfileModal";
 import MessageStatus from "../MessageStatus";
@@ -24,8 +24,6 @@ import {
   MailOutlined,
   DisconnectOutlined,
   LoadingOutlined,
-  // CheckCircleOutlined, // Removed as we no longer show the success connection status
-  // WarningOutlined,
   ReloadOutlined
 } from "@ant-design/icons";
 import "./Chat.css";
@@ -70,9 +68,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
   // Function to handle scrolling to the top (for loading older messages)
   const handleScrollToTop = useCallback(() => {
     if (messagesContainerRef.current && messagesContainerRef.current.scrollTop === 0) {
-      // We're at the top of the container, could load older messages here
-      console.log('Scrolled to top of messages, could load older messages');
-
       // Add a visual indicator that we're at the top
       messagesContainerRef.current.classList.add('at-top');
       setIsAtTop(true);
@@ -87,28 +82,23 @@ export const Chat = ({ selectedChat, onBackClick }) => {
   // Function to load messages for a chat - improved to handle all API response formats and ensure loading state is reset
   const loadMessagesForChat = useCallback((chatId) => {
     if (!chatId) {
-      console.warn("Cannot load messages: no chat ID provided");
       setLoadingMessages(false); // Reset loading state immediately if no chat ID
       return Promise.resolve([]);
     }
 
-    console.log(`Loading messages for chat: ${chatId}`);
     setLoadingMessages(true); // Set loading state
 
     // Create a timeout to ensure loading state is reset even if the API call hangs
     const loadingTimeout = setTimeout(() => {
-      console.warn(`Message loading timeout for chat ${chatId} - resetting loading state`);
       setLoadingMessages(false);
     }, 10000); // 10 second timeout as a safety measure
 
     return getMessagesForChat(chatId)
       .then((response) => {
-        console.log("Messages API response received:", response);
         clearTimeout(loadingTimeout); // Clear the safety timeout
 
         // Handle API errors
         if (response.error) {
-          console.error(`Error loading messages: ${response.message || 'Unknown error'}`);
           return [];
         }
 
@@ -147,7 +137,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
         // Final validation
         if (!Array.isArray(messages)) {
-          console.error("Failed to extract messages array from response:", response);
           return [];
         }
 
@@ -155,15 +144,10 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         const validMessages = messages.filter(msg => {
           if (!msg) return false;
           if (!msg.content) {
-            console.warn("Skipping message without content:", msg);
             return false;
           }
           return true;
         });
-
-        if (validMessages.length === 0 && messages.length > 0) {
-          console.warn("No valid messages found in response");
-        }
 
         // Normalize message objects to ensure consistent structure
         const normalizedMessages = validMessages.map(msg => ({
@@ -178,18 +162,15 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         // Sort messages by timestamp
         normalizedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-        console.log(`Successfully loaded ${normalizedMessages.length} messages for chat ${chatId}`);
         return normalizedMessages;
       })
-      .catch((err) => {
-        console.error(`Failed to load messages for chat ${chatId}:`, err);
+      .catch(() => {
         clearTimeout(loadingTimeout); // Clear the safety timeout
         return [];
       })
       .finally(() => {
         // Always reset loading state in finally block
         clearTimeout(loadingTimeout); // Ensure timeout is cleared
-        console.log(`Resetting loading state for chat ${chatId} in finally block`);
         setLoadingMessages(false);
       });
   }, []);
@@ -208,8 +189,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     const isNewChat = chatId !== lastLoadedChatIdRef.current;
 
     if (isNewChat) {
-      console.log(`Chat changed from ${lastLoadedChatIdRef.current || 'none'} to ${chatId}, loading messages...`);
-
       // Clear existing messages immediately to avoid showing messages from previous chat
       socketContext.setMessages([]);
 
@@ -225,14 +204,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       // Create a flag to track if the component is still mounted
       let isMounted = true;
 
-      // Load messages immediately - no need for delay as the socket join is asynchronous
-      console.log(`Loading messages for chat ${chatId}`);
-
       loadMessagesForChat(chatId)
         .then((msgs) => {
           if (!isMounted) return;
-
-          console.log(`Successfully loaded ${msgs.length} messages for chat ${chatId}`);
 
           // Set messages in the socket context to maintain state across components
           socketContext.setMessages(msgs);
@@ -240,16 +214,13 @@ export const Chat = ({ selectedChat, onBackClick }) => {
           // Scroll to bottom after loading messages
           setTimeout(scrollToBottom, 100);
         })
-        .catch(err => {
+        .catch(() => {
           if (!isMounted) return;
-
-          console.error(`Error loading messages for chat ${chatId}:`, err);
-          // Show error state if needed
+          // Error handling is done silently
         })
         .finally(() => {
           // Always ensure loading state is reset, even if there was an error
           if (isMounted) {
-            console.log(`Finished loading messages for chat ${chatId}, resetting loading state`);
             setLoadingMessages(false);
           }
         });
@@ -434,15 +405,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
   useEffect(() => {
     // Only run this effect when socket connection status changes to connected
     if (!socketContext.connected) {
-      // If socket is not connected, just log and return
-      if (socketContext.connectionStatus === 'disconnected') {
-        console.log("Socket disconnected, chat functionality may be limited");
-      }
       return;
     }
 
-    // Silently handle connection - no toast notifications
-    console.log("Socket connected, checking if messages need to be loaded");
 
     // If we have a selected chat but no messages, try to load messages
     const chatId = selectedChat?._id || selectedChat?.id;
@@ -461,22 +426,15 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       !loadingMessages &&
       lastLoadedChatIdRef.current === chatId // Only load for the current chat
     ) {
-      console.log(`Socket connected but no messages for chat ${chatId}, loading now...`);
-
       // Create a flag to track if the component is still mounted
       let isMounted = true;
 
       // Set loading state
       setLoadingMessages(true);
 
-      // Load messages immediately - the socket is already connected
-      console.log(`Loading messages for chat ${chatId} after socket connection`);
-
       loadMessagesForChat(chatId)
         .then((msgs) => {
           if (!isMounted) return;
-
-          console.log(`Loaded ${msgs.length} messages after socket connection`);
 
           // Set messages in the socket context
           socketContext.setMessages(msgs);
@@ -484,14 +442,12 @@ export const Chat = ({ selectedChat, onBackClick }) => {
           // Scroll to bottom
           setTimeout(scrollToBottom, 100);
         })
-        .catch(err => {
+        .catch(() => {
           if (!isMounted) return;
-          console.error(`Error loading messages after socket connection: ${err.message}`);
         })
         .finally(() => {
           // Always ensure loading state is reset
           if (isMounted) {
-            console.log(`Finished loading messages after socket connection, resetting loading state`);
             setLoadingMessages(false);
           }
         });
@@ -534,7 +490,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
     // If we've already registered handlers for this chat, don't register again
     if (registeredChatIdRef.current === chatId) {
-      console.log(`Event handlers already registered for chat ${chatId}, skipping`);
       return;
     }
 
@@ -543,8 +498,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
     // Clear the received messages map when changing chats
     receivedMessagesRef.current.clear();
-
-    console.log(`Setting up message event handlers for chat ${chatId}`);
 
     const handleMessageReceived = (newMessage) => {
       // Check if the new message belongs to the currently selected chat
@@ -568,8 +521,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       const lastProcessed = receivedMessagesRef.current.get(messageSignature);
 
       if (lastProcessed && (now - lastProcessed) < 10000) {
-        console.log(`Ignoring duplicate message: ${messageSignature}`);
-        return;
+       return;
       }
 
       // Add this message to our tracking map with current timestamp
@@ -580,7 +532,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         // Remove entries older than 5 minutes
         const fiveMinutesAgo = now - 300000;
 
-        // Use for...of with entries to safely delete while iterating
         for (const [key, timestamp] of receivedMessagesRef.current.entries()) {
           if (timestamp < fiveMinutesAgo) {
             receivedMessagesRef.current.delete(key);
@@ -598,8 +549,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         );
 
         if (existsById) {
-          console.log(`Message with ID ${messageId} already exists, not adding`);
-          return prevMessagesArray;
+         return prevMessagesArray;
         }
 
         // Check for temporary messages with the same content from the same sender
@@ -611,7 +561,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         );
 
         if (tempMessageIndex !== -1) {
-          console.log(`Replacing temporary message with real message from server`);
           // Create a new array with the temporary message replaced
           const updatedMessages = [...prevMessagesArray];
           updatedMessages[tempMessageIndex] = {
@@ -622,7 +571,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         }
 
         // If we get here, it's a new message, so add it
-        console.log(`Adding new message: ${messageContent.substring(0, 20)}...`);
         return [...prevMessagesArray, newMessage];
       });
 
@@ -637,11 +585,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     // Also register for the "new message" event in case the backend uses that name
     const unsubscribeNewMessage = socketContext.subscribe("new message", handleMessageReceived);
 
-    console.log(`Registered message event handlers for chat ${chatId}`);
 
     // Cleanup the listeners on component unmount or when dependencies change
     return () => {
-      console.log(`Cleaning up message event handlers for chat ${chatId}`);
       unsubscribe();
       unsubscribeNewMessage();
       // Don't reset registeredChatIdRef here as it will cause issues with re-registering
@@ -660,7 +606,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     const chatId = selectedChat?._id || selectedChat?.id;
 
     if (!message.trim() || !chatId) {
-      console.error("Cannot send message: missing content or chat ID");
       return;
     }
 
@@ -674,7 +619,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
       // Prevent duplicate sends by checking if this message is already being sent
       if (pendingMessagesRef.current.has(messageSignature)) {
-        console.log("Message already being sent, ignoring duplicate send attempt");
         return;
       }
 
@@ -683,8 +627,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         messageContent === lastSentMessageRef.current.content &&
         currentTime - lastSentMessageRef.current.timestamp < 2000
       ) {
-        console.log("Same message sent recently, ignoring duplicate send attempt");
-        return;
+       return;
       }
 
       // Update the last sent message reference
@@ -735,19 +678,16 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         );
 
         if (similarMessageExists) {
-          console.log("Similar message already exists in UI, not adding temporary message");
-          // Remove from pending set since we're not actually sending it
+         // Remove from pending set since we're not actually sending it
           pendingMessagesRef.current.delete(messageSignature);
           return prevMessages;
         }
 
         // Add the temporary message to the messages array
-        console.log(`Adding temporary message with ID ${tempId}`);
         return [...prevMessages, tempMessage];
       });
 
       // Send message via socket context
-      console.log(`Sending message via socket: ${messageContent.substring(0, 20)}...`);
       socketContext.sendMessage({
         content: messageContent,
         chatId: chatId,
@@ -769,7 +709,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
           // If the temporary message still exists and hasn't been replaced, update its status
           if (tempMessageIndex !== -1) {
-            console.log(`Temporary message ${tempId} still exists after 10s, updating status`);
             const updatedMessages = [...prevMessages];
             updatedMessages[tempMessageIndex] = {
               ...updatedMessages[tempMessageIndex],
@@ -785,7 +724,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       // Scroll to bottom after sending
       setTimeout(scrollToBottom, 100);
     } catch (error) {
-      console.error("Error sending message:", error);
       alert("Failed to send message. Please try again.");
     }
   };
@@ -959,7 +897,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
                   size="small"
                   icon={<ReloadOutlined />}
                   onClick={() => {
-                    console.log("Load more messages functionality would be implemented here");
                     // Future implementation: Load older messages
                   }}
                 >
@@ -981,7 +918,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
                     icon={<ReloadOutlined />}
                     onClick={() => {
                       // Use silent reconnect
-                      console.log("Manual reconnection initiated from Chat component");
                       socketContext.reconnect();
                     }}
                   >
@@ -1001,7 +937,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
                     icon={<ReloadOutlined />}
                     onClick={() => {
                       // Use silent reconnect
-                      console.log("Manual reconnection initiated from Chat component");
                       socketContext.reconnect();
                     }}
                   >
@@ -1017,15 +952,8 @@ export const Chat = ({ selectedChat, onBackClick }) => {
             {(socketContext.messages || []).map((msg, index) => {
               // Skip rendering if message doesn't have content
               if (!msg || !msg.content) {
-                console.warn(`Skipping message ${index} - no content:`, msg);
                 return null;
               }
-
-              // Only log message rendering in development mode
-              if (process.env.NODE_ENV === 'development' && index === 0) {
-                console.log(`Rendering ${socketContext.messages.length} messages`);
-              }
-
               // Show date divider for first message or when date changes
               const showDateDivider =
                 index === 0 ||

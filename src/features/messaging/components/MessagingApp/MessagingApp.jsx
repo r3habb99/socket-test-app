@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { useSocketContext } from "../../../../core/providers/SocketProvider";
+import { useSocketContext } from "../../../../features/socket/components/SocketProviderCompat";
 import { useMessaging } from "../../hooks";
 import { ChatList } from "../ChatList";
 import { Chat } from "../Chat";

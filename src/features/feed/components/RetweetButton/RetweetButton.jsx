@@ -3,7 +3,7 @@ import { FaRetweet } from "react-icons/fa";
 import { Button, Tooltip, Spin } from "antd";
 import { toast } from "react-toastify";
 import { retweetPost, undoRetweet } from "../../api/postApi";
-import { useSocketContext } from "../../../../core/providers/SocketProvider";
+import { useSocketContext } from "../../../../features/socket/components/SocketProviderCompat";
 import "./RetweetButton.css";
 
 /**

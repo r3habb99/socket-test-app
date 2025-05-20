@@ -3,7 +3,7 @@ import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { Button, Tooltip, Spin } from "antd";
 import { toast } from "react-toastify";
 import { likePost } from "../../api/postApi";
-import { useSocketContext } from "../../../../core/providers/SocketProvider";
+import { useSocketContext } from "../../../../features/socket/components/SocketProviderCompat";
 import "./LikeButton.css";
 
 /**
@@ -15,11 +15,11 @@ import "./LikeButton.css";
  * @param {Function} props.getPostId - Function to get post ID
  * @returns {JSX.Element} LikeButton component
  */
-export const LikeButton = ({ 
-  post, 
-  setPosts, 
+export const LikeButton = ({
+  post,
+  setPosts,
   onPostsUpdated,
-  getPostId 
+  getPostId
 }) => {
   const [actionInProgress, setActionInProgress] = useState(false);
   const { connected, emit } = useSocketContext();
