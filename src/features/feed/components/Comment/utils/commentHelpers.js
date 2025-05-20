@@ -83,41 +83,73 @@ export const processCommentsResponse = (response) => {
   try {
     // First, check for the specific structure used by the replies endpoint
     if (response.data?.data?.replies && Array.isArray(response.data.data.replies)) {
-      // Structure: { data: { data: { replies: [...], pagination: {...} } } }
-      commentsData = response.data.data.replies;
+     commentsData = response.data.data.replies;
     }
-    // Also check for comments structure
-    else if (response.data?.data?.comments && Array.isArray(response.data.data.comments)) {
-      // Structure: { data: { data: { comments: [...], pagination: {...} } } }
-      commentsData = response.data.data.comments;
+    // Check for alternative replies structure
+    else if (response.data?.replies && Array.isArray(response.data.replies)) {
+      commentsData = response.data.replies;
+    }
+    // Also check for comments structure from the getForPost endpoint
+    else if (response.data?.data && Array.isArray(response.data.data)) {
+      commentsData = response.data.data;
     }
     // Then check for other possible structures
+    else if (response.data?.data?.comments && Array.isArray(response.data.data.comments)) {
+     commentsData = response.data.data.comments;
+    }
     else if (response.data?.comments) {
-      // Structure: { data: { comments: [...] } }
       commentsData = response.data.comments;
-    } else if (Array.isArray(response.data?.data)) {
-      // Structure: { data: { data: [...] } }
-      commentsData = response.data.data;
     } else if (response.data?.data?.data && Array.isArray(response.data.data.data)) {
-      // Structure: { data: { data: { data: [...] } } }
-      commentsData = response.data.data.data;
+     commentsData = response.data.data.data;
     } else if (Array.isArray(response.data)) {
-      // Structure: { data: [...] } (direct array)
-      commentsData = response.data;
+     commentsData = response.data;
     } else if (response.data?.data && typeof response.data.data === 'object' && !Array.isArray(response.data.data)) {
-      // Structure: { data: { data: { ... } } } (single comment object)
       commentsData = [response.data.data];
     } else if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
-      // Structure: { data: { ... } } (single comment object)
       commentsData = [response.data];
     } else {
       commentsData = [];
     }
 
+    // If we still don't have any data, try to extract it from the response directly
+    // No additional processing needed here
+
     // Ensure commentsData is an array
     if (!Array.isArray(commentsData)) {
       commentsData = commentsData ? [commentsData] : [];
     }
+
+    // Process each comment to ensure consistent structure
+    commentsData = commentsData.map(comment => {
+
+      // Ensure author field is properly mapped
+      if (comment.author && !comment.postedBy) {
+        comment.postedBy = comment.author;
+      }
+
+      // If neither author nor postedBy exists, try to extract from replyTo
+      if (!comment.author && !comment.postedBy && comment.replyTo?.author) {
+        comment.author = comment.replyTo.author;
+        comment.postedBy = comment.replyTo.author;
+      }
+
+      // Ensure content is available
+      if (!comment.content && comment.replyTo?.content) {
+        comment.content = comment.replyTo.content;
+      }
+
+      // Handle replyTo field - extract replyToId if it exists
+      if (comment.replyTo && !comment.replyToId) {
+        comment.replyToId = comment.replyTo.id || comment.replyTo._id;
+      }
+
+      // If there's a replyToId but no replyTo object, try to create one
+      if (comment.replyToId && !comment.replyTo) {
+        comment.replyTo = { id: comment.replyToId };
+      }
+
+      return comment;
+    });
   } catch (error) {
     commentsData = [];
   }
@@ -298,7 +330,7 @@ export const extractPaginationData = (response) => {
   }
 
   try {
-    // Check for different possible structures
+    // Check for the specific structure used in the replies endpoint
     if (response.data?.data?.pagination) {
       // Structure: { data: { data: { pagination: {...} } } }
       return {

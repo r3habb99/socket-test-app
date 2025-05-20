@@ -58,26 +58,17 @@ export const useCommentForm = ({
       let response;
       const commentContent = content.trim();
 
-      // Choose the appropriate API call based on whether this is a reply or a new comment
-      if (replyToId) {
-        // This is a reply to an existing comment
-        const replyData = {
-          postId,
-          content: commentContent,
-          replyToId
-        };
 
-        response = await replyToComment(replyData);
-      } else {
-        // This is a new direct comment on a post
-        const commentData = {
-          postId,
-          content: commentContent
-        };
 
-        // Use the direct comment endpoint
-        response = await createCommentDirect(commentData);
-      }
+      // For both comments and replies, we'll use the same endpoint
+      const commentData = {
+        postId,
+        content: commentContent,
+        ...(replyToId && { replyToId }) // Only include replyToId if it exists
+      };
+
+      // Use the direct comment endpoint for both comments and replies
+      response = await createCommentDirect(commentData);
 
       if (!response.error) {
         // Extract comment data from response
@@ -95,7 +86,8 @@ export const useCommentForm = ({
         // Create a complete comment object with user data
         const newComment = {
           ...commentResponse,
-          postedBy: {
+          // Ensure we have the correct author/postedBy structure
+          postedBy: commentResponse.author || {
             _id: currentUser.id,
             id: currentUser.id,
             username: currentUser.username,
@@ -103,10 +95,14 @@ export const useCommentForm = ({
             lastName: currentUser.lastName,
             profilePic: currentUser.profilePic
           },
-          likes: [],
-          replies: [],
-          createdAt: new Date().toISOString()
+          // Ensure replyToId is set correctly
+          replyToId: commentResponse.replyToId || (commentResponse.replyTo ? (commentResponse.replyTo.id || commentResponse.replyTo._id) : replyToId),
+          likes: commentResponse.likes || [],
+          replies: commentResponse.replies || [],
+          createdAt: commentResponse.createdAt || new Date().toISOString()
         };
+
+
 
         // Reset form
         resetForm();
@@ -128,7 +124,6 @@ export const useCommentForm = ({
         toast.error(response.message || 'Failed to add comment. Please try again.');
       }
     } catch (error) {
-      console.error('Error submitting comment:', error);
       toast.error('An error occurred. Please try again.');
     } finally {
       setSubmitting(false);

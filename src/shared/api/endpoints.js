@@ -49,7 +49,9 @@ const endpoints = {
     delete: (id) => `/comment/${id}`,
     like: (id) => `/comment/${id}/like`, // Used for both like and unlike
     reply: (id) => `/comment/${id}/reply`,
+    // Endpoint for fetching comments by post ID
     getForPost: (postId) => `/comment/post/${postId}`,
+    // Endpoint for fetching replies by comment ID
     getReplies: (commentId) => `/comment/replies/${commentId}`,
   },
   chat: {

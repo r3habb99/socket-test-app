@@ -44,30 +44,95 @@ export const useReplies = (commentId, postId) => {
         }));
       }
 
-
       const response = await getCommentReplies(commentId, {
         page: refresh ? 1 : pagination.page,
         limit: pagination.limit
       });
 
-     
       // Process the response to extract comments and pagination data
       let repliesData = [];
       let paginationData = extractPaginationData(response);
 
       if (response && !response.error) {
-        // Check for the specific structure in the response
+
+
+        // Check for the specific structure from the /comment/replies/{commentId} endpoint
         if (response.data?.data?.replies && Array.isArray(response.data.data.replies)) {
-          repliesData = response.data.data.replies;
-        } else if (response.data?.data?.comments && Array.isArray(response.data.data.comments)) {
-          repliesData = response.data.data.comments;
+         repliesData = response.data.data.replies;
+
+          // Also update pagination if available
+          if (response.data.data.pagination) {
+            paginationData = {
+              hasMore: response.data.data.pagination.hasMore || false,
+              total: response.data.data.pagination.total || 0,
+              page: response.data.data.pagination.page || 1,
+              limit: response.data.data.pagination.limit || 10
+            };
+          }
+        } else if (response.data?.replies && Array.isArray(response.data.replies)) {
+         repliesData = response.data.replies;
+
+          // Also update pagination if available
+          if (response.data.pagination) {
+            paginationData = {
+              hasMore: response.data.pagination.hasMore || false,
+              total: response.data.pagination.total || 0,
+              page: response.data.pagination.page || 1,
+              limit: response.data.pagination.limit || 10
+            };
+          }
         } else {
-          // Fall back to the generic processor if the structure is different
-          repliesData = processCommentsResponse(response);
+
+          // Direct extraction attempt for the specific structure we know from the API
+          if (response.data && response.data.statusCode === 200 && response.data.data && response.data.data.replies) {
+            repliesData = response.data.data.replies;
+
+            // Also update pagination if available
+            if (response.data.data.pagination) {
+              paginationData = {
+                hasMore: response.data.data.pagination.hasMore || false,
+                total: response.data.data.pagination.total || 0,
+                page: response.data.data.pagination.page || 1,
+                limit: response.data.data.pagination.limit || 10
+              };
+            }
+          } else {
+           repliesData = processCommentsResponse(response);
+          }
         }
+
+        // Ensure all replies have the correct replyToId and author data
+        repliesData = repliesData.map(reply => {
+          // If the reply doesn't have a replyToId but has a replyTo object, extract the ID
+          if (!reply.replyToId && reply.replyTo) {
+            reply.replyToId = reply.replyTo.id || reply.replyTo._id;
+          }
+
+          // If the reply doesn't have a replyToId at all, set it to the current commentId
+          if (!reply.replyToId) {
+            reply.replyToId = commentId;
+          }
+
+          // Ensure author data is available
+          if (!reply.author && reply.postedBy) {
+            reply.author = reply.postedBy;
+          } else if (!reply.postedBy && reply.author) {
+            reply.postedBy = reply.author;
+          } else if (!reply.author && !reply.postedBy && reply.replyTo?.author) {
+            // If neither author nor postedBy exists, try to extract from replyTo
+            reply.author = reply.replyTo.author;
+            reply.postedBy = reply.replyTo.author;
+          }
+
+          // Ensure content is available
+          if (!reply.content && reply.replyTo?.content) {
+            reply.content = reply.replyTo.content;
+          }
+
+          return reply;
+        });
       }
 
-     
       // Update replies state
       if (refresh) {
         setReplies(repliesData);
@@ -90,7 +155,6 @@ export const useReplies = (commentId, postId) => {
         total: paginationData.total
       }));
     } catch (err) {
-      console.error('Error fetching replies:', err);
       setError('Failed to load replies. Please try again.');
     } finally {
       setLoading(false);
@@ -120,7 +184,38 @@ export const useReplies = (commentId, postId) => {
 
   // Add a new reply
   const addReply = useCallback((newReply) => {
-    if (newReply.postId === postId && newReply.replyToId === commentId) {
+
+    // Check if this is a reply to the current comment
+    // Either by replyToId or by replyTo object
+    const isReplyToCurrentComment =
+      (newReply.replyToId === commentId) ||
+      (newReply.replyTo && (newReply.replyTo.id === commentId || newReply.replyTo._id === commentId));
+
+    if (newReply.postId === postId && isReplyToCurrentComment) {
+
+      // Ensure the reply has the correct replyToId
+      if (!newReply.replyToId) {
+        newReply.replyToId = commentId;
+      }
+
+      // Ensure author data is available
+      if (!newReply.author && newReply.postedBy) {
+        newReply.author = newReply.postedBy;
+      } else if (!newReply.postedBy && newReply.author) {
+        newReply.postedBy = newReply.author;
+      }
+
+      // If we have a replyTo object with author data but no author in the reply itself
+      if ((!newReply.author || !newReply.postedBy) && newReply.replyTo?.author) {
+        if (!newReply.author) newReply.author = newReply.replyTo.author;
+        if (!newReply.postedBy) newReply.postedBy = newReply.replyTo.author;
+      }
+
+      // Ensure content is available
+      if (!newReply.content && newReply.replyTo?.content) {
+        newReply.content = newReply.replyTo.content;
+      }
+
       // Mark that we've received at least one reply
       initialFetchDoneRef.current = true;
 

@@ -32,11 +32,9 @@ export const usePost = (postId) => {
           setPost(postData);
         } else {
           setError('Failed to load post data.');
-          console.error('Failed to process post data');
         }
       }
     } catch (err) {
-      console.error('Error fetching post:', err);
       // Check if component is still mounted before updating state
       if (isMountedRef.current) {
         setError('Failed to load post. Please try again.');

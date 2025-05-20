@@ -56,8 +56,10 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
   } = useReplies(commentId, postId);
 
 
+
+
+  // Extract author data with fallbacks
   const rawAuthor = comment?.author ?? comment?.postedBy ?? comment?.replyTo?.author ?? {};
- 
 
   // Process the author's profile picture URL
   const authorProfilePic = getProcessedProfilePicUrl(rawAuthor.profilePic);
@@ -73,6 +75,7 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
     _id: rawAuthor._id || rawAuthor.id || "unknown",
     id: rawAuthor.id || rawAuthor._id || "unknown"
   };
+
 
   // Check if the current user is the author of the comment
   const isAuthor = currentUserId === (author._id || author.id);
@@ -140,7 +143,6 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
       setHasLiked(wasLiked);
       comment.likes = Array(likesCount).fill(currentUserId);
 
-      console.error(`Error toggling like on comment:`, error);
       toast.error(`An error occurred while ${wasLiked ? 'unliking' : 'liking'} the comment`);
     } finally {
       setActionInProgress(false);
@@ -160,6 +162,11 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
   // Handle reply added
   const handleReplyAdded = (newReply) => {
     setIsReplying(false);
+
+    // Ensure the reply has the correct replyToId
+    if (!newReply.replyToId) {
+      newReply.replyToId = commentId;
+    }
 
     // Add the reply using our custom hook
     addReply(newReply);
@@ -222,7 +229,6 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
         toast.error(response.message || "Failed to update comment");
       }
     } catch (error) {
-      console.error("Error updating comment:", error);
       toast.error("An error occurred while updating the comment");
     } finally {
       setActionInProgress(false);
@@ -249,7 +255,6 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
         toast.error(response.message || "Failed to delete comment");
       }
     } catch (error) {
-      console.error("Error deleting comment:", error);
       toast.error("An error occurred while deleting the comment");
     } finally {
       setActionInProgress(false);
@@ -464,6 +469,8 @@ export const CommentItem = ({ comment, postId, onCommentUpdated }) => {
           </div>
         ) : (
           <>
+
+
             {replies.length > 0 && (
               <div className="comment-replies-container">
                 <CommentList

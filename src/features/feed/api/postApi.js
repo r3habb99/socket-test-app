@@ -18,7 +18,6 @@ export const getPosts = async (options = {}) => {
     // Check if token exists
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("No authentication token found in localStorage");
       return {
         error: true,
         message: "Authentication token not found. Please log in again.",
@@ -60,20 +59,6 @@ export const getPosts = async (options = {}) => {
 
     return apiResponse;
   } catch (error) {
-    console.error("Error fetching posts:", error);
-
-    // Check if it's an authentication error
-    if (error.response?.status === 401) {
-      console.error("Authentication error. Token may be invalid or expired.");
-
-      // Show more details about the error
-      console.error("Error details:", {
-        message: error.response?.data?.message,
-        error: error.response?.data?.error,
-        headers: error.config?.headers
-      });
-    }
-
     return handleApiError(error);
   }
 };
@@ -182,22 +167,6 @@ export const createPost = async (postData) => {
     const processedResponse = handleApiResponse(response);
     return processedResponse;
   } catch (error) {
-    console.error("Error creating post:", error);
-
-    // Log more details about the error
-    if (error.response) {
-      console.error("Error response:", {
-        status: error.response.status,
-        statusText: error.response.statusText,
-        data: error.response.data,
-        headers: error.response.headers
-      });
-    } else if (error.request) {
-      console.error("No response received:", error.request);
-    } else {
-      console.error("Error message:", error.message);
-    }
-
     return handleApiError(error);
   }
 };
@@ -240,7 +209,6 @@ export const retweetPost = async (postId) => {
     // Check if token exists
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("No authentication token found for retweet request");
       return {
         error: true,
         message: "Authentication token not found. Please log in again.",
@@ -276,7 +244,6 @@ export const retweetPost = async (postId) => {
           status: 204
         };
       } catch (getPostError) {
-        console.error('Error getting original post:', getPostError);
         // Return success even if we couldn't get the original post
         return {
           success: true,
@@ -302,20 +269,6 @@ export const retweetPost = async (postId) => {
 
     return processedResponse;
   } catch (error) {
-    console.error('Error in retweetPost:', error);
-
-    // Check if it's an authentication error
-    if (error.response?.status === 401) {
-      console.error("Authentication error in retweet. Token may be invalid or expired.");
-
-      // Show more details about the error
-      console.error("Error details:", {
-        message: error.response?.data?.message,
-        error: error.response?.data?.error,
-        headers: error.config?.headers
-      });
-    }
-
     return handleApiError(error);
   }
 };
@@ -330,7 +283,6 @@ export const undoRetweet = async (postId) => {
     // Check if token exists
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("No authentication token found for undo retweet request");
       return {
         error: true,
         message: "Authentication token not found. Please log in again.",
@@ -356,7 +308,6 @@ export const undoRetweet = async (postId) => {
 
     return handleApiResponse(response);
   } catch (error) {
-    console.error('Error in undoRetweet:', error);
     return handleApiError(error);
   }
 };

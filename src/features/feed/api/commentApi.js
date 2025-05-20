@@ -36,11 +36,10 @@ export const createComment = async (postId, commentData) => {
  */
 export const createCommentDirect = async (commentData) => {
   try {
-    const response = await apiClient.post(
-      endpoints.comment.create,
-      commentData
-    );
-    return handleApiResponse(response);
+    const endpoint = endpoints.comment.create;
+    const response = await apiClient.post(endpoint, commentData);
+    const processedResponse = handleApiResponse(response);
+    return processedResponse;
   } catch (error) {
     return handleApiError(error);
   }
@@ -53,14 +52,17 @@ export const createCommentDirect = async (commentData) => {
  * @param {string} replyData.content - Reply content
  * @param {string} replyData.replyToId - ID of the comment this is replying to
  * @returns {Promise<Object>} Response object
+ * @deprecated Use createCommentDirect instead with replyToId parameter
  */
 export const replyToComment = async (replyData) => {
   try {
+    // Use the same endpoint as createCommentDirect
     const response = await apiClient.post(
       endpoints.comment.create,
       replyData
     );
-    return handleApiResponse(response);
+    const processedResponse = handleApiResponse(response);
+    return processedResponse;
   } catch (error) {
     return handleApiError(error);
   }
@@ -85,12 +87,16 @@ export const getComments = async (postId, options = {}) => {
       parentOnly: options.parentOnly !== undefined ? options.parentOnly : true
     };
 
-    // Use the new dedicated endpoint for getting comments for a post
-    const response = await apiClient.get(
-      endpoints.comment.getForPost(postId),
-      { params }
-    );
-    return handleApiResponse(response);
+    // Ensure parentOnly is a string 'true' or 'false' as required by the API
+    if (typeof params.parentOnly === 'boolean') {
+      params.parentOnly = params.parentOnly.toString();
+    }
+
+    // Use the dedicated endpoint for getting comments for a post
+    const endpoint = endpoints.comment.getForPost(postId);
+    const response = await apiClient.get(endpoint, { params });
+    const processedResponse = handleApiResponse(response);
+    return processedResponse;
   } catch (error) {
     return handleApiError(error);
   }
@@ -111,11 +117,14 @@ export const getCommentReplies = async (commentId, options = {}) => {
       limit: options.limit || 10
     };
 
-    const response = await apiClient.get(
-      endpoints.comment.getReplies(commentId),
-      { params }
-    );
-    return handleApiResponse(response);
+    const endpoint = endpoints.comment.getReplies(commentId);
+    const response = await apiClient.get(endpoint, { params });
+
+    // Special handling for the replies endpoint
+    // No additional processing needed here, handleApiResponse will handle the response
+
+    const processedResponse = handleApiResponse(response);
+    return processedResponse;
   } catch (error) {
     return handleApiError(error);
   }

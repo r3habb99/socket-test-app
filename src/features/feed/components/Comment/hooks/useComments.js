@@ -67,7 +67,7 @@ export const useComments = (postId, options = {}) => {
         }));
       }
 
- 
+
       const response = await getComments(postId, {
         sort: currentSortOrder,
         parentOnly: currentOptions.parentOnly !== undefined ? currentOptions.parentOnly : true,
@@ -75,9 +75,9 @@ export const useComments = (postId, options = {}) => {
         limit: currentPagination.limit
       });
 
-   
+
       const commentsData = processCommentsResponse(response);
-    
+
       // Update comments state
       if (refresh) {
         setComments(commentsData);
@@ -99,7 +99,6 @@ export const useComments = (postId, options = {}) => {
         hasMore: commentsData.length === currentPagination.limit
       }));
     } catch (err) {
-      console.error('Error fetching comments:', err);
       setError('Failed to load comments. Please try again.');
     } finally {
       setLoading(false);

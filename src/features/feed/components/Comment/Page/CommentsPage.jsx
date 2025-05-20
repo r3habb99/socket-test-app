@@ -85,10 +85,7 @@ export const CommentsPage = () => {
             <Text type="danger">{postError}</Text>
             <Button
               type="primary"
-              onClick={() => {
-             // Use the fetchPost function from the hook
-                fetchPost();
-              }}
+              onClick={() => fetchPost()}
             >
               Retry
             </Button>
@@ -162,10 +159,7 @@ export const CommentsPage = () => {
                 <Text type="danger">{commentsError}</Text>
                 <Button
                   type="primary"
-                  onClick={() => {
-               // Use the refreshComments function to refresh comments
-                    refreshComments();
-                  }}
+                  onClick={() => refreshComments()}
                 >
                   Retry
                 </Button>

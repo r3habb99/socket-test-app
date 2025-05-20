@@ -14,10 +14,7 @@ import {
   selectSocket,
   selectConnectionStatus,
   selectOnlineUsers,
-  selectTypingUsers,
   selectLastSeenTimes,
-  selectIsUserOnline,
-  selectLastSeen,
   selectReconnectAttempts,
   selectJoinedRooms,
 } from '../store/socketSlice';
@@ -164,14 +161,16 @@ export const useSocketManager = (options = {}) => {
       connect();
     }
 
+    // Store a reference to the current event handlers at the time the effect runs
+    // This prevents the cleanup function from using a stale ref value
+    const currentEventHandlersSnapshot = { ...eventHandlersRef.current };
+
     return () => {
-      // Clean up socket on unmount
-      // Store a reference to the current socket and event handlers
+      // Clean up socket on unmount using the snapshot we captured
       const currentSocket = socket;
-      const currentEventHandlers = { ...eventHandlersRef.current };
 
       if (currentSocket) {
-        Object.keys(currentEventHandlers).forEach(event => {
+        Object.keys(currentEventHandlersSnapshot).forEach(event => {
           currentSocket.off(event);
         });
       }
