@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import { useAppDispatch } from "../../../../core/store/hooks";
 import { FollowButton } from "../FollowButton";
 import {
   getUserFollowers,
   getUserFollowing,
-  followUser,
   fetchUserProfileById,
 } from "../../api/profileApi";
+import {
+  followUserProfile,
+  unfollowUserProfile
+} from "../../store/profileSlice";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
 import "./FollowersList.css";
 
 export const FollowersList = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const location = window.location.pathname;
 
   // Set initial active tab based on the URL
@@ -39,9 +44,6 @@ export const FollowersList = () => {
         setError(profileResponse.message || "Failed to fetch user profile");
         return;
       }
-
-      // Process profile data
-      console.log("Profile response for followers list:", profileResponse);
 
       // Handle different response structures
       let userData = null;
@@ -89,9 +91,6 @@ export const FollowersList = () => {
           return;
         }
 
-        // Process followers data - these are people who follow the profile we're viewing
-        console.log("Followers response:", followersResponse);
-
         // Initialize followers as an empty array by default
         setFollowers([]);
 
@@ -99,16 +98,14 @@ export const FollowersList = () => {
         if (followersResponse.message &&
             (followersResponse.message.includes("No followers") ||
              followersResponse.message.includes("not found"))) {
-          console.log("API explicitly indicates no followers found");
-          // Already set to empty array above
+        // Already set to empty array above
         }
         // Check if the response data contains a message about no followers
         else if (followersResponse.data &&
                 followersResponse.data.message &&
                 (followersResponse.data.message.includes("No followers") ||
                  followersResponse.data.message.includes("not found"))) {
-          console.log("API data message indicates no followers found");
-          // Already set to empty array above
+         // Already set to empty array above
         }
         else {
           // Handle different response structures
@@ -117,18 +114,15 @@ export const FollowersList = () => {
           // Case 1: Direct response with statusCode, message, data structure
           if (followersResponse.data && followersResponse.data.statusCode && followersResponse.data.data) {
             followersArray = followersResponse.data.data;
-            console.log("Found followers in response.data.data with statusCode structure", followersArray);
           }
           // Case 2: Nested data.data structure
           else if (followersResponse.data && followersResponse.data.data && Array.isArray(followersResponse.data.data)) {
             followersArray = followersResponse.data.data;
-            console.log("Found followers in response.data.data structure", followersArray);
           }
           // Case 3: Direct data structure
           else if (followersResponse.data && Array.isArray(followersResponse.data)) {
             followersArray = followersResponse.data;
-            console.log("Found followers in direct response.data structure", followersArray);
-          }
+         }
 
           if (followersArray && Array.isArray(followersArray) && followersArray.length > 0) {
             // Only process if we have actual data
@@ -136,8 +130,7 @@ export const FollowersList = () => {
             const normalizedFollowers = followersArray.map((follower) => {
               // Skip any entries that don't have basic user data
               if (!follower || (!follower.id && !follower._id)) {
-                console.log("Skipping invalid follower entry:", follower);
-                return null;
+               return null;
               }
 
               return {
@@ -153,9 +146,7 @@ export const FollowersList = () => {
           }
         }
 
-        // Process following data - these are people the profile we're viewing follows
-        console.log("Following response:", followingResponse);
-
+  
         // Initialize following as an empty array by default
         setFollowing([]);
 
@@ -171,8 +162,7 @@ export const FollowersList = () => {
                 followingResponse.data.message &&
                 (followingResponse.data.message.includes("No following") ||
                  followingResponse.data.message.includes("not found"))) {
-          console.log("API data message indicates no following users found");
-          // Already set to empty array above
+           // Already set to empty array above
         }
         else {
           // Handle different response structures
@@ -181,18 +171,15 @@ export const FollowersList = () => {
           // Case 1: Direct response with statusCode, message, data structure
           if (followingResponse.data && followingResponse.data.statusCode && followingResponse.data.data) {
             followingArray = followingResponse.data.data;
-            console.log("Found following in response.data.data with statusCode structure", followingArray);
-          }
+           }
           // Case 2: Nested data.data structure
           else if (followingResponse.data && followingResponse.data.data && Array.isArray(followingResponse.data.data)) {
             followingArray = followingResponse.data.data;
-            console.log("Found following in response.data.data structure", followingArray);
           }
           // Case 3: Direct data structure
           else if (followingResponse.data && Array.isArray(followingResponse.data)) {
             followingArray = followingResponse.data;
-            console.log("Found following in direct response.data structure", followingArray);
-          }
+           }
 
           if (followingArray && Array.isArray(followingArray) && followingArray.length > 0) {
             // Only process if we have actual data
@@ -200,8 +187,7 @@ export const FollowersList = () => {
             const normalizedFollowing = followingArray.map((user) => {
               // Skip any entries that don't have basic user data
               if (!user || (!user.id && !user._id)) {
-                console.log("Skipping invalid following entry:", user);
-                return null;
+               return null;
               }
 
               return {
@@ -226,19 +212,63 @@ export const FollowersList = () => {
 
         // Only process if we have users to check
         const followStatus = {};
+
+        // First, set all users in the "following" list to true (since the logged-in user is following them)
+        // This is for the case when viewing your own following list
+        if (profileUser && String(profileUser.id) === String(loggedInUserId)) {
+          following.forEach(user => {
+            const userIdToCheck = user.id || user._id;
+            if (userIdToCheck) {
+              followStatus[userIdToCheck] = true;
+            }
+          });
+        }
+
+        // Then process all users normally
         if (allUsers.length > 0) {
           allUsers.forEach((user) => {
             // Skip any invalid entries
             if (!user) return;
 
             const userIdToCheck = user.id || user._id;
-            if (userIdToCheck) {
+            if (userIdToCheck && followStatus[userIdToCheck] === undefined) {
               // Check if the logged-in user is following this user
-              followStatus[userIdToCheck] =
-                user.followers?.includes(loggedInUserId);
+              // First check if the user has an isFollowing property (from API)
+              if (user.isFollowing !== undefined) {
+                followStatus[userIdToCheck] = user.isFollowing;
+              }
+              // Then check if the logged-in user is in the followers array
+              else if (user.followers && Array.isArray(user.followers)) {
+                // Check for both string IDs and object IDs
+                followStatus[userIdToCheck] = user.followers.some(followerId =>
+                  String(followerId) === String(loggedInUserId) ||
+                  (typeof followerId === 'object' &&
+                   (String(followerId.id) === String(loggedInUserId) ||
+                    String(followerId._id) === String(loggedInUserId)))
+                );
+              }
+              // Default to false if we can't determine
+              else {
+                followStatus[userIdToCheck] = false;
+              }
             }
           });
         }
+
+        // Special case: If we're in the "following" tab, all users should be marked as followed
+        if (activeTab === "following") {
+          following.forEach(user => {
+            const userIdToCheck = user.id || user._id;
+            if (userIdToCheck) {
+              // If the user is in the following list, they should be marked as followed
+              // unless we've already determined they're not followed
+              if (followStatus[userIdToCheck] === undefined) {
+                followStatus[userIdToCheck] = true;
+              }
+            }
+          });
+        }
+
         setFollowingStates(followStatus);
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -248,35 +278,73 @@ export const FollowersList = () => {
       }
     };
 
+  // Fetch data initially and when userId or loggedInUserId changes
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, loggedInUserId]);
 
+  // Add a refresh mechanism when the component gains focus
+  useEffect(() => {
+    // Function to refresh data when the component becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData();
+      }
+    };
+
+    // Add event listener for visibility change
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Clean up
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const toggleFollow = async (targetUserId) => {
     try {
-      const response = await followUser(targetUserId);
-
-      if (response.error) {
-        console.error("Error toggling follow status:", response.message);
-        return;
-      }
-
       // Determine if this was a follow or unfollow action
       const wasFollowing = followingStates[targetUserId];
       const isNowFollowing = !wasFollowing;
 
-      // Update the following state for this user
+      // Update the local state immediately for a responsive UI
       setFollowingStates(prev => ({
         ...prev,
         [targetUserId]: isNowFollowing
       }));
 
+      // Dispatch the appropriate Redux action
+      let response;
+      if (wasFollowing) {
+        response = await dispatch(unfollowUserProfile(targetUserId)).unwrap();
+      } else {
+        response = await dispatch(followUserProfile(targetUserId)).unwrap();
+      }
+
+      // If there was an error, revert the local state change
+      if (response && response.error) {
+        console.error("Error toggling follow status:", response.message);
+        setFollowingStates(prev => ({
+          ...prev,
+          [targetUserId]: wasFollowing // Revert to previous state
+        }));
+        return;
+      }
+
       // If we're removing a follow in the "following" tab, remove them from the list
+      // This is especially important when viewing your own following list
       if (wasFollowing && activeTab === "following") {
-        setFollowing(prevFollowing =>
-          prevFollowing.filter(user => user.id !== targetUserId)
-        );
+        // If this is the logged-in user's profile, remove the unfollowed user from the list
+        if (profileUser && String(profileUser.id) === String(loggedInUserId)) {
+          setFollowing(prevFollowing =>
+            prevFollowing.filter(user =>
+              String(user.id) !== String(targetUserId) &&
+              String(user._id) !== String(targetUserId)
+            )
+          );
+        }
       }
 
       // If we're viewing our own profile and we remove a follow
@@ -285,6 +353,12 @@ export const FollowersList = () => {
       }
     } catch (err) {
       console.error("Error toggling follow:", err);
+      // Revert the local state change on error
+      const wasFollowing = followingStates[targetUserId];
+      setFollowingStates(prev => ({
+        ...prev,
+        [targetUserId]: wasFollowing // Revert to previous state
+      }));
     }
   };
 
@@ -531,7 +605,7 @@ export const FollowersList = () => {
                   {user.id !== loggedInUserId && (
                     <div className="following-follow">
                       <FollowButton
-                        isFollowing={followingStates[user.id]}
+                        isFollowing={activeTab === "following" ? true : followingStates[user.id]}
                         toggleFollow={() => toggleFollow(user.id)}
                       />
                     </div>

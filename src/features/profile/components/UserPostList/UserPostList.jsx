@@ -66,27 +66,22 @@ export const UserPostList = ({ userId, activeTab }) => {
         return;
       }
 
-      // Log the response for debugging
-      console.log("User stats API response for posts:", response);
-
+  
       // Handle different response structures
       let statsData = null;
 
       // Case 1: Direct response with statusCode, message, data structure
       if (response.data && response.data.statusCode && response.data.data) {
         statsData = response.data.data;
-        console.log("Found stats data in response.data.data with statusCode structure", statsData);
       }
       // Case 2: Nested response.data.data structure
       else if (response.data && response.data.data) {
         statsData = response.data.data;
-        console.log("Found stats data in response.data.data structure", statsData);
       }
       // Case 3: Direct response.data structure
       else if (response.data) {
         statsData = response.data;
-        console.log("Found stats data in direct response.data structure", statsData);
-      }
+     }
 
       if (!statsData) {
         setError('No user data found in response');

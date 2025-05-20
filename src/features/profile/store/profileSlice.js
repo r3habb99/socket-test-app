@@ -52,7 +52,31 @@ export const fetchUserProfile = createAsyncThunk(
         return rejectWithValue(errorMsg);
       }
 
-      return { profile: profileData };
+      // Get the logged-in user ID
+      const loggedInUserId = localStorage.getItem("userId");
+
+      // Ensure the profile has normalized ID fields
+      const normalizedProfile = {
+        ...profileData,
+        id: profileData.id || profileData._id,
+        _id: profileData._id || profileData.id,
+      };
+
+      // Determine if the logged-in user is following this profile
+      // First check if isFollowing is already set in the API response
+      if (normalizedProfile.isFollowing === undefined) {
+        // If not set, check if the logged-in user is in the followers array
+        const followersArray = normalizedProfile.followers || [];
+        normalizedProfile.isFollowing = Array.isArray(followersArray) &&
+          followersArray.some(followerId =>
+            String(followerId) === String(loggedInUserId) ||
+            (typeof followerId === 'object' &&
+             (String(followerId.id) === String(loggedInUserId) ||
+              String(followerId._id) === String(loggedInUserId)))
+          );
+      }
+
+      return { profile: normalizedProfile };
     } catch (err) {
       const message = err.message || "Failed to fetch user profile";
       dispatch(setError({ feature: 'profile', error: message }));
@@ -244,7 +268,7 @@ export const fetchFollowing = createAsyncThunk(
 
 export const followUserProfile = createAsyncThunk(
   'profile/followUser',
-  async (userId, { dispatch, rejectWithValue }) => {
+  async (userId, { rejectWithValue }) => {
     try {
       const response = await followUser(userId);
 
@@ -252,7 +276,14 @@ export const followUserProfile = createAsyncThunk(
         return rejectWithValue(response.message);
       }
 
-      return { userId, followed: true };
+      // Get the current logged-in user ID
+      const loggedInUserId = localStorage.getItem("userId");
+
+      return {
+        userId,
+        followed: true,
+        loggedInUserId
+      };
     } catch (err) {
       return rejectWithValue(err.message || "Failed to follow user");
     }
@@ -261,7 +292,7 @@ export const followUserProfile = createAsyncThunk(
 
 export const unfollowUserProfile = createAsyncThunk(
   'profile/unfollowUser',
-  async (userId, { dispatch, rejectWithValue }) => {
+  async (userId, { rejectWithValue }) => {
     try {
       // Use the same followUser API for unfollowing as it toggles follow status
       const response = await followUser(userId);
@@ -270,7 +301,14 @@ export const unfollowUserProfile = createAsyncThunk(
         return rejectWithValue(response.message);
       }
 
-      return { userId, followed: false };
+      // Get the current logged-in user ID
+      const loggedInUserId = localStorage.getItem("userId");
+
+      return {
+        userId,
+        followed: false,
+        loggedInUserId
+      };
     } catch (err) {
       return rejectWithValue(err.message || "Failed to unfollow user");
     }
@@ -393,24 +431,104 @@ const profileSlice = createSlice({
 
       // Follow user cases
       .addCase(followUserProfile.fulfilled, (state, action) => {
-        // Update current profile if it matches
+        const { userId, loggedInUserId } = action.payload;
+
+        // Update current profile if it matches the target user
         if (state.currentProfile &&
-            (state.currentProfile.id === action.payload.userId ||
-             state.currentProfile._id === action.payload.userId)) {
+            (state.currentProfile.id === userId ||
+             state.currentProfile._id === userId)) {
           state.followerCount += 1;
           state.currentProfile.isFollowing = true;
+
+          // Add the logged-in user to the followers array if not already there
+          if (state.currentProfile.followers) {
+            if (!state.currentProfile.followers.includes(loggedInUserId)) {
+              state.currentProfile.followers.push(loggedInUserId);
+            }
+          } else {
+            state.currentProfile.followers = [loggedInUserId];
+          }
         }
+
+        // Update followers list if it contains the target user
+        state.followers = state.followers.map(follower => {
+          if (follower.id === userId || follower._id === userId) {
+            return {
+              ...follower,
+              isFollowing: true,
+              followers: follower.followers ?
+                (follower.followers.includes(loggedInUserId) ?
+                  follower.followers :
+                  [...follower.followers, loggedInUserId]) :
+                [loggedInUserId]
+            };
+          }
+          return follower;
+        });
+
+        // Update following list if it contains the target user
+        state.following = state.following.map(user => {
+          if (user.id === userId || user._id === userId) {
+            return {
+              ...user,
+              isFollowing: true,
+              followers: user.followers ?
+                (user.followers.includes(loggedInUserId) ?
+                  user.followers :
+                  [...user.followers, loggedInUserId]) :
+                [loggedInUserId]
+            };
+          }
+          return user;
+        });
       })
 
       // Unfollow user cases
       .addCase(unfollowUserProfile.fulfilled, (state, action) => {
-        // Update current profile if it matches
+        const { userId, loggedInUserId } = action.payload;
+
+        // Update current profile if it matches the target user
         if (state.currentProfile &&
-            (state.currentProfile.id === action.payload.userId ||
-             state.currentProfile._id === action.payload.userId)) {
+            (state.currentProfile.id === userId ||
+             state.currentProfile._id === userId)) {
           state.followerCount = Math.max(0, state.followerCount - 1);
           state.currentProfile.isFollowing = false;
+
+          // Remove the logged-in user from the followers array
+          if (state.currentProfile.followers) {
+            state.currentProfile.followers = state.currentProfile.followers.filter(
+              id => String(id) !== String(loggedInUserId)
+            );
+          }
         }
+
+        // Update followers list if it contains the target user
+        state.followers = state.followers.map(follower => {
+          if (follower.id === userId || follower._id === userId) {
+            return {
+              ...follower,
+              isFollowing: false,
+              followers: follower.followers ?
+                follower.followers.filter(id => String(id) !== String(loggedInUserId)) :
+                []
+            };
+          }
+          return follower;
+        });
+
+        // Update following list if it contains the target user
+        state.following = state.following.map(user => {
+          if (user.id === userId || user._id === userId) {
+            return {
+              ...user,
+              isFollowing: false,
+              followers: user.followers ?
+                user.followers.filter(id => String(id) !== String(loggedInUserId)) :
+                []
+            };
+          }
+          return user;
+        });
       });
   },
 });

@@ -66,26 +66,21 @@ export const Profile = () => {
         return;
       }
 
-      // Log the stats response for debugging
-      console.log("User stats API response:", response);
-
+  
       // Handle different response structures for stats
       let statsData = null;
 
       // Case 1: Direct response with statusCode, message, data structure
       if (response.data && response.data.statusCode && response.data.data) {
         statsData = response.data;
-        console.log("Found stats data in response.data with statusCode structure", statsData);
-      }
+       }
       // Case 2: Nested response.data.data structure
       else if (response.data && response.data.data) {
         statsData = response.data;
-        console.log("Found stats data in response.data.data structure", statsData);
       }
       // Case 3: Direct response.data structure
       else if (response.data) {
         statsData = response.data;
-        console.log("Found stats data in direct response.data structure", statsData);
       }
 
       if (statsData) {
@@ -105,6 +100,24 @@ export const Profile = () => {
     if (userId) {
       dispatch(fetchUserProfile(userId));
     }
+  }, [dispatch, userId]);
+
+  // Add a refresh mechanism when the component gains focus
+  useEffect(() => {
+    // Function to refresh data when the component becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && userId) {
+        dispatch(fetchUserProfile(userId));
+      }
+    };
+
+    // Add event listener for visibility change
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Clean up
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [dispatch, userId]);
 
   // Refresh stats when active tab changes
