@@ -149,9 +149,10 @@ export const SocketProviderCompat = ({ children }) => {
     leaveChat: socketManager.leaveChatRoom,
     sendMessage: socketManager.sendMessage,
     sendTyping: socketManager.sendTyping,
-    handleTyping: (isTyping) => {
-      if (!currentChatId) return;
-      socketManager.sendTyping(currentChatId, isTyping);
+    handleTyping: (isTyping, chatId) => {
+      const targetChatId = chatId || currentChatId;
+      if (!targetChatId) return;
+      socketManager.sendTyping(targetChatId, isTyping);
     },
     markMessageRead: (messageId, chatId) => {
       if (!socket) return;

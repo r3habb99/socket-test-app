@@ -232,21 +232,67 @@ export const useSocketManager = (options = {}) => {
    * @param {Object} messageData - Message data to send
    * @param {Function} callback - Callback function
    */
-  const sendMessage = useCallback((messageData, callback) => {
-    if (!socket || !socket.connected) {
-      connect().then(connected => {
-        if (connected) {
-          socket.emit('new message', messageData, callback);
-        } else if (callback) {
-          callback({ success: false, error: 'Socket not connected' });
-        }
+  const sendMessage = useCallback(async (messageData, callback) => {
+    // Import the API function here to avoid circular dependencies
+    const { sendMessage: apiSendMessage } = require('../../messaging/api/messagingApi');
+
+    try {
+      // First, try to send the message via API to ensure it's saved in the database
+      const apiResponse = await apiSendMessage({
+        content: messageData.content,
+        chatId: messageData.chatId
       });
+
+      // If API call was successful, emit the socket event for real-time updates
+      if (socket && socket.connected) {
+        // Include the saved message ID from the API response if available
+        const socketData = {
+          ...messageData,
+          _id: apiResponse?.data?._id || apiResponse?.data?.id || messageData.tempId
+        };
+
+        socket.emit('new message', socketData, (socketResponse) => {
+          if (callback) {
+            // Combine API and socket responses
+            callback({
+              success: true,
+              apiResponse,
+              socketResponse,
+              message: apiResponse?.data || socketData
+            });
+          }
+        });
+      } else if (callback) {
+        // If socket is not connected, just return the API response
+        callback({
+          success: true,
+          apiResponse,
+          socketConnected: false,
+          message: apiResponse?.data
+        });
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error sending message:', error);
+
+      // Try socket-only as fallback if API fails
+      if (socket && socket.connected) {
+        socket.emit('new message', messageData, callback);
+        return true;
+      }
+
+      if (callback) {
+        callback({
+          success: false,
+          error: error.message || 'Failed to send message',
+          apiError: error
+        });
+      }
+
       return false;
     }
-
-    socket.emit('new message', messageData, callback);
-    return true;
-  }, [connect, socket]);
+  }, [socket]);
 
   /**
    * Send typing indicator

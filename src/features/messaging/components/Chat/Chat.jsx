@@ -283,7 +283,6 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
     // Only send typing indicator if we're connected and have a selected chat
     if (!socketContext.connected || !selectedChat) {
-
       return;
     }
 
@@ -295,13 +294,27 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     }
 
     // Send typing indicator with explicit chat ID
+    // Try both methods to ensure compatibility
+    if (typeof socketContext.sendTyping === 'function') {
+      socketContext.sendTyping(chatId, isTyping);
+    }
 
-    socketContext.sendTyping(isTyping, chatId);
+    if (typeof socketContext.handleTyping === 'function') {
+      socketContext.handleTyping(isTyping, chatId);
+    }
 
     // If user is typing, set a timeout to automatically stop typing indicator
     if (isTyping) {
       const timeout = setTimeout(() => {
-        socketContext.sendTyping(false, chatId);
+        // Try both methods to ensure compatibility
+        if (typeof socketContext.sendTyping === 'function') {
+          socketContext.sendTyping(chatId, false);
+        }
+
+        if (typeof socketContext.handleTyping === 'function') {
+          socketContext.handleTyping(false, chatId);
+        }
+
         setTypingTimeout(null);
       }, 3000); // 3 seconds
       setTypingTimeout(timeout);
@@ -319,14 +332,28 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
         if (chatId) {
           // Also send a stopped typing event when unmounting
-          socketContext.sendTyping(false, chatId);
+          // Try both methods to ensure compatibility
+          if (typeof socketContext.sendTyping === 'function') {
+            socketContext.sendTyping(chatId, false);
+          }
+
+          if (typeof socketContext.handleTyping === 'function') {
+            socketContext.handleTyping(false, chatId);
+          }
         }
       }
 
       // Leave chat room on component unmount
       const chatId = selectedChat?._id || selectedChat?.id;
       if (chatId) {
-        socketContext.leaveChat(chatId);
+        // Try both methods to ensure compatibility
+        if (typeof socketContext.leaveChat === 'function') {
+          socketContext.leaveChat(chatId);
+        }
+
+        if (typeof socketContext.leaveChatRoom === 'function') {
+          socketContext.leaveChatRoom(chatId);
+        }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -521,7 +548,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       const lastProcessed = receivedMessagesRef.current.get(messageSignature);
 
       if (lastProcessed && (now - lastProcessed) < 10000) {
-       return;
+        return;
       }
 
       // Add this message to our tracking map with current timestamp
@@ -539,6 +566,23 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         }
       }
 
+      // Normalize the message to ensure consistent structure
+      const normalizedMessage = {
+        ...newMessage,
+        _id: messageId || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        id: messageId || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        sender: {
+          ...(typeof newMessage.sender === 'object' ? newMessage.sender : {}),
+          _id: senderId,
+          id: senderId
+        },
+        chat: {
+          _id: messageChatId,
+          id: messageChatId
+        },
+        createdAt: newMessage.createdAt || new Date().toISOString()
+      };
+
       // Update messages state with the new message
       socketContext.setMessages((prevMessages) => {
         const prevMessagesArray = Array.isArray(prevMessages) ? prevMessages : [];
@@ -549,7 +593,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         );
 
         if (existsById) {
-         return prevMessagesArray;
+          return prevMessagesArray;
         }
 
         // Check for temporary messages with the same content from the same sender
@@ -564,14 +608,15 @@ export const Chat = ({ selectedChat, onBackClick }) => {
           // Create a new array with the temporary message replaced
           const updatedMessages = [...prevMessagesArray];
           updatedMessages[tempMessageIndex] = {
-            ...newMessage,
-            replaced: true
+            ...normalizedMessage,
+            replaced: true,
+            status: 'sent'
           };
           return updatedMessages;
         }
 
         // If we get here, it's a new message, so add it
-        return [...prevMessagesArray, newMessage];
+        return [...prevMessagesArray, normalizedMessage];
       });
 
       // Scroll to the bottom when a new message is received
@@ -585,11 +630,14 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     // Also register for the "new message" event in case the backend uses that name
     const unsubscribeNewMessage = socketContext.subscribe("new message", handleMessageReceived);
 
+    // Also register for the "receiveMessage" event as some backends use this name
+    const unsubscribeReceiveMessage = socketContext.subscribe("receiveMessage", handleMessageReceived);
 
     // Cleanup the listeners on component unmount or when dependencies change
     return () => {
       unsubscribe();
       unsubscribeNewMessage();
+      unsubscribeReceiveMessage();
       // Don't reset registeredChatIdRef here as it will cause issues with re-registering
     };
   }, [selectedChat?._id, selectedChat?.id, socketContext, scrollToBottom]); // Only depend on the chat ID properties
@@ -627,7 +675,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         messageContent === lastSentMessageRef.current.content &&
         currentTime - lastSentMessageRef.current.timestamp < 2000
       ) {
-       return;
+        return;
       }
 
       // Update the last sent message reference
@@ -678,7 +726,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         );
 
         if (similarMessageExists) {
-         // Remove from pending set since we're not actually sending it
+          // Remove from pending set since we're not actually sending it
           pendingMessagesRef.current.delete(messageSignature);
           return prevMessages;
         }
@@ -687,14 +735,86 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         return [...prevMessages, tempMessage];
       });
 
-      // Send message via socket context
+      // Send message via socket context with a callback to handle the response
       socketContext.sendMessage({
         content: messageContent,
         chatId: chatId,
         tempId: tempId // Include the temp ID to help with matching on the response
+      }, (response) => {
+        // Handle the response from the socket/API
+        if (response && response.success) {
+          // Get the real message from the response
+          const realMessage = response.message || response.apiResponse?.data;
+
+          if (realMessage) {
+            // Update the temporary message with the real message data
+            socketContext.setMessages(prev => {
+              const prevMessages = Array.isArray(prev) ? prev : [];
+
+              // Find the temporary message
+              const tempMessageIndex = prevMessages.findIndex(msg =>
+                msg._id === tempId && msg.isTemp
+              );
+
+              // If the temporary message exists, replace it with the real message
+              if (tempMessageIndex !== -1) {
+                const updatedMessages = [...prevMessages];
+                updatedMessages[tempMessageIndex] = {
+                  ...realMessage,
+                  status: 'sent',
+                  replaced: true
+                };
+                return updatedMessages;
+              }
+
+              // If the temporary message doesn't exist, add the real message
+              // (but check for duplicates first)
+              const messageExists = prevMessages.some(msg =>
+                (msg._id === realMessage._id || msg._id === realMessage.id) && !msg.isTemp
+              );
+
+              if (!messageExists) {
+                return [...prevMessages, {
+                  ...realMessage,
+                  status: 'sent'
+                }];
+              }
+
+              return prevMessages;
+            });
+          }
+
+          // Remove from pending set since the message was sent successfully
+          pendingMessagesRef.current.delete(messageSignature);
+        } else {
+          // Handle error - update the temporary message to show error
+          socketContext.setMessages(prev => {
+            const prevMessages = Array.isArray(prev) ? prev : [];
+
+            // Find the temporary message
+            const tempMessageIndex = prevMessages.findIndex(msg =>
+              msg._id === tempId && msg.isTemp
+            );
+
+            // If the temporary message exists, update its status
+            if (tempMessageIndex !== -1) {
+              const updatedMessages = [...prevMessages];
+              updatedMessages[tempMessageIndex] = {
+                ...updatedMessages[tempMessageIndex],
+                status: 'error',
+                error: response?.error || 'Failed to send message'
+              };
+              return updatedMessages;
+            }
+
+            return prevMessages;
+          });
+
+          console.error('Error sending message:', response?.error || 'Unknown error');
+        }
       });
 
-      // Remove from pending set after 10 seconds (should be delivered by then)
+      // Fallback: Remove from pending set after 10 seconds (should be delivered by then)
       setTimeout(() => {
         pendingMessagesRef.current.delete(messageSignature);
 
@@ -704,7 +824,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
 
           // Find the temporary message
           const tempMessageIndex = prevMessages.findIndex(msg =>
-            msg._id === tempId && msg.isTemp
+            msg._id === tempId && msg.isTemp && msg.status === 'sending'
           );
 
           // If the temporary message still exists and hasn't been replaced, update its status
@@ -724,6 +844,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       // Scroll to bottom after sending
       setTimeout(scrollToBottom, 100);
     } catch (error) {
+      console.error("Error in handleSendMessage:", error);
       alert("Failed to send message. Please try again.");
     }
   };
