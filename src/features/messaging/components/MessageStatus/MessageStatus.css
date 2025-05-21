@@ -1,23 +1,41 @@
-.message-status-container {
+.message-status {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
   margin-left: 4px;
+  font-size: 12px;
 }
 
 .message-status-icon {
+  margin-right: 4px;
   font-size: 12px;
 }
 
 .message-status-text {
   font-size: 11px;
-  opacity: 0.8;
+  color: var(--secondary-text-color, #536471);
 }
 
-/* Animation for sending status */
-.message-status-container .anticon-loading {
+/* Status-specific styles */
+.message-status-icon.sending {
+  color: var(--secondary-text-color, #536471);
+  font-size: 10px;
   animation: spin 1s infinite linear;
+}
+
+.message-status-icon.sent {
+  color: var(--secondary-text-color, #536471);
+}
+
+.message-status-icon.delivered {
+  color: var(--primary-color, #1d9bf0);
+}
+
+.message-status-icon.read {
+  color: var(--primary-color, #1d9bf0);
+}
+
+.message-status-icon.failed {
+  color: #f44336;
 }
 
 @keyframes spin {
@@ -26,5 +44,20 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .message-status {
+    font-size: 10px;
+  }
+
+  .message-status-icon {
+    font-size: 10px;
+  }
+
+  .message-status-text {
+    font-size: 9px;
   }
 }

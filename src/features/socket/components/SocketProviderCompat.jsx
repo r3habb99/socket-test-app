@@ -118,6 +118,7 @@ export const SocketProviderCompat = ({ children }) => {
     // Connection state
     connected: connectionStatus === 'connected',
     connectionStatus,
+    reconnectAttempts: socketManager.reconnectAttempts,
 
     // User presence state
     onlineUsers,
@@ -133,9 +134,14 @@ export const SocketProviderCompat = ({ children }) => {
     setMessage,
     typingUsers,
     currentChatId,
+    getTypingUsers: socketManager.getTypingUsers,
 
     // Socket methods
     subscribe,
+    connect: socketManager.connect,
+    disconnect: socketManager.disconnect,
+
+    // Chat room methods
     joinChatRoom: (chatId) => {
       setCurrentChatId(chatId);
       return socketManager.joinChatRoom(chatId);
@@ -146,28 +152,39 @@ export const SocketProviderCompat = ({ children }) => {
     },
     leaveChatRoom: socketManager.leaveChatRoom,
     leaveChat: socketManager.leaveChatRoom,
+
+    // Message methods
     sendMessage: socketManager.sendMessage,
+    markMessageRead: (messageId, chatId) => {
+      return socketManager.markMessageRead(messageId, chatId || currentChatId);
+    },
+    markAllMessagesRead: (chatId) => {
+      return socketManager.markAllMessagesRead(chatId || currentChatId);
+    },
+    editMessage: (messageId, chatId, content, callback) => {
+      return socketManager.editMessage(messageId, chatId || currentChatId, content, callback);
+    },
+    deleteMessage: (messageId, chatId, callback) => {
+      return socketManager.deleteMessage(messageId, chatId || currentChatId, callback);
+    },
+
+    // Typing indicators
     sendTyping: socketManager.sendTyping,
     handleTyping: (isTyping, chatId) => {
       const targetChatId = chatId || currentChatId;
       if (!targetChatId) return;
-      socketManager.sendTyping(targetChatId, isTyping);
+      return socketManager.sendTyping(targetChatId, isTyping);
     },
-    markMessageRead: (messageId, chatId) => {
-      if (!socket) return;
-      socket.emit('message read', { messageId, chatId: chatId || currentChatId });
-    },
+
+    // Connection management
     reconnect: () => {
-      if (socket) {
-        socket.connect();
-        return true;
-      }
-      return false;
+      return socketManager.connect();
     },
     refreshMessages,
 
     // Direct socket access (for backward compatibility)
     socket,
+    socketManager, // Provide direct access to the socket manager for advanced usage
   };
 
   return (

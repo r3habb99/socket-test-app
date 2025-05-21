@@ -526,6 +526,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     // Clear the received messages map when changing chats
     receivedMessagesRef.current.clear();
 
+    // Mark all messages as read when opening a chat
+    socketContext.markAllMessagesRead(chatId);
+
     const handleMessageReceived = (newMessage) => {
       // Check if the new message belongs to the currently selected chat
       const messageChatId = newMessage.chat?._id || newMessage.chat?.id || newMessage.chatId;
@@ -566,6 +569,12 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         }
       }
 
+      // If the message is from someone else, mark it as read
+      if (String(senderId) !== String(userId)) {
+        // Mark the message as read
+        socketContext.markMessageRead(messageId, chatId);
+      }
+
       // Normalize the message to ensure consistent structure
       const normalizedMessage = {
         ...newMessage,
@@ -580,7 +589,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
           _id: messageChatId,
           id: messageChatId
         },
-        createdAt: newMessage.createdAt || new Date().toISOString()
+        createdAt: newMessage.createdAt || new Date().toISOString(),
+        // Set status based on sender
+        status: String(senderId) === String(userId) ? (newMessage.status || 'delivered') : 'read'
       };
 
       // Update messages state with the new message

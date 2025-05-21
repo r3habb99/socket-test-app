@@ -11,7 +11,7 @@
   overflow: hidden;
   position: relative;
   min-width: 0; /* Prevent flex items from overflowing */
-  max-height: 100vh; /* Ensure container doesn't exceed viewport height */
+  max-height: 100%; /* Ensure container doesn't exceed parent height */
   padding-bottom: 70px; /* Make room for the input container */
 }
 
@@ -230,6 +230,7 @@
   min-height: 0; /* Critical for flexbox scrolling */
   scrollbar-width: thin; /* For Firefox */
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* For Firefox */
+  height: calc(100% - 120px); /* Account for header and input container */
 }
 
 /* Top loading indicator for older messages */
@@ -629,6 +630,8 @@ li.receiver .message-info {
   max-width: 100%;
   z-index: 950; /* Ensure input is above other elements but below navigation (z-index: 999) */
   height: 60px; /* Fixed height to match reference image */
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .message-actions {
@@ -752,7 +755,7 @@ li.receiver .message-info {
 
 .mobile-input-container {
   position: absolute;
-  bottom: 10px; /* Fixed position above the mobile navigation */
+  bottom: 0; /* Fixed position at the bottom */
   left: 0;
   right: 0;
   background-color: #fff;
@@ -766,8 +769,8 @@ li.receiver .message-info {
   padding: 10px 16px;
   justify-content: space-between;
   margin: 0; /* Reset any margins */
-  opacity: 1; /* Ensure visibility */
-  visibility: visible; /* Ensure visibility */
+  opacity: 1 !important; /* Ensure visibility */
+  visibility: visible !important; /* Ensure visibility */
 }
 
 /* Style the input field in mobile view to match reference image */
@@ -797,8 +800,11 @@ li.receiver .message-info {
 @media (max-width: 768px) {
   .chat-container {
     width: 100%;
-    padding-bottom: 120px; /* Make room for both input container and bottom navigation */
+    height: 100%;
+    padding-bottom: 70px; /* Make room for input container */
     position: relative;
+    max-height: 100%;
+    overflow: hidden;
   }
 
   .chat-header-container.ant-layout-header {
@@ -836,6 +842,16 @@ li.receiver .message-info {
   /* Hide the default input container in mobile view */
   .input-container:not(.mobile-input-container) {
     display: none;
+  }
+
+  /* Ensure messages container scrolls properly on mobile */
+  .chat-section .messages-container {
+    height: calc(
+      100% - 116px
+    ) !important; /* Account for header and input container on mobile */
+    max-height: calc(100% - 116px) !important;
+    overflow-y: auto;
+    padding-bottom: 70px;
   }
 
   /* Adjust messages container to account for fixed input */

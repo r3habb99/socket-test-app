@@ -1,8 +1,10 @@
 /**
- * User presence utilities
- * Handles tracking online/offline status and last seen times
+ * User Presence Utilities
+ * Manages user online status and last seen times
  */
+import { formatDistanceToNow } from 'date-fns';
 
+// Local storage keys
 const ONLINE_USERS_KEY = 'online_users';
 const LAST_SEEN_KEY = 'last_seen_users';
 
@@ -16,7 +18,7 @@ export const setUserOnline = (userId, userData = {}) => {
   try {
     // Get current online users
     const onlineUsers = getOnlineUsers();
-    
+
     // Add user to online users with timestamp
     const updatedUsers = {
       ...onlineUsers,
@@ -26,10 +28,10 @@ export const setUserOnline = (userId, userData = {}) => {
         online: true
       }
     };
-    
+
     // Save to localStorage
     localStorage.setItem(ONLINE_USERS_KEY, JSON.stringify(updatedUsers));
-    
+
     return updatedUsers;
   } catch (error) {
     console.error('Failed to set user online:', error);
@@ -46,17 +48,17 @@ export const setUserOffline = (userId) => {
   try {
     // Get current online users
     const onlineUsers = getOnlineUsers();
-    
+
     // Remove user from online users
     const updatedUsers = { ...onlineUsers };
     delete updatedUsers[userId];
-    
+
     // Save to localStorage
     localStorage.setItem(ONLINE_USERS_KEY, JSON.stringify(updatedUsers));
-    
+
     // Update last seen
     updateLastSeen(userId);
-    
+
     return updatedUsers;
   } catch (error) {
     console.error('Failed to set user offline:', error);
@@ -97,16 +99,16 @@ export const updateLastSeen = (userId) => {
   try {
     // Get current last seen times
     const lastSeen = getLastSeenTimes();
-    
+
     // Update last seen time
     const updatedLastSeen = {
       ...lastSeen,
       [userId]: new Date().toISOString()
     };
-    
+
     // Save to localStorage
     localStorage.setItem(LAST_SEEN_KEY, JSON.stringify(updatedLastSeen));
-    
+
     return updatedLastSeen;
   } catch (error) {
     console.error('Failed to update last seen:', error);
@@ -145,23 +147,31 @@ export const getUserLastSeen = (userId) => {
  */
 export const formatLastSeen = (lastSeenTime) => {
   if (!lastSeenTime) return 'Never';
-  
-  const lastSeen = new Date(lastSeenTime);
-  const now = new Date();
-  const diffSeconds = Math.floor((now - lastSeen) / 1000);
-  
-  if (diffSeconds < 60) {
-    return 'Just now';
-  } else if (diffSeconds < 3600) {
-    const minutes = Math.floor(diffSeconds / 60);
-    return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
-  } else if (diffSeconds < 86400) {
-    const hours = Math.floor(diffSeconds / 3600);
-    return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
-  } else if (diffSeconds < 604800) {
-    const days = Math.floor(diffSeconds / 86400);
-    return `${days} ${days === 1 ? 'day' : 'days'} ago`;
-  } else {
-    return lastSeen.toLocaleDateString();
+
+  try {
+    // Use date-fns for consistent formatting
+    return formatDistanceToNow(new Date(lastSeenTime), { addSuffix: true });
+  } catch (error) {
+    console.error('Error formatting last seen time:', error);
+
+    // Fallback to basic formatting
+    const lastSeen = new Date(lastSeenTime);
+    const now = new Date();
+    const diffSeconds = Math.floor((now - lastSeen) / 1000);
+
+    if (diffSeconds < 60) {
+      return 'Just now';
+    } else if (diffSeconds < 3600) {
+      const minutes = Math.floor(diffSeconds / 60);
+      return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+    } else if (diffSeconds < 86400) {
+      const hours = Math.floor(diffSeconds / 3600);
+      return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+    } else if (diffSeconds < 604800) {
+      const days = Math.floor(diffSeconds / 86400);
+      return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+    } else {
+      return lastSeen.toLocaleDateString();
+    }
   }
 };

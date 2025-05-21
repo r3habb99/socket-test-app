@@ -1,9 +1,10 @@
 /**
- * Offline message queue utilities
- * Handles storing and retrieving messages when offline
+ * Offline Queue Utilities
+ * Manages offline message queue for sending messages when reconnected
  */
 
 const OFFLINE_QUEUE_KEY = 'offline_message_queue';
+const MAX_RETRY_ATTEMPTS = 3;
 
 /**
  * Add a message to the offline queue
@@ -14,20 +15,20 @@ export const addToOfflineQueue = (message) => {
   try {
     // Get existing queue
     const queue = getOfflineQueue();
-    
+
     // Add message with timestamp
     const queuedMessage = {
       ...message,
       queuedAt: new Date().toISOString(),
       attempts: 0
     };
-    
+
     // Add to queue
     const updatedQueue = [...queue, queuedMessage];
-    
+
     // Save updated queue
     localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(updatedQueue));
-    
+
     return updatedQueue;
   } catch (error) {
     console.error('Failed to add message to offline queue:', error);
@@ -57,7 +58,11 @@ export const getOfflineQueue = () => {
 export const removeFromOfflineQueue = (messageId) => {
   try {
     const queue = getOfflineQueue();
-    const updatedQueue = queue.filter(msg => msg._id !== messageId && msg.id !== messageId);
+    const updatedQueue = queue.filter(msg =>
+      msg._id !== messageId &&
+      msg.id !== messageId &&
+      msg.tempId !== messageId
+    );
     localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(updatedQueue));
     return updatedQueue;
   } catch (error) {
@@ -112,11 +117,11 @@ export const incrementAttemptCount = (messageId) => {
   try {
     const queue = getOfflineQueue();
     let updatedMessage = null;
-    
+
     const updatedQueue = queue.map(msg => {
-      if (msg._id === messageId || msg.id === messageId) {
-        updatedMessage = { 
-          ...msg, 
+      if (msg._id === messageId || msg.id === messageId || msg.tempId === messageId) {
+        updatedMessage = {
+          ...msg,
           attempts: (msg.attempts || 0) + 1,
           lastAttempt: new Date().toISOString()
         };
@@ -124,11 +129,50 @@ export const incrementAttemptCount = (messageId) => {
       }
       return msg;
     });
-    
+
     localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(updatedQueue));
     return updatedMessage;
   } catch (error) {
     console.error('Failed to increment attempt count:', error);
     return null;
+  }
+};
+
+/**
+ * Get messages that should be retried
+ * @returns {Array} Messages to retry
+ */
+export const getMessagesToRetry = () => {
+  try {
+    // Get current queue
+    const queue = getOfflineQueue();
+
+    // Filter messages that haven't exceeded max retry attempts
+    return queue.filter(message => (message.attempts || 0) < MAX_RETRY_ATTEMPTS);
+  } catch (error) {
+    console.error('Error getting messages to retry:', error);
+    return [];
+  }
+};
+
+/**
+ * Remove messages that have exceeded max retry attempts
+ * @returns {Array} Updated queue
+ */
+export const removeFailedMessages = () => {
+  try {
+    // Get current queue
+    const queue = getOfflineQueue();
+
+    // Filter out messages that have exceeded max retry attempts
+    const updatedQueue = queue.filter(message => (message.attempts || 0) < MAX_RETRY_ATTEMPTS);
+
+    // Save updated queue
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(updatedQueue));
+
+    return updatedQueue;
+  } catch (error) {
+    console.error('Error removing failed messages:', error);
+    return [];
   }
 };

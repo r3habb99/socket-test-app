@@ -72,5 +72,14 @@
 
   .main-content {
     padding-bottom: var(--mobile-nav-height, 60px);
+    height: calc(100vh - var(--mobile-nav-height, 60px)) !important;
+    max-height: calc(100vh - var(--mobile-nav-height, 60px)) !important;
+  }
+
+  /* Exception for messaging app */
+  .messaging-app-container {
+    height: calc(100vh - var(--mobile-nav-height, 60px)) !important;
+    max-height: calc(100vh - var(--mobile-nav-height, 60px)) !important;
+    overflow: hidden !important;
   }
 }

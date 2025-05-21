@@ -1,10 +1,13 @@
 /* Root layout fixes to ensure proper scrolling */
 
 /* Root container setup */
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden; /* Prevent body scrolling */
 }
 
 /* App container */
@@ -12,6 +15,7 @@ html, body, #root {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Prevent app container scrolling */
 }
 
 /* Dashboard container */
@@ -48,9 +52,24 @@ html, body, #root {
 @media (max-width: 768px) {
   .main-content {
     padding-bottom: calc(var(--mobile-nav-height, 60px) + 150px) !important;
+    height: calc(100vh - var(--mobile-nav-height, 60px)) !important;
+    max-height: calc(100vh - var(--mobile-nav-height, 60px)) !important;
   }
-  
+
   .content-container {
     padding-bottom: calc(var(--mobile-nav-height, 60px) + 150px) !important;
+  }
+
+  /* Exception for messaging app */
+  .messaging-app-container {
+    height: calc(100vh - var(--mobile-nav-height, 60px)) !important;
+    max-height: calc(100vh - var(--mobile-nav-height, 60px)) !important;
+    overflow: hidden !important;
+  }
+
+  /* Fix for messaging content */
+  .messaging-content-container {
+    height: 100% !important;
+    overflow: hidden !important;
   }
 }

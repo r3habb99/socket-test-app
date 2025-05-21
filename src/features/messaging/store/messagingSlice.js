@@ -31,24 +31,24 @@ export const fetchChats = createAsyncThunk(
     try {
       dispatch(setLoading({ feature: 'messaging', isLoading: true }));
       dispatch(clearError({ feature: 'messaging' }));
-      
+
       const response = await getAllChats();
-      
+
       if (response.error) {
         dispatch(setError({ feature: 'messaging', error: response.message }));
         return rejectWithValue(response.message);
       }
-      
+
       // Extract chats from response
       const chatsData = response.data?.data || response.data || [];
-      
+
       // Normalize chat objects to ensure they have both id and _id properties
       const normalizedChats = chatsData.map(chat => ({
         ...chat,
         id: chat.id || chat._id, // Ensure id is available
         _id: chat._id || chat.id, // Ensure _id is available
       }));
-      
+
       return { chats: normalizedChats };
     } catch (err) {
       const message = err.message || "Failed to fetch chats";
@@ -66,30 +66,30 @@ export const fetchChat = createAsyncThunk(
     try {
       dispatch(setLoading({ feature: 'messaging', isLoading: true }));
       dispatch(clearError({ feature: 'messaging' }));
-      
+
       const response = await getChatById(chatId);
-      
+
       if (response.error) {
         dispatch(setError({ feature: 'messaging', error: response.message }));
         return rejectWithValue(response.message);
       }
-      
+
       // Extract chat data from response
       const chatData = response.data?.data || response.data;
-      
+
       if (!chatData) {
         const errorMsg = "Chat not found";
         dispatch(setError({ feature: 'messaging', error: errorMsg }));
         return rejectWithValue(errorMsg);
       }
-      
+
       // Normalize chat object
       const normalizedChat = {
         ...chatData,
         id: chatData.id || chatData._id, // Ensure id is available
         _id: chatData._id || chatData.id, // Ensure _id is available
       };
-      
+
       return { chat: normalizedChat };
     } catch (err) {
       const message = err.message || "Failed to fetch chat";
@@ -107,24 +107,24 @@ export const fetchMessages = createAsyncThunk(
     try {
       dispatch(setLoading({ feature: 'messaging', isLoading: true }));
       dispatch(clearError({ feature: 'messaging' }));
-      
+
       const response = await getMessages(chatId);
-      
+
       if (response.error) {
         dispatch(setError({ feature: 'messaging', error: response.message }));
         return rejectWithValue(response.message);
       }
-      
+
       // Extract messages from response
       const messagesData = response.data?.data || response.data || [];
-      
+
       // Normalize message objects
       const normalizedMessages = messagesData.map(message => ({
         ...message,
         id: message.id || message._id, // Ensure id is available
         _id: message._id || message.id, // Ensure _id is available
       }));
-      
+
       return { messages: normalizedMessages, chatId };
     } catch (err) {
       const message = err.message || "Failed to fetch messages";
@@ -141,21 +141,21 @@ export const sendMessage = createAsyncThunk(
   async ({ content, chatId }, { dispatch, rejectWithValue }) => {
     try {
       const response = await sendMessageApi(content, chatId);
-      
+
       if (response.error) {
         return rejectWithValue(response.message);
       }
-      
+
       // Extract message data from response
       const messageData = response.data?.data || response.data;
-      
+
       // Normalize message object
       const normalizedMessage = {
         ...messageData,
         id: messageData.id || messageData._id, // Ensure id is available
         _id: messageData._id || messageData.id, // Ensure _id is available
       };
-      
+
       return { message: normalizedMessage, chatId };
     } catch (err) {
       return rejectWithValue(err.message || "Failed to send message");
@@ -169,24 +169,24 @@ export const createChat = createAsyncThunk(
     try {
       dispatch(setLoading({ feature: 'messaging', isLoading: true }));
       dispatch(clearError({ feature: 'messaging' }));
-      
+
       const response = await createChatApi(chatData);
-      
+
       if (response.error) {
         dispatch(setError({ feature: 'messaging', error: response.message }));
         return rejectWithValue(response.message);
       }
-      
+
       // Extract chat data from response
       const newChatData = response.data?.data || response.data;
-      
+
       // Normalize chat object
       const normalizedChat = {
         ...newChatData,
         id: newChatData.id || newChatData._id, // Ensure id is available
         _id: newChatData._id || newChatData.id, // Ensure _id is available
       };
-      
+
       return { chat: normalizedChat };
     } catch (err) {
       const message = err.message || "Failed to create chat";
@@ -207,66 +207,195 @@ const messagingSlice = createSlice({
     setSocket: (state, action) => {
       state.socket = action.payload;
     },
-    
+
     // Update connection status
     setConnectionStatus: (state, action) => {
       state.connectionStatus = action.payload;
     },
-    
+
     // Select a chat
     selectChat: (state, action) => {
       state.selectedChat = action.payload;
     },
-    
+
     // Add a new message (e.g., from socket)
     addMessage: (state, action) => {
       const message = action.payload;
-      
+
       // Normalize message object
       const normalizedMessage = {
         ...message,
         id: message.id || message._id, // Ensure id is available
         _id: message._id || message.id, // Ensure _id is available
+        status: message.status || 'delivered', // Ensure status is available
       };
-      
-      // Add message to the list if it's for the selected chat
-      if (state.selectedChat && 
-          (normalizedMessage.chat === state.selectedChat.id || 
-           normalizedMessage.chat === state.selectedChat._id)) {
+
+      // Check if this message already exists (by id or tempId)
+      const messageExists = state.messages.some(m =>
+        (m.id === normalizedMessage.id || m._id === normalizedMessage._id) ||
+        (normalizedMessage.tempId && (m.tempId === normalizedMessage.tempId))
+      );
+
+      // Add message to the list if it's for the selected chat and doesn't already exist
+      if (state.selectedChat &&
+          (normalizedMessage.chat === state.selectedChat.id ||
+           normalizedMessage.chat === state.selectedChat._id) &&
+          !messageExists) {
         state.messages.push(normalizedMessage);
+      } else if (messageExists && normalizedMessage.tempId) {
+        // If message exists and has a tempId, update it with the real message data
+        const index = state.messages.findIndex(m => m.tempId === normalizedMessage.tempId);
+        if (index !== -1) {
+          state.messages[index] = {
+            ...state.messages[index],
+            ...normalizedMessage,
+            status: 'delivered',
+          };
+        }
       }
-      
+
       // Update last message in chat list
-      const chatIndex = state.chats.findIndex(chat => 
+      const chatIndex = state.chats.findIndex(chat =>
         chat.id === normalizedMessage.chat || chat._id === normalizedMessage.chat
       );
-      
+
       if (chatIndex !== -1) {
         state.chats[chatIndex].latestMessage = normalizedMessage;
+
+        // Move this chat to the top of the list
+        const chat = state.chats[chatIndex];
+        state.chats.splice(chatIndex, 1);
+        state.chats.unshift(chat);
       }
     },
-    
+
+    // Update an existing message
+    updateMessage: (state, action) => {
+      const { messageId, updates } = action.payload;
+
+      // Find the message in the messages array
+      const messageIndex = state.messages.findIndex(message =>
+        message.id === messageId || message._id === messageId
+      );
+
+      // Update the message if found
+      if (messageIndex !== -1) {
+        state.messages[messageIndex] = {
+          ...state.messages[messageIndex],
+          ...updates,
+        };
+      }
+
+      // Also update in latestMessage if it matches
+      state.chats.forEach(chat => {
+        if (chat.latestMessage &&
+            (chat.latestMessage.id === messageId || chat.latestMessage._id === messageId)) {
+          chat.latestMessage = {
+            ...chat.latestMessage,
+            ...updates,
+          };
+        }
+      });
+    },
+
+    // Remove a message
+    removeMessage: (state, action) => {
+      const { messageId, chatId } = action.payload;
+
+      // Remove from messages array
+      state.messages = state.messages.filter(message =>
+        message.id !== messageId && message._id !== messageId
+      );
+
+      // If it was the latest message, update the chat's latestMessage
+      const chatIndex = state.chats.findIndex(chat =>
+        (chat.id === chatId || chat._id === chatId) &&
+        chat.latestMessage &&
+        (chat.latestMessage.id === messageId || chat.latestMessage._id === messageId)
+      );
+
+      if (chatIndex !== -1) {
+        // Find the new latest message for this chat
+        const newLatestMessage = state.messages
+          .filter(message => message.chat === chatId || message.chat === state.chats[chatIndex]._id)
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+
+        state.chats[chatIndex].latestMessage = newLatestMessage || null;
+      }
+    },
+
+    // Mark a message as read
+    markMessageRead: (state, action) => {
+      const { messageId, readBy, chatId } = action.payload;
+
+      // Find the message in the messages array
+      const messageIndex = state.messages.findIndex(message =>
+        message.id === messageId || message._id === messageId
+      );
+
+      // Update the message if found
+      if (messageIndex !== -1) {
+        state.messages[messageIndex].readBy = readBy ||
+          [...(state.messages[messageIndex].readBy || []), readBy];
+        state.messages[messageIndex].status = 'read';
+      }
+
+      // Also update in latestMessage if it matches
+      state.chats.forEach(chat => {
+        if (chat.latestMessage &&
+            (chat.latestMessage.id === messageId || chat.latestMessage._id === messageId)) {
+          chat.latestMessage.readBy = readBy ||
+            [...(chat.latestMessage.readBy || []), readBy];
+          chat.latestMessage.status = 'read';
+        }
+      });
+    },
+
+    // Mark all messages in a chat as read
+    markAllMessagesRead: (state, action) => {
+      const { chatId, readBy } = action.payload;
+
+      // Update all messages for this chat
+      state.messages.forEach(message => {
+        if (message.chat === chatId || message.chat === state.selectedChat?._id) {
+          message.readBy = [...(message.readBy || []), readBy];
+          message.status = 'read';
+        }
+      });
+
+      // Update latestMessage for this chat
+      const chatIndex = state.chats.findIndex(chat =>
+        chat.id === chatId || chat._id === chatId
+      );
+
+      if (chatIndex !== -1 && state.chats[chatIndex].latestMessage) {
+        state.chats[chatIndex].latestMessage.readBy =
+          [...(state.chats[chatIndex].latestMessage.readBy || []), readBy];
+        state.chats[chatIndex].latestMessage.status = 'read';
+      }
+    },
+
     // Update typing users
     setTypingUser: (state, action) => {
       const { chatId, userId, isTyping } = action.payload;
-      
+
       if (!state.typingUsers[chatId]) {
         state.typingUsers[chatId] = {};
       }
-      
+
       if (isTyping) {
         state.typingUsers[chatId][userId] = true;
       } else {
         delete state.typingUsers[chatId][userId];
       }
     },
-    
+
     // Update online users
     setOnlineUser: (state, action) => {
       const { userId, isOnline } = action.payload;
       state.onlineUsers[userId] = isOnline;
     },
-    
+
     // Update last seen time for a user
     setLastSeen: (state, action) => {
       const { userId, timestamp } = action.payload;
@@ -279,60 +408,60 @@ const messagingSlice = createSlice({
       .addCase(fetchChats.fulfilled, (state, action) => {
         state.chats = action.payload.chats;
       })
-      
+
       // Fetch chat cases
       .addCase(fetchChat.fulfilled, (state, action) => {
         const { chat } = action.payload;
-        
+
         // Update in chats list if it exists
-        const chatIndex = state.chats.findIndex(c => 
+        const chatIndex = state.chats.findIndex(c =>
           c.id === chat.id || c._id === chat._id
         );
-        
+
         if (chatIndex !== -1) {
           state.chats[chatIndex] = chat;
         } else {
           state.chats.push(chat);
         }
-        
+
         // Update selected chat if it matches
-        if (state.selectedChat && 
+        if (state.selectedChat &&
             (state.selectedChat.id === chat.id || state.selectedChat._id === chat._id)) {
           state.selectedChat = chat;
         }
       })
-      
+
       // Fetch messages cases
       .addCase(fetchMessages.fulfilled, (state, action) => {
         const { messages, chatId } = action.payload;
-        
+
         // Only update messages if they're for the selected chat
-        if (state.selectedChat && 
+        if (state.selectedChat &&
             (state.selectedChat.id === chatId || state.selectedChat._id === chatId)) {
           state.messages = messages;
         }
       })
-      
+
       // Send message cases
       .addCase(sendMessage.fulfilled, (state, action) => {
         const { message, chatId } = action.payload;
-        
+
         // Add message to the list if it's for the selected chat
-        if (state.selectedChat && 
+        if (state.selectedChat &&
             (state.selectedChat.id === chatId || state.selectedChat._id === chatId)) {
           state.messages.push(message);
         }
-        
+
         // Update last message in chat list
-        const chatIndex = state.chats.findIndex(chat => 
+        const chatIndex = state.chats.findIndex(chat =>
           chat.id === chatId || chat._id === chatId
         );
-        
+
         if (chatIndex !== -1) {
           state.chats[chatIndex].latestMessage = message;
         }
       })
-      
+
       // Create chat cases
       .addCase(createChat.fulfilled, (state, action) => {
         const { chat } = action.payload;
@@ -349,6 +478,10 @@ export const {
   setConnectionStatus,
   selectChat,
   addMessage,
+  updateMessage,
+  removeMessage,
+  markMessageRead,
+  markAllMessagesRead,
   setTypingUser,
   setOnlineUser,
   setLastSeen,
