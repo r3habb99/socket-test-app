@@ -23,13 +23,18 @@
 .main-content {
   grid-area: main;
   min-width: 0; /* Prevent flex items from overflowing */
-  height: 100vh;
-  overflow-y: auto;
+  height: auto;
+  min-height: 100vh;
+  overflow-y: auto; /* This is the ONLY container that should scroll */
+  overflow-x: hidden;
   border-left: 1px solid #eff3f4;
   border-right: 1px solid #eff3f4;
   position: relative;
   will-change: transform, opacity;
   transition: background-color 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 /* Smooth scrolling for better experience */
@@ -251,6 +256,9 @@
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
+    overflow-y: auto;
+    height: auto;
+    min-height: calc(100vh - var(--mobile-nav-height));
   }
 
   /* Show mobile navigation */

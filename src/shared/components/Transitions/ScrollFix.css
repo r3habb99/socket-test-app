@@ -1,0 +1,76 @@
+/* ScrollFix.css - Fixes for scrolling issues with transitions */
+
+/* Content containers should expand fully */
+.scrollable-content {
+  height: auto !important;
+  min-height: 100% !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+}
+
+/* Fix for PostList and UserPostList components */
+.post-list-container,
+.user-post-list-container {
+  height: auto !important;
+  min-height: 100% !important;
+  padding-bottom: 120px; /* Extra padding to ensure we can scroll to the end */
+}
+
+/* Fix for Feed component */
+.feed-container {
+  height: auto !important;
+  min-height: 100% !important;
+  padding-bottom: 120px; /* Extra padding to ensure we can scroll to the end */
+}
+
+/* Fix for Profile component */
+.profile-container {
+  height: auto !important;
+  min-height: 100% !important;
+  padding-bottom: 120px; /* Extra padding to ensure we can scroll to the end */
+}
+
+/* Fix for infinite scroll components */
+.infinite-scroll-component,
+.infinite-scroll-component__outerdiv {
+  overflow: unset !important; /* Allow the parent to handle scrolling */
+  height: auto !important;
+}
+
+/* Fix for Ant Design components */
+.ant-list,
+.ant-list-items,
+.ant-list-item,
+.ant-card,
+.ant-card-body,
+.ant-tabs-content,
+.ant-tabs-tabpane,
+.ant-modal-body,
+.ant-drawer-body {
+  height: auto !important;
+}
+
+/* Main content should be scrollable */
+.main-content {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Fix for mobile view */
+@media (max-width: 768px) {
+  .post-list-container,
+  .user-post-list-container,
+  .feed-container,
+  .profile-container {
+    padding-bottom: calc(var(--mobile-nav-height, 60px) + 120px);
+  }
+
+  .main-content {
+    padding-bottom: var(--mobile-nav-height, 60px);
+  }
+}

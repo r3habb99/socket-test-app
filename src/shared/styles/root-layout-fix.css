@@ -1,0 +1,56 @@
+/* Root layout fixes to ensure proper scrolling */
+
+/* Root container setup */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* App container */
+.app-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Dashboard container */
+.dashboard-container {
+  flex: 1;
+  display: grid;
+  height: auto;
+  min-height: 100vh;
+}
+
+/* Main content area */
+.main-content {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  height: auto !important;
+  min-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding-bottom: 150px !important; /* Extra padding to ensure we can scroll to the end */
+}
+
+/* Content containers */
+.content-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: auto !important;
+  min-height: 100% !important;
+  padding-bottom: 150px !important; /* Extra padding to ensure we can scroll to the end */
+}
+
+/* Fix for mobile view */
+@media (max-width: 768px) {
+  .main-content {
+    padding-bottom: calc(var(--mobile-nav-height, 60px) + 150px) !important;
+  }
+  
+  .content-container {
+    padding-bottom: calc(var(--mobile-nav-height, 60px) + 150px) !important;
+  }
+}

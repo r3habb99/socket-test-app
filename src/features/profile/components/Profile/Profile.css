@@ -10,8 +10,10 @@
     "tabs";
   width: 100%;
   background-color: #ffffff;
-  overflow: hidden;
+  overflow: visible; /* Allow content to be visible */
   min-height: 100vh;
+  height: auto;
+  padding-bottom: 150px; /* Extra padding to ensure we can scroll to the end */
 }
 
 /* Header Bar - Using Grid Areas */
@@ -356,6 +358,9 @@
   border-top: 1px solid #eee;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: calc(100vh - 350px); /* Ensure enough space for content */
+  overflow: visible;
 }
 
 /* Cover Photo Uploader */
@@ -454,6 +459,10 @@
   .profile-tabs-section {
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(2, auto);
+    min-height: calc(100vh - 250px); /* Adjusted for mobile */
+    padding-bottom: calc(
+      var(--mobile-nav-height, 60px) + 100px
+    ); /* Extra padding for mobile */
   }
 
   .profile-header {

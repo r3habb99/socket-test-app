@@ -42,6 +42,14 @@ const PageTransition = ({
         duration: 0.3,
         ease: [0.25, 1, 0.5, 1]
       }}
+      style={{
+        height: 'auto',
+        minHeight: '100%',
+        overflow: 'visible',
+        display: 'flex',
+        flexDirection: 'column',
+        flex: '1 1 auto'
+      }}
       {...props}
     >
       {children}
@@ -56,14 +64,14 @@ const transitionVariants = {
     animate: {
       opacity: 1,
       transition: {
-        duration: 0.25,
+        duration: 0.2,
         ease: [0.25, 1, 0.5, 1],
       },
     },
     exit: {
       opacity: 0,
       transition: {
-        duration: 0.15,
+        duration: 0.1,
         ease: 'easeOut',
       },
     },
@@ -71,21 +79,21 @@ const transitionVariants = {
   slide: {
     initial: {
       opacity: 0,
-      x: 20,
+      x: 10,
     },
     animate: {
       opacity: 1,
       x: 0,
       transition: {
-        duration: 0.25,
+        duration: 0.2,
         ease: [0.25, 1, 0.5, 1],
       },
     },
     exit: {
       opacity: 0,
-      x: -20,
+      x: -10,
       transition: {
-        duration: 0.15,
+        duration: 0.1,
         ease: 'easeOut',
       },
     },
@@ -93,22 +101,38 @@ const transitionVariants = {
   slideUp: {
     initial: {
       opacity: 0,
-      y: 20,
+      y: 10,
     },
     animate: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.25,
+        duration: 0.2,
         ease: [0.25, 1, 0.5, 1],
       },
     },
     exit: {
       opacity: 0,
-      y: -20,
+      y: -10,
+      transition: {
+        duration: 0.1,
+        ease: 'easeOut',
+      },
+    },
+  },
+  // Simple fade with no movement - best for scrollable content
+  simpleFade: {
+    initial: { opacity: 0 },
+    animate: {
+      opacity: 1,
       transition: {
         duration: 0.15,
-        ease: 'easeOut',
+      },
+    },
+    exit: {
+      opacity: 0,
+      transition: {
+        duration: 0.1,
       },
     },
   },

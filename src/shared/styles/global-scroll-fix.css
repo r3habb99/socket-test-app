@@ -1,0 +1,61 @@
+/* Global scroll fix to prevent double scrollbars while ensuring content is fully scrollable */
+
+/* Set up the root container */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Allow the main-content to scroll */
+.main-content {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  height: auto !important;
+  min-height: 100vh !important;
+  padding-bottom: 100px !important; /* Extra padding to ensure we can scroll to the end */
+}
+
+/* Fix for specific components - allow them to expand fully */
+.post-list-container,
+.user-post-list-container,
+.feed-container,
+.profile-container {
+  height: auto !important;
+  min-height: 100% !important;
+  padding-bottom: 100px !important; /* Extra padding to ensure we can scroll to the end */
+}
+
+/* Fix for infinite scroll components */
+.infinite-scroll-component,
+.infinite-scroll-component__outerdiv {
+  overflow: unset !important; /* Allow the parent to handle scrolling */
+  height: auto !important;
+}
+
+/* Fix for Ant Design components */
+.ant-list,
+.ant-list-items,
+.ant-card,
+.ant-card-body,
+.ant-tabs-content,
+.ant-tabs-tabpane {
+  height: auto !important;
+}
+
+/* Fix for mobile */
+@media (max-width: 768px) {
+  .main-content {
+    padding-bottom: calc(var(--mobile-nav-height, 60px) + 100px) !important;
+  }
+
+  .post-list-container,
+  .user-post-list-container,
+  .feed-container,
+  .profile-container {
+    padding-bottom: calc(var(--mobile-nav-height, 60px) + 100px) !important;
+  }
+}

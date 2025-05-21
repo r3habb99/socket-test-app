@@ -24,6 +24,14 @@ const TransitionLayout = ({
         transitionKey={location.key || location.pathname}
         key={location.key || location.pathname}
         transitionType={transitionType}
+        style={{
+          height: 'auto',
+          minHeight: '100%',
+          overflow: 'visible',
+          display: 'flex',
+          flexDirection: 'column',
+          flex: '1 1 auto'
+        }}
         {...props}
       >
         {children}

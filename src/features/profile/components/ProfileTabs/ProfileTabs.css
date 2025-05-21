@@ -4,6 +4,10 @@
   width: 100%;
   border-bottom: 1px solid #eee;
   margin-top: 0;
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 10;
 }
 
 .profile-tab {

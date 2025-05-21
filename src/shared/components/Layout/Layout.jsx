@@ -156,7 +156,9 @@ const Layout = () => {
 
       {/* Main content area */}
       <div className="main-content">
-        <Outlet />
+        <div className="content-container">
+          <Outlet />
+        </div>
       </div>
 
       {/* Mobile bottom navigation */}

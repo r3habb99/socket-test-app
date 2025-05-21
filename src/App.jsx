@@ -32,6 +32,11 @@ import { GlobalModals } from "./features/ui/components";
 
 // Import global transition styles
 import "./shared/components/Transitions/Transitions.css";
+import "./shared/components/Transitions/ScrollFix.css";
+import "./shared/styles/global-scroll-fix.css";
+import "./shared/styles/infinite-scroll-fix.css";
+import "./shared/styles/root-layout-fix.css";
+import "./shared/styles/user-post-list-fix.css";
 
 const App = () => {
   return (
@@ -45,10 +50,11 @@ const App = () => {
         },
       }}
     >
-      <AuthProvider>
-        <SocketProviderCompat>
-          <Router>
-            <TransitionProvider>
+      <div className="app-container">
+        <AuthProvider>
+          <SocketProviderCompat>
+            <Router>
+              <TransitionProvider>
               <Routes>
                 {/* Public routes */}
                 <Route path="/login" element={
@@ -72,57 +78,57 @@ const App = () => {
                   }
                 >
                   <Route path="dashboard" element={
-                    <TransitionLayout transitionType="fade">
+                    <TransitionLayout transitionType="simpleFade">
                       <Feed />
                     </TransitionLayout>
                   } />
                   <Route path="dashboard/messages" element={
-                    <TransitionLayout transitionType="fade">
+                    <TransitionLayout transitionType="simpleFade">
                       <MessagingApp />
                     </TransitionLayout>
                   } />
                   <Route path="comments/:postId" element={
-                    <TransitionLayout transitionType="fade">
+                    <TransitionLayout transitionType="simpleFade">
                       <CommentsPage />
                     </TransitionLayout>
                   } />
                   <Route path="post/:postId" element={
-                    <TransitionLayout transitionType="fade">
+                    <TransitionLayout transitionType="simpleFade">
                       <PostDetail />
                     </TransitionLayout>
                   } />
                   <Route path="profile" element={
-                    <TransitionLayout transitionType="fade">
+                    <TransitionLayout transitionType="simpleFade">
                       <Profile />
                     </TransitionLayout>
                   } />
                   <Route path="profile/:userId" element={
-                    <TransitionLayout transitionType="fade">
+                    <TransitionLayout transitionType="simpleFade">
                       <Profile />
                     </TransitionLayout>
                   } />
                   <Route path="search" element={
-                    <TransitionLayout transitionType="fade">
+                    <TransitionLayout transitionType="simpleFade">
                       <Search />
                     </TransitionLayout>
                   } />
                   <Route path="notifications" element={
-                    <TransitionLayout transitionType="fade">
+                    <TransitionLayout transitionType="simpleFade">
                       <NotificationList />
                     </TransitionLayout>
                   } />
                   <Route path="user/:userId/followers" element={
-                    <TransitionLayout transitionType="fade">
+                    <TransitionLayout transitionType="simpleFade">
                       <FollowersList />
                     </TransitionLayout>
                   } />
                   <Route path="user/:userId/following" element={
-                    <TransitionLayout transitionType="fade">
+                    <TransitionLayout transitionType="simpleFade">
                       <FollowingList />
                     </TransitionLayout>
                   } />
                   <Route path="user/edit-profile" element={
-                    <TransitionLayout transitionType="fade">
+                    <TransitionLayout transitionType="simpleFade">
                       <ProfileEdit />
                     </TransitionLayout>
                   } />
@@ -138,6 +144,7 @@ const App = () => {
           </Router>
         </SocketProviderCompat>
       </AuthProvider>
+      </div>
     </ConfigProvider>
   );
 };

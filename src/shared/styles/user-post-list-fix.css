@@ -1,0 +1,65 @@
+/* Specific fixes for UserPostList component */
+
+/* Fix for UserPostList container */
+.user-post-list-container {
+  width: 100% !important;
+  height: auto !important;
+  min-height: calc(100vh - 350px) !important;
+  padding-bottom: 150px !important; /* Extra padding to ensure we can scroll to the end */
+  overflow: visible !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+}
+
+/* Fix for post cards */
+.post-card {
+  width: 100% !important;
+  height: auto !important;
+  overflow: visible !important;
+  margin-bottom: 1px !important;
+}
+
+/* Fix for post content */
+.post-content-container {
+  width: 100% !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Fix for post media */
+.post-media-container {
+  width: 100% !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Fix for Ant Design List component */
+.ant-list,
+.ant-list-items,
+.ant-list-item {
+  width: 100% !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Fix for mobile view */
+@media (max-width: 768px) {
+  .user-post-list-container {
+    padding-bottom: calc(var(--mobile-nav-height, 60px) + 150px) !important;
+    min-height: calc(100vh - 300px) !important;
+  }
+  
+  /* Ensure post cards are fully visible */
+  .post-card {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+  
+  /* Fix for post actions on mobile */
+  .post-actions {
+    width: 100% !important;
+    padding: 8px 0 !important;
+    justify-content: space-between !important;
+  }
+}
