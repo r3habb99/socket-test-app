@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
+import { debugLog } from "../../utils/socketDebug";
 
 /**
  * Custom hook that contains all the message handling logic for the Chat component
@@ -29,7 +30,7 @@ export const useMessageHandlers = ({
 
     // If we've already registered handlers for this chat, don't register again
     if (registeredChatIdRef.current === chatId) {
-      console.log(`Event handlers already registered for chat ${chatId}, skipping`);
+      debugLog(`Event handlers already registered for chat ${chatId}, skipping`);
       return;
     }
 
@@ -39,7 +40,7 @@ export const useMessageHandlers = ({
     // Clear the received messages map when changing chats
     receivedMessagesRef.current.clear();
 
-    console.log(`Setting up message event handlers for chat ${chatId}`);
+    debugLog(`Setting up message event handlers for chat ${chatId}`);
 
     const handleMessageReceived = (newMessage) => {
       // Check if the new message belongs to the currently selected chat
@@ -63,7 +64,7 @@ export const useMessageHandlers = ({
       const lastProcessed = receivedMessagesRef.current.get(messageSignature);
 
       if (lastProcessed && (now - lastProcessed) < 10000) {
-        console.log(`Ignoring duplicate message: ${messageSignature}`);
+        debugLog(`Ignoring duplicate message: ${messageSignature}`);
         return;
       }
 
@@ -93,12 +94,12 @@ export const useMessageHandlers = ({
         );
 
         if (existsById) {
-          console.log(`Message with ID ${messageId} already exists, not adding`);
+          debugLog(`Message with ID ${messageId} already exists, not adding`);
           return prevMessagesArray;
         }
 
         // If we get here, it's a new message, so add it
-        console.log(`Adding new message: ${messageContent.substring(0, 20)}...`);
+        debugLog(`Adding new message: ${messageContent.substring(0, 20)}...`);
         return [...prevMessagesArray, newMessage];
       });
 
@@ -113,11 +114,11 @@ export const useMessageHandlers = ({
     // Also register for the "new message" event in case the backend uses that name
     const unsubscribeNewMessage = socketContext.subscribe("new message", handleMessageReceived);
 
-    console.log(`Registered message event handlers for chat ${chatId}`);
+    debugLog(`Registered message event handlers for chat ${chatId}`);
 
     // Cleanup the listeners on component unmount or when dependencies change
     return () => {
-      console.log(`Cleaning up message event handlers for chat ${chatId}`);
+      debugLog(`Cleaning up message event handlers for chat ${chatId}`);
       unsubscribe();
       unsubscribeNewMessage();
       // Don't reset registeredChatIdRef here as it will cause issues with re-registering
@@ -134,7 +135,7 @@ export const useMessageHandlers = ({
     const chatId = selectedChat?._id || selectedChat?.id;
 
     if (!message.trim() || !chatId) {
-      console.error("Cannot send message: missing content or chat ID");
+      debugLog("Cannot send message: missing content or chat ID");
       return;
     }
 
@@ -148,7 +149,7 @@ export const useMessageHandlers = ({
 
       // Prevent duplicate sends by checking if this message is already being sent
       if (pendingMessagesRef.current.has(messageSignature)) {
-        console.log("Message already being sent, ignoring duplicate send attempt");
+        debugLog("Message already being sent, ignoring duplicate send attempt");
         return;
       }
 
@@ -157,7 +158,7 @@ export const useMessageHandlers = ({
         messageContent === lastSentMessageRef.current.content &&
         currentTime - lastSentMessageRef.current.timestamp < 2000
       ) {
-        console.log("Same message sent recently, ignoring duplicate send attempt");
+        debugLog("Same message sent recently, ignoring duplicate send attempt");
         return;
       }
 
@@ -177,7 +178,7 @@ export const useMessageHandlers = ({
       handleTyping(false);
 
       // Clear the input field immediately after sending
-      console.log(`Sending message via socket: ${messageContent.substring(0, 20)}...`);
+      debugLog(`Sending message via socket: ${messageContent.substring(0, 20)}...`);
 
       // Create a message object to display immediately
       const newMessage = {
@@ -217,7 +218,7 @@ export const useMessageHandlers = ({
       // Scroll to bottom after sending
       setTimeout(scrollToBottom, 100);
     } catch (error) {
-      console.error("Error sending message:", error);
+      debugLog("Error sending message:", error);
       alert("Failed to send message. Please try again.");
     }
   }, [message, selectedChat, userId, socketContext, setMessage, handleTyping, scrollToBottom]);

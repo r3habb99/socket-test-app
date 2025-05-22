@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
+import { debugLog } from "../../utils/socketDebug";
 
 /**
  * Custom hook that contains all the event handlers and socket-related logic for the Chat component
@@ -38,14 +39,26 @@ export const useChatHandlers = ({
 
     // Only join if the chat ID has actually changed
     if (chatId && chatId !== previousChatIdRef.current) {
+      debugLog(`Chat ID changed from ${previousChatIdRef.current} to ${chatId}`);
+
       // Store the current chat ID in the ref
       previousChatIdRef.current = chatId;
 
       // Join the chat room via socket
       socketContext.joinChat(chatId);
 
+      // Wait for a short time and then check if we're connected to the room
+      setTimeout(() => {
+        if (socketContext.connected) {
+          debugLog(`Verifying connection to chat room ${chatId}`);
+          // Emit a ready event to let the server know we're ready to receive messages
+          socketContext.socket?.emit("ready", { chatId });
+        }
+      }, 500);
+
       // Clean up function will only run on unmount or when chat ID changes
       return () => {
+        debugLog(`Leaving chat room ${chatId} due to chat change or unmount`);
         socketContext.leaveChat(chatId);
         // Don't reset previousChatIdRef here, it will be updated in the next effect run
       };
@@ -97,6 +110,7 @@ export const useChatHandlers = ({
 
         if (chatId) {
           // Also send a stopped typing event when unmounting
+          debugLog(`Sending stopped typing event for chat ${chatId} on unmount`);
           socketContext.sendTyping(false, chatId);
         }
       }
@@ -104,7 +118,14 @@ export const useChatHandlers = ({
       // Leave chat room on component unmount
       const chatId = selectedChat?._id || selectedChat?.id;
       if (chatId) {
+        debugLog(`Leaving chat room ${chatId} on component unmount`);
         socketContext.leaveChat(chatId);
+
+        // Notify the server that we're leaving the chat
+        if (socketContext.socket && socketContext.connected) {
+          debugLog(`Notifying server that we're leaving chat ${chatId}`);
+          socketContext.socket.emit("leave chat", { chatId });
+        }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -185,13 +206,13 @@ export const useChatHandlers = ({
     if (!socketContext.connected) {
       // If socket is not connected, just log and return
       if (socketContext.connectionStatus === 'disconnected') {
-        console.log("Socket disconnected, chat functionality may be limited");
+        debugLog("Socket disconnected, chat functionality may be limited");
       }
       return;
     }
 
     // Silently handle connection - no toast notifications
-    console.log("Socket connected, checking if messages need to be loaded");
+    debugLog("Socket connected, checking if messages need to be loaded");
 
     // If we have a selected chat but no messages, try to load messages
     const chatId = selectedChat?._id || selectedChat?.id;
@@ -210,7 +231,7 @@ export const useChatHandlers = ({
       !socketContext.loadingMessages &&
       lastLoadedChatIdRef.current === chatId // Only load for the current chat
     ) {
-      console.log(`Socket connected but no messages for chat ${chatId}, loading now...`);
+      debugLog(`Socket connected but no messages for chat ${chatId}, loading now...`);
 
       // Create a flag to track if the component is still mounted
       let isMounted = true;
@@ -219,13 +240,13 @@ export const useChatHandlers = ({
       setLoadingMessages(true);
 
       // Load messages immediately - the socket is already connected
-      console.log(`Loading messages for chat ${chatId} after socket connection`);
+      debugLog(`Loading messages for chat ${chatId} after socket connection`);
 
       loadMessagesForChat(chatId)
         .then((msgs) => {
           if (!isMounted) return;
 
-          console.log(`Loaded ${msgs.length} messages after socket connection`);
+          debugLog(`Loaded ${msgs.length} messages after socket connection`);
 
           // Set messages in the socket context
           socketContext.setMessages(msgs);
@@ -235,12 +256,12 @@ export const useChatHandlers = ({
         })
         .catch(err => {
           if (!isMounted) return;
-          console.error(`Error loading messages after socket connection: ${err.message}`);
+          debugLog(`Error loading messages after socket connection: ${err.message}`);
         })
         .finally(() => {
           // Always ensure loading state is reset
           if (isMounted) {
-            console.log(`Finished loading messages after socket connection, resetting loading state`);
+            debugLog(`Finished loading messages after socket connection, resetting loading state`);
             setLoadingMessages(false);
           }
         });

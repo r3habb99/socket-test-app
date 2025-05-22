@@ -12,11 +12,15 @@ import {
 import {
   setUserOnline,
   setUserOffline,
-  isUserOnline,
-  updateLastSeen,
-  getUserLastSeen,
-  formatLastSeen
+  updateLastSeen
 } from "../utils/userPresence";
+import {
+  debugLog,
+  addSocketLogging,
+  trackRoomJoin,
+  trackRoomLeave,
+  isRoomJoined
+} from "../utils/socketDebug";
 
 /**
  * Custom hook for socket.io functionality
@@ -116,7 +120,7 @@ export const useSocket = (
     }
 
     setConnectionStatus('connecting');
-    console.log(`Creating new socket connection for user: ${userId} (${username})`);
+    debugLog(`Creating new socket connection for user: ${userId} (${username})`);
 
     // Create socket instance with user info
     const socket = io(url, {
@@ -137,7 +141,8 @@ export const useSocket = (
       multiplex: true,
     });
 
-    return socket;
+    // Add socket event logging if debug mode is enabled
+    return addSocketLogging(socket);
   }, [url]);
 
   // Initialize socket connection
@@ -152,7 +157,7 @@ export const useSocket = (
     if (socketRef.current) {
       // If socket exists but is not connected, try to connect it
       if (!socketRef.current.connected) {
-        console.log("Socket exists but not connected. Attempting to connect...");
+        debugLog("Socket exists but not connected. Attempting to connect...");
         setConnectionStatus('connecting');
         socketRef.current.connect();
       }
@@ -165,7 +170,7 @@ export const useSocket = (
 
     // Set up event listeners for connection status
     socket.on("connect", () => {
-      console.log("Socket connected successfully");
+      debugLog("Socket connected successfully");
       setConnected(true);
       setConnectionStatus('connected');
       setError(null);
@@ -173,8 +178,25 @@ export const useSocket = (
 
       // Join current chat if any
       if (currentChatIdRef.current) {
-        console.log(`Joining chat room ${currentChatIdRef.current} after connection`);
+        debugLog(`Joining chat room ${currentChatIdRef.current} after connection`);
         socket.emit("join room", currentChatIdRef.current);
+
+        // Track the room join
+        trackRoomJoin(currentChatIdRef.current);
+
+        // Set up message event handlers for this chat
+        debugLog(`Setting up message event handlers for chat ${currentChatIdRef.current}`);
+
+        // Check if we need to load messages for this chat
+        debugLog(`Socket connected, checking if messages need to be loaded`);
+
+        // Emit a ready event to let the server know we're ready to receive messages
+        setTimeout(() => {
+          if (socketRef.current && socketRef.current.connected) {
+            debugLog(`Emitting ready event for chat ${currentChatIdRef.current}`);
+            socketRef.current.emit("ready", { chatId: currentChatIdRef.current });
+          }
+        }, 300);
       }
 
       // Set current user as online
@@ -238,6 +260,25 @@ export const useSocket = (
         });
 
         // Offline queue is processed, no need to update state
+      }
+    });
+
+    // Handle user joined event
+    socket.on("user joined", (data) => {
+      debugLog(`User joined room: ${data.username || data.userId} joined ${data.roomId || data.chatId}`);
+
+      // Always update online users regardless of the room
+      // This ensures we track all online users across the app
+      if (data.userId && data.userId !== localStorage.getItem("userId")) {
+        debugLog(`Setting user ${data.userId} as online`);
+        setOnlineUsers(prevUsers => ({
+          ...prevUsers,
+          [data.userId]: {
+            ...data,
+            timestamp: new Date().toISOString(),
+            online: true
+          }
+        }));
       }
     });
 
@@ -305,21 +346,25 @@ export const useSocket = (
     // Handle user online events
     socket.on("user online", (data) => {
       console.log(`User online: ${data.username || data.userId}`);
+      debugLog(`User online event received for user ${data.userId}`);
 
       // Update online users state
-      setOnlineUsers(prevUsers => ({
-        ...prevUsers,
-        [data.userId]: {
-          ...data,
-          timestamp: new Date().toISOString(),
-          online: true
-        }
-      }));
+      if (data.userId && data.userId !== localStorage.getItem("userId")) {
+        debugLog(`Setting user ${data.userId} as online from 'user online' event`);
+        setOnlineUsers(prevUsers => ({
+          ...prevUsers,
+          [data.userId]: {
+            ...data,
+            timestamp: new Date().toISOString(),
+            online: true
+          }
+        }));
+      }
     });
 
     // Handle user offline events
     socket.on("user offline", (data) => {
-      console.log(`User offline: ${data.username || data.userId}`);
+      debugLog(`User offline: ${data.username || data.userId}`);
 
       // Update online users state
       setOnlineUsers(prevUsers => {
@@ -335,14 +380,54 @@ export const useSocket = (
       }));
     });
 
+    // Handle user left event (when a user leaves a specific chat room)
+    socket.on("user left", (data) => {
+      debugLog(`User left room: ${data.username || data.userId} left ${data.roomId || data.chatId}`);
+
+      // Note: When a user leaves a room, they might still be online in the app
+      // So we don't remove them from onlineUsers here, we just update their last seen time
+      // The 'user offline' event will handle removing them from onlineUsers when they disconnect
+
+      // Update last seen time for this user if they're not the current user
+      if (data.userId && data.userId !== localStorage.getItem("userId")) {
+        debugLog(`Updating last seen time for user ${data.userId}`);
+        setLastSeenTimes(prevTimes => ({
+          ...prevTimes,
+          [data.userId]: new Date().toISOString()
+        }));
+      }
+    });
+
     // Handle user status events (for bulk updates)
     socket.on("user status", (data) => {
+      debugLog("Received user status update", data);
+
       if (data.onlineUsers) {
-        setOnlineUsers(data.onlineUsers);
+        // Process online users data
+        const processedUsers = { ...data.onlineUsers };
+
+        // Make sure each user has the online flag set
+        Object.keys(processedUsers).forEach(userId => {
+          processedUsers[userId] = {
+            ...processedUsers[userId],
+            online: true,
+            timestamp: processedUsers[userId].timestamp || new Date().toISOString()
+          };
+        });
+
+        debugLog("Setting online users from bulk update", processedUsers);
+        setOnlineUsers(prevUsers => ({
+          ...prevUsers,
+          ...processedUsers
+        }));
       }
 
       if (data.lastSeen) {
-        setLastSeenTimes(data.lastSeen);
+        debugLog("Setting last seen times from bulk update", data.lastSeen);
+        setLastSeenTimes(prevTimes => ({
+          ...prevTimes,
+          ...data.lastSeen
+        }));
       }
     });
 
@@ -362,6 +447,7 @@ export const useSocket = (
 
     // Message received handler - updated to match backend event
     const messageReceivedHandler = (newMessage) => {
+      debugLog("Message received event handler called", newMessage);
 
       // Normalize chat ID (might be an object or a string)
       const messageChat =
@@ -392,7 +478,6 @@ export const useSocket = (
       // If it's from another user, mark it as read (since we're seeing it)
       const messageStatus = isFromCurrentUser ? MESSAGE_STATUS.DELIVERED : MESSAGE_STATUS.READ;
 
-
       // IMPORTANT: Make sure we're in the right chat room
       // If this message is for a chat we're not currently in, join that chat room
       if (
@@ -400,11 +485,12 @@ export const useSocket = (
         messageChat !== currentChatIdRef.current &&
         socketRef.current
       ) {
-
         // We don't want to automatically switch chats, but we do want to make sure
         // we're joined to the chat room to receive future messages
         if (socketRef.current.connected) {
+          debugLog(`Joining chat room ${messageChat} to receive future messages`);
           socketRef.current.emit("join room", messageChat);
+          trackRoomJoin(messageChat);
         }
       }
 
@@ -418,6 +504,7 @@ export const useSocket = (
         );
 
       if (isRecentlySentMessage) {
+        debugLog(`Skipping recently sent message: ${messageId || localMessageId}`);
         // This is a message we just sent, so we don't need to add it again
         return;
       }
@@ -527,10 +614,13 @@ export const useSocket = (
 
     // Register the handler for only one event name to prevent duplicate processing
     // The backend should be consistent with its event naming
+    debugLog(`Registered message event handlers for chat ${currentChatIdRef.current}`);
     socket.on("message received", messageReceivedHandler);
 
     // We'll keep a reference to the handler for cleanup
     const messageHandler = messageReceivedHandler;
+
+    // We'll use the message handler reference for cleanup later
 
     // Handle message delivery status updates
     socket.on("message delivered", (data) => {
@@ -619,10 +709,17 @@ export const useSocket = (
     return () => {
       // Leave current chat room if any - use ref instead of state
       if (currentChatIdRef.current && socket.connected) {
+        debugLog(`Leaving chat room ${currentChatIdRef.current} on component unmount`);
         socket.emit("leave room", currentChatIdRef.current);
+        trackRoomLeave(currentChatIdRef.current);
+
+        // Also notify the server that we're leaving this chat
+        debugLog(`Notifying server that we're leaving chat ${currentChatIdRef.current}`);
+        socket.emit("leave chat", { chatId: currentChatIdRef.current });
       }
 
       // Remove all event listeners
+      debugLog("Removing all socket event listeners");
       socket.off("connect");
       socket.off("connect_error");
       socket.off("disconnect");
@@ -658,6 +755,7 @@ export const useSocket = (
 
         // Broadcast offline status to other users if still connected
         if (socket.connected) {
+          debugLog(`Setting user ${userId} as offline before disconnecting`);
           socket.emit("user offline", { userId });
         }
       }
@@ -666,27 +764,35 @@ export const useSocket = (
       socket.off("error");
 
       // Disconnect socket
+      debugLog("Disconnecting socket");
       socket.disconnect();
       socketRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url]); // Include url in dependencies to ensure correct socket server is used
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createSocketConnection]);
 
-  // Join a chat room - improved to handle message state properly
+  // Join a chat room - improved to handle message state properly and prevent duplicate joins
   const joinChat = useCallback(
     (chatId) => {
       if (!chatId) {
-        console.warn("Cannot join chat room: invalid chat ID");
+        debugLog("Cannot join chat room: invalid chat ID");
         return;
       }
 
       // Check if we're already in this chat room to prevent duplicate join events
-      if (currentChatIdRef.current === chatId) {
-        console.log(`Already in chat room ${chatId}`);
+      if (currentChatIdRef.current === chatId && isRoomJoined(chatId)) {
+        debugLog(`Already in chat room ${chatId}`);
+
+        // Even if we're already in the room, verify connection to the room
+        if (socketRef.current && socketRef.current.connected) {
+          debugLog(`Verifying connection to chat room ${chatId}`);
+          // Emit a ready event to let the server know we're ready to receive messages
+          socketRef.current.emit("ready", { chatId });
+        }
         return;
       }
 
-      console.log(`Joining chat room ${chatId}`);
+      debugLog(`Joining chat room ${chatId}`);
 
       // Update both state and ref for current chat ID immediately
       // This ensures we have the current chat ID set even if the socket isn't connected yet
@@ -698,7 +804,7 @@ export const useSocket = (
 
       // Initialize socket if it doesn't exist
       if (!socketRef.current) {
-        console.log("No socket connection exists, creating one...");
+        debugLog("No socket connection exists, creating one...");
         const socket = createSocketConnection();
 
         if (!socket) {
@@ -708,12 +814,21 @@ export const useSocket = (
 
         // Set up event handlers for the new socket
         socket.on("connect", () => {
-          console.log(`Socket connected, joining chat room ${chatId}`);
+          debugLog(`Socket connected, joining chat room ${chatId}`);
           setConnected(true);
           setConnectionStatus('connected');
 
           // Join the chat room now that we're connected
           socket.emit("join room", chatId);
+          trackRoomJoin(chatId);
+
+          // Emit a ready event to let the server know we're ready to receive messages
+          setTimeout(() => {
+            if (socketRef.current && socketRef.current.connected) {
+              debugLog(`Emitting ready event for chat ${chatId}`);
+              socketRef.current.emit("ready", { chatId });
+            }
+          }, 300);
 
           // Only show success toast if we're in the chat section and not in silent mode
           if (window.location.pathname.includes('/messages') && !silentMode) {
@@ -732,25 +847,31 @@ export const useSocket = (
       if (socketRef.current.connected) {
         const previousChatId = currentChatIdRef.current;
         if (previousChatId && previousChatId !== chatId) {
-          console.log(`Leaving previous chat room ${previousChatId}`);
+          debugLog(`Leaving previous chat room ${previousChatId} due to chat change or unmount`);
           socketRef.current.emit("leave room", previousChatId);
+          trackRoomLeave(previousChatId);
+
+          // Also notify the server that we're leaving this chat
+          debugLog(`Notifying server that we're leaving chat ${previousChatId}`);
+          socketRef.current.emit("leave chat", { chatId: previousChatId });
         }
 
         // Join the new chat room
-        console.log(`Emitting join room event for ${chatId}`);
+        debugLog(`Emitting join room event for ${chatId}`);
         socketRef.current.emit("join room", chatId);
+        trackRoomJoin(chatId);
 
         // Emit a ready event to let the server know we're ready to receive messages
         // This can help with ensuring we get the latest messages
         setTimeout(() => {
           if (socketRef.current && socketRef.current.connected) {
-            console.log(`Emitting ready event for chat ${chatId}`);
+            debugLog(`Emitting ready event for chat ${chatId}`);
             socketRef.current.emit("ready", { chatId });
           }
         }, 300);
       } else {
         // Socket exists but is not connected
-        console.log("Socket exists but not connected, attempting to reconnect...");
+        debugLog("Socket exists but not connected, attempting to reconnect...");
         setConnectionStatus('connecting');
 
         // Connect the socket
@@ -758,15 +879,16 @@ export const useSocket = (
 
         // Set up a one-time connect handler to join the room when connected
         socketRef.current.once("connect", () => {
-          console.log(`Socket reconnected, joining chat room ${chatId}`);
+          debugLog(`Socket reconnected, joining chat room ${chatId}`);
           socketRef.current.emit("join room", chatId);
+          trackRoomJoin(chatId);
           setConnected(true);
           setConnectionStatus('connected');
 
           // Emit a ready event after a short delay
           setTimeout(() => {
             if (socketRef.current && socketRef.current.connected) {
-              console.log(`Emitting ready event for chat ${chatId} after reconnection`);
+              debugLog(`Emitting ready event for chat ${chatId} after reconnection`);
               socketRef.current.emit("ready", { chatId });
             }
           }, 300);
@@ -787,7 +909,18 @@ export const useSocket = (
     (chatId) => {
       if (socketRef.current && chatId) {
         // Use only the event name that matches the backend
+        debugLog(`Leaving chat room: ${chatId} on component unmount`);
         socketRef.current.emit("leave room", chatId);
+
+        // Track the room leave
+        trackRoomLeave(chatId);
+
+        // Also notify the server that we're leaving this chat
+        debugLog(`Notifying server that we're leaving chat ${chatId}`);
+        socketRef.current.emit("leave chat", { chatId });
+
+        // Clean up message event handlers for this chat
+        debugLog(`Cleaning up message event handlers for chat ${chatId}`);
 
         // Update current chat ID if we're leaving the current chat
         if (currentChatIdRef.current === chatId) {
@@ -796,6 +929,7 @@ export const useSocket = (
         }
       } else if (!chatId && window.location.pathname !== '/login') {
         // Only show error if not on login page
+        debugLog("Cannot leave chat: invalid chat ID");
         toast.error("Cannot leave chat: invalid chat ID");
       }
     },
@@ -1206,9 +1340,16 @@ export const useSocket = (
     // User presence state
     onlineUsers,
     lastSeenTimes,
-    isUserOnline: (userId) => isUserOnline(userId),
-    getLastSeen: (userId) => getUserLastSeen(userId),
-    formatLastSeen: (timestamp) => formatLastSeen(timestamp),
+    isUserOnline: (userId) => {
+      // Check if the user is in the onlineUsers state
+      return !!onlineUsers[userId]?.online;
+    },
+    getLastSeen: (userId) => lastSeenTimes[userId] || null,
+    formatLastSeen: (timestamp) => {
+      if (!timestamp) return "Offline";
+      const date = new Date(timestamp);
+      return `Last seen ${date.toLocaleString()}`;
+    },
 
     // Socket methods
     joinChat,

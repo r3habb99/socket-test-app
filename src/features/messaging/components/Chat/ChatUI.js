@@ -281,11 +281,6 @@ export const MessagesContainer = ({
               return null;
             }
 
-            // Only log message rendering in development mode
-            if (process.env.NODE_ENV === 'development' && index === 0) {
-              console.log(`Rendering ${socketContext.messages.length} messages`);
-            }
-
             // Show date divider for first message or when date changes
             const showDateDivider =
               index === 0 ||

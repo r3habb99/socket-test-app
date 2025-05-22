@@ -1,14 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { UserProfileModal } from "../UserProfileModal";
 import { useChatLogic } from "./ChatLogic";
 import { useChatHandlers } from "./ChatHandlers";
 import { useMessageHandlers } from "./MessageHandlers";
 import { ChatHeader, MessageInput, MessagesContainer } from "./ChatUI";
+import { SocketDebugPanel } from "../SocketDebugPanel";
 import "./Chat.css";
 
 export const Chat = ({ selectedChat, onBackClick }) => {
   const socketContext = useSocketContext();
+  // Define showDebug state at the top level, not conditionally
+  const [showDebug] = useState(process.env.NODE_ENV === 'development');
 
   // Use the custom hooks to get all the logic and state
   const {
@@ -76,17 +79,19 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     );
   }
 
+  // Debug mode is already defined at the top level
+
   return (
     <div className="chat-container">
-      <ChatHeader 
-        selectedChat={selectedChat} 
-        chatPartner={chatPartner} 
-        onBackClick={onBackClick} 
-        socketContext={socketContext} 
-        setShowProfileModal={setShowProfileModal} 
+      <ChatHeader
+        selectedChat={selectedChat}
+        chatPartner={chatPartner}
+        onBackClick={onBackClick}
+        socketContext={socketContext}
+        setShowProfileModal={setShowProfileModal}
       />
 
-      <MessagesContainer 
+      <MessagesContainer
         loadingMessages={loadingMessages}
         socketContext={socketContext}
         messagesContainerRef={messagesContainerRef}
@@ -97,7 +102,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         getMessageDate={getMessageDate}
       />
 
-      <MessageInput 
+      <MessageInput
         message={message}
         setMessage={setMessage}
         handleKeyPress={handleKeyPress}
@@ -112,6 +117,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
           onClose={() => setShowProfileModal(false)}
         />
       )}
+
+      {/* Socket Debug Panel - only shown in development mode */}
+      {showDebug && <SocketDebugPanel />}
     </div>
   );
 };
