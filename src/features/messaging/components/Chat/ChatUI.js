@@ -19,12 +19,12 @@ import "./Chat.css";
 /**
  * Renders the chat header with user info and actions
  */
-export const ChatHeader = ({ 
-  selectedChat, 
-  chatPartner, 
-  onBackClick, 
-  socketContext, 
-  setShowProfileModal 
+export const ChatHeader = ({
+  selectedChat,
+  chatPartner,
+  onBackClick,
+  socketContext,
+  setShowProfileModal
 }) => {
   return (
     <Layout.Header className="chat-header-container">
@@ -129,12 +129,12 @@ export const ChatHeader = ({
 /**
  * Renders the message input area
  */
-export const MessageInput = ({ 
-  message, 
-  setMessage, 
-  handleKeyPress, 
-  handleSendMessage, 
-  socketContext 
+export const MessageInput = ({
+  message,
+  setMessage,
+  handleKeyPress,
+  handleSendMessage,
+  socketContext
 }) => {
   return (
     <div className="input-container mobile-input-container">
@@ -296,22 +296,18 @@ export const MessagesContainer = ({
             const senderId = msg.sender?._id || msg.sender?.id || msg.sender;
 
             // Check if the current user is the sender
-            const isSender =
-              String(senderId) === String(userId) ||
-              msg.isTemp ||
-              msg._id?.startsWith("temp-");
+            const isSender = String(senderId) === String(userId);
 
             // Force sender class for messages sent by the current user
             const messageClass = isSender ? "sender" : "receiver";
 
             // Generate a stable key for the message
-            // For real messages, use their ID
-            // For temporary messages, use their unique temp ID
+            // For messages with an ID, use their ID
             // For messages without any ID, create a stable index-based key that won't change on re-renders
             const messageKey =
               msg._id ||
               msg.id ||
-              (msg.isTemp ? msg._id : `msg-${index}-${msg.content?.substring(0, 10)}-${msg.sender?._id || msg.sender?.id || 'unknown'}`);
+              `msg-${index}-${msg.content?.substring(0, 10)}-${msg.sender?._id || msg.sender?.id || 'unknown'}`;
 
             return (
               <React.Fragment key={messageKey}>
@@ -327,15 +323,14 @@ export const MessagesContainer = ({
                   </div>
                 )}
 
-                <li className={`${messageClass} ${msg.isTemp ? 'temp-message' : ''} ${msg.replaced ? 'replaced-message' : ''}`}>
+                <li className={`${messageClass}`}>
                   <div className="message-bubble">
                     <div className="message-content">{msg.content}</div>
                     <div className="message-info">
                       <div className="message-timestamp">
                         {formatMessageDate(msg.createdAt)}
-                        {msg.isTemp && <span className="temp-indicator"> (sending...)</span>}
                       </div>
-                      {isSender && <MessageStatus status={msg.status || (msg.isTemp ? 'sending' : 'sent')} />}
+                      {isSender && <MessageStatus status={msg.status || 'sent'} />}
                     </div>
                   </div>
                 </li>

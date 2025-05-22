@@ -372,6 +372,9 @@ export const useSocket = (
       // Get message ID (might be _id or id)
       const messageId = newMessage._id || newMessage.id;
 
+      // Check for local message ID (for matching with locally sent messages)
+      const localMessageId = newMessage.localMessageId;
+
       // Get message content
       const messageContent = newMessage.content;
 
@@ -409,72 +412,49 @@ export const useSocket = (
       // Use the ref for recentlySentMessages to avoid dependency on state
       const isRecentlySentMessage =
         recentlySentMessagesRef.current[messageId] ||
+        (localMessageId && recentlySentMessagesRef.current[localMessageId]) ||
         Object.keys(recentlySentMessagesRef.current).some((key) =>
           key.startsWith(`${messageContent}-`)
         );
 
       if (isRecentlySentMessage) {
-        // Replace any temporary message with the real one
-        setMessages((prevMessages) => {
-          // Find any temporary messages that match this content
-          const tempMessage = prevMessages.find(
-            (msg) =>
-              msg.isTemp &&
-              msg.content === messageContent &&
-              (msg.sender._id === senderId || msg.sender.id === senderId)
-          );
-
-          if (tempMessage) {
-            // Add status to the real message
-            const messageWithStatus = {
-              ...newMessage,
-              status: MESSAGE_STATUS.DELIVERED // Mark as delivered when confirmed by server
-            };
-
-            return prevMessages.map((msg) =>
-              msg._id === tempMessage._id ? messageWithStatus : msg
-            );
-          }
-
-          // Add the new message with status
-          const messageWithStatus = {
-            ...newMessage,
-            status: messageStatus // Use the status we determined earlier
-          };
-
-          const updatedMessages = [...prevMessages, messageWithStatus];
-
-          // Sort messages by timestamp if available
-          if (updatedMessages.length > 0 && updatedMessages[0].createdAt) {
-            return updatedMessages.sort(
-              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-            );
-          }
-
-          return updatedMessages;
-        });
-
+        // This is a message we just sent, so we don't need to add it again
         return;
       }
 
 
 
       setMessages((prevMessages) => {
-        // More thorough duplicate checking
+        // Check if message already exists by ID or if it's a local message that needs to be replaced
         const existsById = prevMessages.some(
           (msg) =>
             // Check by ID if available
-            (messageId && ((msg._id && msg._id === messageId) || (msg.id && msg.id === messageId))) ||
-            // Also check for temporary messages with the same content and sender
-            (msg.isTemp &&
-             msg.content === messageContent &&
-             String(msg.sender?._id || msg.sender?.id) === String(senderId))
+            (messageId && ((msg._id && msg._id === messageId) || (msg.id && msg.id === messageId)))
+        );
+
+        // Check if this is a response to a local message we sent
+        const localMessageIndex = prevMessages.findIndex(
+          (msg) =>
+            msg._id && msg._id.startsWith('local-') &&
+            msg.content === messageContent &&
+            String(msg.sender?._id || msg.sender?.id) === String(senderId)
         );
 
         if (existsById) {
           console.log(`Message already exists in state (ID: ${messageId}), updating status only`);
           // If message exists, just update its status
           return updateMessageStatus(prevMessages, messageId, messageStatus);
+        }
+
+        // If this is a response to a local message, replace the local message with the server message
+        if (localMessageIndex !== -1) {
+          console.log(`Replacing local message with server message for content: ${messageContent.substring(0, 20)}...`);
+          const updatedMessages = [...prevMessages];
+          updatedMessages[localMessageIndex] = {
+            ...newMessage,
+            status: messageStatus
+          };
+          return updatedMessages;
         }
 
         // Only add the message if it's for the current chat
@@ -489,28 +469,8 @@ export const useSocket = (
             id: messageId || `generated-${Date.now()}` // Ensure it has an id
           };
 
-          // Replace any temporary message with the same content and sender
-          const hasTempMessage = prevMessages.some(
-            msg => msg.isTemp &&
-                  msg.content === messageContent &&
-                  String(msg.sender?._id || msg.sender?.id) === String(senderId)
-          );
-
-          let updatedMessages;
-
-          if (hasTempMessage) {
-            console.log('Replacing temporary message with real message');
-            updatedMessages = prevMessages.map(msg =>
-              (msg.isTemp &&
-               msg.content === messageContent &&
-               String(msg.sender?._id || msg.sender?.id) === String(senderId))
-                ? { ...messageWithStatus, replaced: true }
-                : msg
-            );
-          } else {
-            // Add the new message
-            updatedMessages = [...prevMessages, messageWithStatus];
-          }
+          // Add the new message
+          const updatedMessages = [...prevMessages, messageWithStatus];
 
           // Sort messages by timestamp if available
           if (updatedMessages.length > 0 && updatedMessages[0].createdAt) {
@@ -868,45 +828,21 @@ export const useSocket = (
       try {
         console.log(`Sending message to chat ${chatId}: ${messageData.content.trim().substring(0, 20)}...`);
 
-        // Create a temporary message for immediate display
-        const tempMessage = {
-          _id: `temp-${Date.now()}`,
-          id: `temp-${Date.now()}`,
-          content: messageData.content.trim(),
-          sender: {
-            _id: userId,
-            id: userId,
-            username,
-          },
-          chat: chatId,
-          createdAt: new Date().toISOString(),
-          isTemp: true,
-          status: MESSAGE_STATUS.SENDING, // Add status for tracking delivery
-        };
-
-        // Add the temporary message to the UI immediately
-        setMessages((prev) => {
-          // Sort messages by timestamp if available
-          const updatedMessages = [...prev, tempMessage];
-          if (updatedMessages.length > 0 && updatedMessages[0].createdAt) {
-            return updatedMessages.sort(
-              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-            );
-          }
-          return updatedMessages;
-        });
-
         // Track this message to prevent duplication when it comes back from the server
-        const tempId = tempMessage._id;
         const trackingKey = `${messageData.content.trim()}-${Date.now()}`;
 
         // Update both state and ref for recently sent messages
         setRecentlySentMessages((prev) => {
           const updated = {
             ...prev,
-            [tempId]: true,
-            [trackingKey]: true, // Also track by content+timestamp as fallback
+            [trackingKey]: true, // Track by content+timestamp
           };
+
+          // Also track by local message ID if provided
+          if (messageData.localMessageId) {
+            updated[messageData.localMessageId] = true;
+          }
+
           // Update ref to match state
           recentlySentMessagesRef.current = updated;
           return updated;
@@ -916,8 +852,13 @@ export const useSocket = (
         setTimeout(() => {
           setRecentlySentMessages((prev) => {
             const updated = { ...prev };
-            delete updated[tempId];
             delete updated[trackingKey];
+
+            // Also remove local message ID tracking if provided
+            if (messageData.localMessageId) {
+              delete updated[messageData.localMessageId];
+            }
+
             // Update ref to match state
             recentlySentMessagesRef.current = updated;
             return updated;
@@ -928,6 +869,7 @@ export const useSocket = (
         const messagePayload = {
           content: messageData.content.trim(),
           chat: chatId, // This is what the backend expects
+          localMessageId: messageData.localMessageId // Include local message ID if provided
         };
 
         // Initialize socket if it doesn't exist
@@ -957,25 +899,11 @@ export const useSocket = (
                 console.warn("Message delivery failed:", response);
                 toast.warning("Message may not have been delivered. Please check your connection.");
 
-                // Update message status to failed
-                setMessages(prevMessages => {
-                  return prevMessages.map(msg => {
-                    if (msg.isTemp && msg.content === messageData.content.trim()) {
-                      return { ...msg, status: MESSAGE_STATUS.FAILED };
-                    }
-                    return msg;
-                  });
-                });
+                // Show error toast
+                toast.error("Failed to send message");
               } else {
-                // Update message status to sent
-                setMessages(prevMessages => {
-                  return prevMessages.map(msg => {
-                    if (msg.isTemp && msg.content === messageData.content.trim()) {
-                      return { ...msg, status: MESSAGE_STATUS.SENT };
-                    }
-                    return msg;
-                  });
-                });
+                // Message sent successfully
+                console.log("Message sent successfully");
               }
             });
           });
@@ -992,9 +920,11 @@ export const useSocket = (
 
           // Add message to offline queue
           console.log("Adding message to offline queue");
+          // Use the local message ID if provided, otherwise generate a new one
+          const messageId = messageData.localMessageId || `generated-${Date.now()}`;
           const queuedMessage = {
-            _id: tempMessage._id,
-            id: tempMessage._id,
+            _id: messageId,
+            id: messageId,
             content: messageData.content.trim(),
             chat: chatId,
             chatId: chatId,
@@ -1008,15 +938,8 @@ export const useSocket = (
 
           addToOfflineQueue(queuedMessage);
 
-          // Update message status to queued/failed
-          setMessages(prevMessages => {
-            return prevMessages.map(msg => {
-              if (msg.isTemp && msg.content === messageData.content.trim()) {
-                return { ...msg, status: MESSAGE_STATUS.FAILED };
-              }
-              return msg;
-            });
-          });
+          // Show toast notification for queued message
+          console.log("Message will be sent when connection is restored");
 
           // Show toast notification
           toast.info("Message saved to offline queue. It will be sent when connection is restored.", {
@@ -1064,25 +987,11 @@ export const useSocket = (
             console.warn("Message delivery failed:", response);
             toast.warning("Message may not have been delivered. Please check your connection.");
 
-            // Update message status to failed
-            setMessages(prevMessages => {
-              return prevMessages.map(msg => {
-                if (msg.isTemp && msg.content === messageData.content.trim()) {
-                  return { ...msg, status: MESSAGE_STATUS.FAILED };
-                }
-                return msg;
-              });
-            });
+            // Show error toast
+            toast.error("Failed to send message");
           } else {
-            // Update message status to sent
-            setMessages(prevMessages => {
-              return prevMessages.map(msg => {
-                if (msg.isTemp && msg.content === messageData.content.trim()) {
-                  return { ...msg, status: MESSAGE_STATUS.SENT };
-                }
-                return msg;
-              });
-            });
+            // Message sent successfully
+            console.log("Message sent successfully");
           }
         });
       } catch (error) {

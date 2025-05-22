@@ -97,25 +97,6 @@ export const useMessageHandlers = ({
           return prevMessagesArray;
         }
 
-        // Check for temporary messages with the same content from the same sender
-        const tempMessageIndex = prevMessagesArray.findIndex(
-          (msg) =>
-            msg.isTemp &&
-            msg.content === messageContent &&
-            String(msg.sender?._id || msg.sender?.id) === String(senderId)
-        );
-
-        if (tempMessageIndex !== -1) {
-          console.log(`Replacing temporary message with real message from server`);
-          // Create a new array with the temporary message replaced
-          const updatedMessages = [...prevMessagesArray];
-          updatedMessages[tempMessageIndex] = {
-            ...newMessage,
-            replaced: true
-          };
-          return updatedMessages;
-        }
-
         // If we get here, it's a new message, so add it
         console.log(`Adding new message: ${messageContent.substring(0, 20)}...`);
         return [...prevMessagesArray, newMessage];
@@ -195,84 +176,42 @@ export const useMessageHandlers = ({
       // Stop typing indicator
       handleTyping(false);
 
-      // Create a temporary message to display immediately with a unique ID
-      const tempId = `temp-${currentTime}-${Math.random().toString(36).substring(2, 9)}`;
-      const tempMessage = {
-        _id: tempId,
-        id: tempId, // Include both id and _id for consistency
+      // Clear the input field immediately after sending
+      console.log(`Sending message via socket: ${messageContent.substring(0, 20)}...`);
+
+      // Create a message object to display immediately
+      const newMessage = {
+        _id: `local-${Date.now()}`,
+        id: `local-${Date.now()}`,
         content: messageContent,
         sender: {
           _id: userId,
-          id: userId,
+          id: userId
         },
-        createdAt: new Date(currentTime).toISOString(),
-        isTemp: true,
-        status: 'sending',
+        createdAt: new Date().toISOString(),
         chat: {
           _id: chatId,
           id: chatId
-        }
+        },
+        status: 'sent'
       };
 
-      // Add the temporary message to the UI, with improved duplicate detection
+      // Add the message to the UI immediately
       socketContext.setMessages(prev => {
         const prevMessages = Array.isArray(prev) ? prev : [];
-
-        // Check if a similar message already exists (to prevent duplicates)
-        // Look for messages with the same content from the same sender in the last 5 seconds
-        const similarMessageExists = prevMessages.some(msg =>
-          msg.content === messageContent &&
-          String(msg.sender?._id || msg.sender?.id) === String(userId) &&
-          msg.createdAt &&
-          (currentTime - new Date(msg.createdAt).getTime()) < 5000
-        );
-
-        if (similarMessageExists) {
-          console.log("Similar message already exists in UI, not adding temporary message");
-          // Remove from pending set since we're not actually sending it
-          pendingMessagesRef.current.delete(messageSignature);
-          return prevMessages;
-        }
-
-        // Add the temporary message to the messages array
-        console.log(`Adding temporary message with ID ${tempId}`);
-        return [...prevMessages, tempMessage];
+        return [...prevMessages, newMessage];
       });
 
       // Send message via socket context
-      console.log(`Sending message via socket: ${messageContent.substring(0, 20)}...`);
       socketContext.sendMessage({
         content: messageContent,
         chatId: chatId,
-        tempId: tempId // Include the temp ID to help with matching on the response
+        localMessageId: newMessage._id // Include local message ID to help with matching on the response
       });
 
       // Remove from pending set after 10 seconds (should be delivered by then)
       setTimeout(() => {
         pendingMessagesRef.current.delete(messageSignature);
-
-        // Also check if the temporary message is still in the list and update its status if needed
-        socketContext.setMessages(prev => {
-          const prevMessages = Array.isArray(prev) ? prev : [];
-
-          // Find the temporary message
-          const tempMessageIndex = prevMessages.findIndex(msg =>
-            msg._id === tempId && msg.isTemp
-          );
-
-          // If the temporary message still exists and hasn't been replaced, update its status
-          if (tempMessageIndex !== -1) {
-            console.log(`Temporary message ${tempId} still exists after 10s, updating status`);
-            const updatedMessages = [...prevMessages];
-            updatedMessages[tempMessageIndex] = {
-              ...updatedMessages[tempMessageIndex],
-              status: 'sent' // Assume it was sent even if we didn't get confirmation
-            };
-            return updatedMessages;
-          }
-
-          return prevMessages;
-        });
       }, 10000);
 
       // Scroll to bottom after sending
