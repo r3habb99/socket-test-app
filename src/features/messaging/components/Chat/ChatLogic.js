@@ -262,6 +262,7 @@ export const useChatLogic = (selectedChat, socketContext) => {
     scrollToBottom,
     handleScrollToTop,
     lastLoadedChatIdRef,
-    loadMessagesForChat
+    loadMessagesForChat,
+    messages: socketContext.messages, // Added messages state from socketContext
   };
 };

@@ -1,17 +1,17 @@
-import React, { useState } from "react";
+
 import { useSocketContext } from "../../../../core/providers/SocketProvider";
 import { UserProfileModal } from "../UserProfileModal";
 import { useChatLogic } from "./ChatLogic";
 import { useChatHandlers } from "./ChatHandlers";
 import { useMessageHandlers } from "./MessageHandlers";
 import { ChatHeader, MessageInput, MessagesContainer } from "./ChatUI";
-import { SocketDebugPanel } from "../SocketDebugPanel";
+// import { SocketDebugPanel } from "../SocketDebugPanel";
 import "./Chat.css";
 
 export const Chat = ({ selectedChat, onBackClick }) => {
   const socketContext = useSocketContext();
   // Define showDebug state at the top level, not conditionally
-  const [showDebug] = useState(process.env.NODE_ENV === 'development');
+  // const [showDebug] = useState(process.env.NODE_ENV === 'development');
 
   // Use the custom hooks to get all the logic and state
   const {
@@ -32,7 +32,8 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     scrollToBottom,
     handleScrollToTop,
     lastLoadedChatIdRef,
-    loadMessagesForChat
+    loadMessagesForChat,
+    messages // Added messages from useChatLogic
   } = useChatLogic(selectedChat, socketContext);
 
   // Get chat event handlers
@@ -100,6 +101,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         userId={userId}
         formatMessageDate={formatMessageDate}
         getMessageDate={getMessageDate}
+        messages={messages} // Pass messages explicitly
       />
 
       <MessageInput
@@ -119,7 +121,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       )}
 
       {/* Socket Debug Panel - only shown in development mode */}
-      {showDebug && <SocketDebugPanel />}
+      {/* {showDebug && <SocketDebugPanel />} */}
     </div>
   );
 };
