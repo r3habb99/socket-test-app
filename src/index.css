@@ -1,22 +1,54 @@
 @import "tailwindcss";
+
+/* Theme CSS Variables */
+:root {
+  /* Light theme colors (default) */
+  --bg-primary: #ffffff;
+  --bg-surface: #f9fafb;
+  --bg-hover: rgba(29, 155, 240, 0.1);
+  --text-primary: #0f1419;
+  --text-secondary: #536471;
+  --border-color: #eff3f4;
+  --primary-color: #1d9bf0;
+  --primary-color-hover: #1a8cd8;
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  --hover-bg: rgba(29, 155, 240, 0.1);
+}
+
+/* Dark theme colors */
+.dark {
+  --bg-primary: #1a1a1a;
+  --bg-surface: #262626;
+  --bg-hover: rgba(96, 165, 250, 0.1);
+  --text-primary: #e7e9ea;
+  --text-secondary: #8b98a5;
+  --border-color: #2f3336;
+  --primary-color: #60a5fa;
+  --primary-color-hover: #93c5fd;
+  --shadow-color: rgba(0, 0, 0, 0.4);
+  --hover-bg: rgba(96, 165, 250, 0.1);
+}
+
 /* General Styles */
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  /* background-color: #ece5dd; */
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   margin: 0;
   padding: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1 {
   text-align: center;
   font-size: 2.8rem;
-  color: #4a4a4a;
+  color: var(--text-primary);
   font-weight: bold;
   margin-bottom: 20px;
 }
 
 h2 {
-  color: #4a4a4a;
+  color: var(--text-primary);
   font-size: 1.5rem;
   margin-bottom: 10px;
   text-transform: uppercase;
@@ -33,9 +65,9 @@ h2 {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  background-color: white;
+  background-color: var(--bg-primary);
   border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px var(--shadow-color);
   padding: 20px;
   margin-top: 20px;
   height: 85vh;

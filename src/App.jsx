@@ -5,9 +5,10 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { ConfigProvider } from "antd";
-import { AuthProvider, SocketProvider } from "./core/providers";
+import { ConfigProvider, theme as antdTheme } from "antd";
+import { AuthProvider, SocketProvider, ThemeProvider } from "./core/providers";
 import { PrivateRoute } from "./core/router";
+import { useTheme } from "./shared/hooks";
 
 // Import components directly
 import Login from "./features/auth/components/Login/Login";
@@ -25,15 +26,26 @@ import ToastController from "./shared/components/ToastController/ToastController
 import { Search } from "./shared/components";
 import { NotificationList } from "./features/notification/components";
 
-const App = () => {
+/**
+ * ThemedApp component - Wraps the app with theme-aware ConfigProvider
+ */
+const ThemedApp = () => {
+  const { isDark } = useTheme();
+
   return (
     <ConfigProvider
       theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#3b82f6', // Tailwind blue-500
+          colorPrimary: isDark ? '#60a5fa' : '#3b82f6', // Tailwind blue-400/500
           borderRadius: 6,
-          colorLink: '#3b82f6',
-          colorLinkHover: '#2563eb', // Tailwind blue-600
+          colorLink: isDark ? '#60a5fa' : '#3b82f6',
+          colorLinkHover: isDark ? '#93c5fd' : '#2563eb', // Tailwind blue-300/600
+          colorBgContainer: isDark ? '#262626' : '#ffffff',
+          colorBgElevated: isDark ? '#1a1a1a' : '#ffffff',
+          colorBorder: isDark ? '#2f3336' : '#eff3f4',
+          colorText: isDark ? '#e7e9ea' : '#0f1419',
+          colorTextSecondary: isDark ? '#8b98a5' : '#536471',
         },
       }}
     >
@@ -82,6 +94,14 @@ const App = () => {
         </SocketProvider>
       </AuthProvider>
     </ConfigProvider>
+  );
+};
+
+const App = () => {
+  return (
+    <ThemeProvider>
+      <ThemedApp />
+    </ThemeProvider>
   );
 };
 

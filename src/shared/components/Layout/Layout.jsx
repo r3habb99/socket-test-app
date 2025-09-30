@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuthContext } from "../../../core/providers/AuthProvider";
 import { Sidebar } from "../Sidebar/Sidebar";
+import { ThemeToggle } from "../ThemeToggle";
 import { logout } from "../../../features/auth/api/authApi";
 import {
   HomeOutlined,
@@ -226,6 +227,12 @@ const Layout = () => {
                   )}
                 </li>
               ))}
+              {/* Theme Toggle in More Menu */}
+              <li>
+                <div className="more-menu-theme-toggle">
+                  <ThemeToggle compact={false} />
+                </div>
+              </li>
             </ul>
           </div>
         </>

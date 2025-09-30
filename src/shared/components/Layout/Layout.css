@@ -7,9 +7,10 @@
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  background-color: #fff;
+  background-color: var(--bg-primary);
   position: relative;
   padding-bottom: 0; /* Default padding, will be adjusted for mobile */
+  transition: background-color 0.3s ease;
 }
 
 .sidebar {
@@ -25,9 +26,11 @@
   min-width: 0; /* Prevent flex items from overflowing */
   height: 100vh;
   overflow-y: auto;
-  border-left: 1px solid #eff3f4;
-  border-right: 1px solid #eff3f4;
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
   position: relative;
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .widgets-column {
@@ -44,16 +47,17 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: var(--background-color);
+  background-color: var(--bg-primary);
   border-top: 1px solid var(--border-color);
   z-index: 999;
   padding: 6px 0;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 -2px 8px var(--shadow-color);
   height: var(--mobile-nav-height);
   box-sizing: border-box;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  transition: transform var(--transition-normal), opacity var(--transition-fast);
+  transition: transform var(--transition-normal), opacity var(--transition-fast),
+    background-color 0.3s ease;
 }
 
 .mobile-nav-list {
@@ -72,7 +76,7 @@
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  color: var(--secondary-text-color);
+  color: var(--text-secondary);
   font-size: 0.8rem;
   padding: 4px 0;
   width: 25%;
@@ -141,13 +145,15 @@
   position: fixed;
   bottom: 70px;
   right: 10px;
-  background-color: var(--background-color);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 4px 12px var(--shadow-color);
   z-index: 1000;
   width: 200px;
   padding: 8px 0;
-  transition: all var(--transition-normal) var(--transition-bounce);
+  transition: all var(--transition-normal) var(--transition-bounce),
+    background-color 0.3s ease;
   opacity: 0;
   transform: translateY(20px) scale(0.95);
   overflow: hidden;
@@ -169,18 +175,30 @@
   padding: 14px 16px;
   display: flex;
   align-items: center;
-  color: var(--text-color);
+  color: var(--text-primary);
   text-decoration: none;
   font-size: 0.95rem;
   transition: background-color var(--transition-fast);
   border-radius: 8px;
   margin: 2px 6px;
   font-weight: 500;
+  border: none;
+  background: none;
+  width: calc(100% - 12px);
+  cursor: pointer;
 }
 
 .more-menu-item:hover,
 .more-menu-item:active {
-  background-color: var(--primary-color-light);
+  background-color: var(--hover-bg);
+}
+
+.more-menu-theme-toggle {
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--border-color);
+  padding-top: 8px;
+  margin-top: 8px;
 }
 
 .more-menu-icon {

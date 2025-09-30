@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { ThemeToggle } from "../ThemeToggle";
 // import { Search } from "../Search";
 import "./Sidebar.css";
 
@@ -29,17 +30,12 @@ export const Sidebar = ({ links, onLogout }) => {
 
       <nav className="sidebar-nav">
         <ul>
-          {links.map((link) => (
-            <li key={link.name}>
-              {link.name === "logout" ? (
-                <button
-                  className="logout-button"
-                  onClick={() => handleLinkClick(link.name)}
-                >
-                  <span className="nav-icon">{link.icon}</span>
-                  {link.label}
-                </button>
-              ) : (
+          {links.map((link) => {
+            // Skip logout, we'll add it separately at the end
+            if (link.name === "logout") return null;
+
+            return (
+              <li key={link.name}>
                 <Link
                   to={`/${link.name}`}
                   className={
@@ -50,10 +46,32 @@ export const Sidebar = ({ links, onLogout }) => {
                   <span className="nav-icon">{link.icon}</span>
                   {link.label}
                 </Link>
-              )}
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
+
+        {/* Bottom section with Theme Toggle and Logout */}
+        <div className="sidebar-bottom">
+          <ul>
+            {/* Theme Toggle */}
+            <li>
+              <ThemeToggle />
+            </li>
+            {/* Logout Button */}
+            <li>
+              <button
+                className="logout-button"
+                onClick={() => handleLinkClick("logout")}
+              >
+                <span className="nav-icon">
+                  {links.find(l => l.name === "logout")?.icon}
+                </span>
+                Logout
+              </button>
+            </li>
+          </ul>
+        </div>
       </nav>
     </div>
   );
