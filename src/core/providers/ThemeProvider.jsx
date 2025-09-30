@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { applyThemePreset, getThemePresetNames } from './themePresets';
 
 // Create context
 const ThemeContext = createContext(null);
@@ -10,8 +11,9 @@ export const THEME_MODES = {
   SYSTEM: 'system',
 };
 
-// Local storage key
+// Local storage keys
 const THEME_STORAGE_KEY = 'app-theme-preference';
+const THEME_PRESET_STORAGE_KEY = 'app-theme-preset';
 
 /**
  * Get system theme preference
@@ -43,6 +45,23 @@ const getInitialTheme = () => {
 };
 
 /**
+ * Get initial theme preset from localStorage
+ * @returns {string} Theme preset name
+ */
+const getInitialPreset = () => {
+  try {
+    const savedPreset = localStorage.getItem(THEME_PRESET_STORAGE_KEY);
+    const availablePresets = getThemePresetNames();
+    if (savedPreset && availablePresets.includes(savedPreset)) {
+      return savedPreset;
+    }
+  } catch (error) {
+    console.error('Error reading theme preset from localStorage:', error);
+  }
+  return 'default';
+};
+
+/**
  * Get the actual theme to apply (resolves 'system' to 'light' or 'dark')
  * @param {string} themeMode - The theme mode preference
  * @returns {string} 'light' or 'dark'
@@ -62,6 +81,7 @@ const getResolvedTheme = (themeMode) => {
 export const ThemeProvider = ({ children }) => {
   const [themeMode, setThemeMode] = useState(getInitialTheme);
   const [resolvedTheme, setResolvedTheme] = useState(() => getResolvedTheme(getInitialTheme()));
+  const [themePreset, setThemePreset] = useState(getInitialPreset);
 
   /**
    * Update the resolved theme based on theme mode
@@ -75,6 +95,9 @@ export const ThemeProvider = ({ children }) => {
     root.classList.remove(THEME_MODES.LIGHT, THEME_MODES.DARK);
     root.classList.add(newResolvedTheme);
 
+    // Apply theme preset colors
+    applyThemePreset(themePreset, newResolvedTheme);
+
     // Update meta theme-color for mobile browsers
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
@@ -83,7 +106,7 @@ export const ThemeProvider = ({ children }) => {
         newResolvedTheme === THEME_MODES.DARK ? '#1a1a1a' : '#ffffff'
       );
     }
-  }, [themeMode]);
+  }, [themeMode, themePreset]);
 
   /**
    * Listen for system theme changes when in system mode
@@ -127,6 +150,17 @@ export const ThemeProvider = ({ children }) => {
   }, [themeMode]);
 
   /**
+   * Save theme preset to localStorage
+   */
+  useEffect(() => {
+    try {
+      localStorage.setItem(THEME_PRESET_STORAGE_KEY, themePreset);
+    } catch (error) {
+      console.error('Error saving theme preset to localStorage:', error);
+    }
+  }, [themePreset]);
+
+  /**
    * Set theme mode
    * @param {string} mode - Theme mode to set
    */
@@ -151,11 +185,27 @@ export const ThemeProvider = ({ children }) => {
     });
   };
 
+  /**
+   * Change theme preset
+   * @param {string} preset - Theme preset name
+   */
+  const changeThemePreset = (preset) => {
+    const availablePresets = getThemePresetNames();
+    if (!availablePresets.includes(preset)) {
+      console.error(`Invalid theme preset: ${preset}`);
+      return;
+    }
+    setThemePreset(preset);
+  };
+
   const value = {
     themeMode, // Current theme preference (light/dark/system)
     resolvedTheme, // Actual theme being applied (light/dark)
+    themePreset, // Current theme preset
     setTheme,
     toggleTheme,
+    changeThemePreset,
+    availablePresets: getThemePresetNames(),
     isDark: resolvedTheme === THEME_MODES.DARK,
     isLight: resolvedTheme === THEME_MODES.LIGHT,
     isSystem: themeMode === THEME_MODES.SYSTEM,

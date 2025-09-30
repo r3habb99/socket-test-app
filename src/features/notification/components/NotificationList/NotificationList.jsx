@@ -8,7 +8,8 @@ import {
   Empty,
   Spin,
   Layout,
-  Badge
+  Badge,
+  Divider
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -16,6 +17,8 @@ import {
   ReloadOutlined
 } from "@ant-design/icons";
 import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
+import { isToday, isYesterday, isThisWeek, parseISO } from "date-fns";
 import NotificationItem from "../NotificationItem/NotificationItem";
 import {
   getNotifications,
@@ -24,8 +27,38 @@ import {
 } from "../../api";
 import "./NotificationList.css";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Header, Content } = Layout;
+
+/**
+ * Group notifications by time period
+ * @param {Array} notifications - Array of notifications
+ * @returns {Object} Grouped notifications
+ */
+const groupNotificationsByTime = (notifications) => {
+  const groups = {
+    today: [],
+    yesterday: [],
+    thisWeek: [],
+    older: []
+  };
+
+  notifications.forEach(notification => {
+    const date = parseISO(notification.createdAt);
+
+    if (isToday(date)) {
+      groups.today.push(notification);
+    } else if (isYesterday(date)) {
+      groups.yesterday.push(notification);
+    } else if (isThisWeek(date)) {
+      groups.thisWeek.push(notification);
+    } else {
+      groups.older.push(notification);
+    }
+  });
+
+  return groups;
+};
 
 /**
  * NotificationList component
@@ -139,15 +172,103 @@ const NotificationList = () => {
 
   // Render empty state
   const renderEmpty = () => (
-    <Empty
-      image={Empty.PRESENTED_IMAGE_SIMPLE}
-      description={
-        activeTab === "all"
-          ? "No notifications yet"
-          : "No unread notifications"
-      }
-    />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+        description={
+          activeTab === "all"
+            ? "No notifications yet"
+            : "No unread notifications"
+        }
+      />
+    </motion.div>
   );
+
+  // Render grouped notifications
+  const renderGroupedNotifications = (notifications) => {
+    const grouped = groupNotificationsByTime(notifications);
+    let itemIndex = 0;
+
+    return (
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          {grouped.today.length > 0 && (
+            <div className="notification-group">
+              <Divider orientation="left">
+                <Text strong className="notification-group-title">Today</Text>
+              </Divider>
+              {grouped.today.map((notification) => (
+                <NotificationItem
+                  key={notification._id}
+                  notification={notification}
+                  onMarkAsOpened={handleMarkAsOpened}
+                  index={itemIndex++}
+                />
+              ))}
+            </div>
+          )}
+
+          {grouped.yesterday.length > 0 && (
+            <div className="notification-group">
+              <Divider orientation="left">
+                <Text strong className="notification-group-title">Yesterday</Text>
+              </Divider>
+              {grouped.yesterday.map((notification) => (
+                <NotificationItem
+                  key={notification._id}
+                  notification={notification}
+                  onMarkAsOpened={handleMarkAsOpened}
+                  index={itemIndex++}
+                />
+              ))}
+            </div>
+          )}
+
+          {grouped.thisWeek.length > 0 && (
+            <div className="notification-group">
+              <Divider orientation="left">
+                <Text strong className="notification-group-title">This Week</Text>
+              </Divider>
+              {grouped.thisWeek.map((notification) => (
+                <NotificationItem
+                  key={notification._id}
+                  notification={notification}
+                  onMarkAsOpened={handleMarkAsOpened}
+                  index={itemIndex++}
+                />
+              ))}
+            </div>
+          )}
+
+          {grouped.older.length > 0 && (
+            <div className="notification-group">
+              <Divider orientation="left">
+                <Text strong className="notification-group-title">Older</Text>
+              </Divider>
+              {grouped.older.map((notification) => (
+                <NotificationItem
+                  key={notification._id}
+                  notification={notification}
+                  onMarkAsOpened={handleMarkAsOpened}
+                  index={itemIndex++}
+                />
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    );
+  };
 
   return (
     <Layout className="notification-list-container">
@@ -195,21 +316,16 @@ const NotificationList = () => {
               children: (
                 <div className="notification-list">
                   {loading ? (
-                    <div className="notification-loading">
+                    <motion.div
+                      className="notification-loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
                       <Spin size="large" />
-                    </div>
+                    </motion.div>
                   ) : notifications.length > 0 ? (
-                    <List
-                      dataSource={notifications}
-                      renderItem={(notification) => (
-                        <List.Item className="notification-list-item" key={notification._id}>
-                          <NotificationItem
-                            notification={notification}
-                            onMarkAsOpened={handleMarkAsOpened}
-                          />
-                        </List.Item>
-                      )}
-                    />
+                    renderGroupedNotifications(notifications)
                   ) : (
                     renderEmpty()
                   )}
@@ -226,21 +342,16 @@ const NotificationList = () => {
               children: (
                 <div className="notification-list">
                   {loading ? (
-                    <div className="notification-loading">
+                    <motion.div
+                      className="notification-loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
                       <Spin size="large" />
-                    </div>
+                    </motion.div>
                   ) : notifications.length > 0 ? (
-                    <List
-                      dataSource={notifications}
-                      renderItem={(notification) => (
-                        <List.Item className="notification-list-item" key={notification._id}>
-                          <NotificationItem
-                            notification={notification}
-                            onMarkAsOpened={handleMarkAsOpened}
-                          />
-                        </List.Item>
-                      )}
-                    />
+                    renderGroupedNotifications(notifications)
                   ) : (
                     renderEmpty()
                   )}

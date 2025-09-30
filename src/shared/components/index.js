@@ -5,3 +5,4 @@ export { default as ToastController } from "./ToastController/ToastController";
 export * from "./ImageProxy";
 export * from "./Search";
 export * from "./ThemeToggle";
+export * from "./ThemeSelector";

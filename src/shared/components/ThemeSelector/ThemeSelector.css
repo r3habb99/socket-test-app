@@ -1,0 +1,221 @@
+/* Theme Selector Button */
+.theme-selector-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px !important;
+  border-radius: 9999px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.theme-selector-button:hover {
+  background-color: var(--hover-bg) !important;
+  transform: scale(1.05);
+}
+
+.theme-selector-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Theme Drawer */
+.theme-selector-drawer .ant-drawer-header {
+  background: var(--gradient-subtle);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.theme-drawer-header {
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.theme-selector-drawer .ant-drawer-body {
+  padding: 24px;
+  background-color: var(--bg-primary);
+}
+
+.theme-selector-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.theme-selector-description {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Theme Preset Option */
+.theme-preset-option {
+  position: relative;
+  padding: 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--bg-surface);
+  overflow: hidden;
+}
+
+.theme-preset-option:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px var(--shadow-color);
+  transform: translateY(-2px);
+}
+
+.theme-preset-option.selected {
+  border-color: var(--primary-color);
+  border-width: 3px;
+  background: var(--gradient-subtle);
+  box-shadow: 0 4px 16px var(--shadow-color);
+}
+
+.theme-preset-header {
+  margin-bottom: 12px;
+}
+
+/* Theme Preview */
+.theme-preset-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.theme-gradient-preview {
+  height: 60px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.theme-preset-option:hover .theme-gradient-preview {
+  transform: scale(1.02);
+}
+
+.theme-color-swatches {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.color-swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.color-swatch:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Selected Indicator */
+.theme-selected-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Footer */
+.theme-selector-footer {
+  padding: 16px;
+  background: var(--bg-surface);
+  border-radius: 8px;
+  text-align: center;
+}
+
+/* Animations */
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.theme-gradient-preview {
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .theme-selector-drawer {
+    width: 100% !important;
+  }
+
+  .theme-selector-label {
+    display: none;
+  }
+
+  .theme-preset-option {
+    padding: 12px;
+  }
+
+  .theme-gradient-preview {
+    height: 50px;
+  }
+
+  .color-swatch {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+/* Dark mode adjustments */
+.dark .theme-selector-drawer .ant-drawer-header {
+  background: var(--gradient-subtle);
+}
+
+.dark .color-swatch {
+  border-color: var(--border-color);
+}
+
+.dark .theme-preset-option {
+  background-color: var(--bg-surface);
+}
+
+.dark .theme-preset-option.selected {
+  background: var(--gradient-subtle);
+}
+
+/* Accessibility */
+.theme-preset-option:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Radio button styling */
+.theme-preset-option .ant-radio-wrapper {
+  color: var(--text-primary);
+}
+
+.theme-preset-option .ant-radio-checked .ant-radio-inner {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+}
+
+.theme-preset-option .ant-radio:hover .ant-radio-inner {
+  border-color: var(--primary-color);
+}
+

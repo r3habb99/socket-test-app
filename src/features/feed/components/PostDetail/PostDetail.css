@@ -15,9 +15,10 @@
   border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: var(--bg-primary);
   backdrop-filter: blur(5px);
   z-index: 10;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .post-detail-back {
@@ -262,7 +263,7 @@
 }
 
 .post-detail-content .post-action-button:hover::before {
-  background-color: rgba(29, 155, 240, 0.1);
+  background-color: var(--primary-color-light);
 }
 
 .post-detail-content .like-button:hover {
@@ -270,7 +271,7 @@
 }
 
 .post-detail-content .like-button:hover::before {
-  background-color: rgba(224, 36, 94, 0.1);
+  background-color: var(--like-hover-bg);
 }
 
 .post-detail-content .post-action-count {
@@ -347,11 +348,11 @@
 }
 
 .post-detail-comment-form button:hover {
-  background-color: #1a8cd8;
+  background-color: var(--primary-color-hover);
 }
 
 .post-detail-comment-form button:disabled {
-  background-color: #8ecdf7;
+  background-color: var(--primary-color-disabled);
   cursor: not-allowed;
 }
 

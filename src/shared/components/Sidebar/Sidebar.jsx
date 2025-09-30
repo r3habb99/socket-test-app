@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ThemeToggle } from "../ThemeToggle";
+import { ThemeSelector } from "../ThemeSelector";
 // import { Search } from "../Search";
 import "./Sidebar.css";
 
@@ -34,13 +35,18 @@ export const Sidebar = ({ links, onLogout }) => {
             // Skip logout, we'll add it separately at the end
             if (link.name === "logout") return null;
 
+            // Check if this link is active - exact match only
+            const currentPath = location.pathname.replace(/^\//, ''); // Remove leading slash
+            const linkPath = link.name;
+
+            // Exact match for the path
+            const isActive = currentPath === linkPath;
+
             return (
               <li key={link.name}>
                 <Link
                   to={`/${link.name}`}
-                  className={
-                    location.pathname.includes(`/${link.name}`) ? "active" : ""
-                  }
+                  className={isActive ? "active" : ""}
                   onClick={() => handleLinkClick(link.name)}
                 >
                   <span className="nav-icon">{link.icon}</span>
@@ -51,9 +57,13 @@ export const Sidebar = ({ links, onLogout }) => {
           })}
         </ul>
 
-        {/* Bottom section with Theme Toggle and Logout */}
+        {/* Bottom section with Theme Controls and Logout */}
         <div className="sidebar-bottom">
           <ul>
+            {/* Theme Selector */}
+            <li>
+              <ThemeSelector />
+            </li>
             {/* Theme Toggle */}
             <li>
               <ThemeToggle />

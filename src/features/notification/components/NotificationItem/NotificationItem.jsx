@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Avatar, Badge, Typography, Space } from "antd";
 import {
@@ -8,6 +8,7 @@ import {
   RetweetOutlined
 } from "@ant-design/icons";
 import { formatDistanceToNow } from "date-fns";
+import { motion } from "framer-motion";
 import "./NotificationItem.css";
 
 const { Text } = Typography;
@@ -77,10 +78,12 @@ const getNotificationLink = (type, entityId) => {
  * @param {Object} props.notification - Notification data
  * @param {Function} props.onMarkAsRead - Function to mark notification as read
  * @param {Function} props.onMarkAsOpened - Function to mark notification as opened
+ * @param {number} props.index - Index for staggered animation
  * @returns {JSX.Element} NotificationItem component
  */
-const NotificationItem = ({ notification, onMarkAsRead, onMarkAsOpened }) => {
+const NotificationItem = ({ notification, onMarkAsRead, onMarkAsOpened, index = 0 }) => {
   const { _id, notificationType, userFrom, opened, createdAt, entityId, message } = notification;
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = () => {
     if (!opened && onMarkAsOpened) {
@@ -89,6 +92,20 @@ const NotificationItem = ({ notification, onMarkAsRead, onMarkAsOpened }) => {
     if (onMarkAsRead) {
       onMarkAsRead(_id);
     }
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    // Mark as read on hover (desktop only)
+    if (!opened && onMarkAsOpened && window.innerWidth > 768) {
+      setTimeout(() => {
+        onMarkAsOpened(_id);
+      }, 1000); // Mark as read after 1 second of hover
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
   };
 
   // Get full name if available
@@ -113,45 +130,95 @@ const NotificationItem = ({ notification, onMarkAsRead, onMarkAsOpened }) => {
     return null;
   }
 
+  // Animation variants for staggered entrance
+  const itemVariants = {
+    hidden: {
+      opacity: 0,
+      x: -20,
+      scale: 0.95
+    },
+    visible: {
+      opacity: 1,
+      x: 0,
+      scale: 1,
+      transition: {
+        duration: 0.3,
+        delay: index * 0.05, // Stagger effect
+        ease: "easeOut"
+      }
+    },
+    exit: {
+      opacity: 0,
+      x: 100,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
+
   return (
-    <Link
-      to={getNotificationLink(notificationType, entityId)}
-      className={`notification-item ${!opened ? "unread" : ""}`}
-      onClick={handleClick}
+    <motion.div
+      variants={itemVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      whileHover={{
+        scale: 1.02,
+        transition: { duration: 0.2 }
+      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      <Badge dot={!opened} offset={[-5, 5]} color="#1d9bf0">
-        {userFrom?.profilePic ? (
-          <Avatar
-            src={userFrom.profilePic}
-            className="notification-avatar"
-            size={40}
-          />
-        ) : (
-          <Avatar
-            icon={getNotificationIcon(notificationType)}
-            className="notification-avatar"
-            size={40}
-          />
-        )}
-      </Badge>
-      <div className="notification-content">
-        <Space direction="vertical" size={0}>
-          <Text strong>
-            {message ? (
-              message
+      <Link
+        to={getNotificationLink(notificationType, entityId)}
+        className={`notification-item ${!opened ? "unread" : ""} ${isHovered ? "hovered" : ""}`}
+        onClick={handleClick}
+      >
+        <Badge dot={!opened} offset={[-5, 5]} color="#1d9bf0">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{
+              type: "spring",
+              stiffness: 260,
+              damping: 20,
+              delay: index * 0.05 + 0.1
+            }}
+          >
+            {userFrom?.profilePic ? (
+              <Avatar
+                src={userFrom.profilePic}
+                className="notification-avatar"
+                size={40}
+              />
             ) : (
-              <>
-                <span className="notification-username">{getFullName()}</span>{" "}
-                {getNotificationText(notificationType)}
-              </>
+              <Avatar
+                icon={getNotificationIcon(notificationType)}
+                className="notification-avatar"
+                size={40}
+              />
             )}
-          </Text>
-          <Text type="secondary" className="notification-time">
-            {createdAt ? formatDistanceToNow(new Date(createdAt), { addSuffix: true }) : "Unknown time"}
-          </Text>
-        </Space>
-      </div>
-    </Link>
+          </motion.div>
+        </Badge>
+        <div className="notification-content">
+          <Space direction="vertical" size={0}>
+            <Text strong>
+              {message ? (
+                message
+              ) : (
+                <>
+                  <span className="notification-username">{getFullName()}</span>{" "}
+                  {getNotificationText(notificationType)}
+                </>
+              )}
+            </Text>
+            <Text type="secondary" className="notification-time">
+              {createdAt ? formatDistanceToNow(new Date(createdAt), { addSuffix: true }) : "Unknown time"}
+            </Text>
+          </Space>
+        </div>
+      </Link>
+    </motion.div>
   );
 };
 

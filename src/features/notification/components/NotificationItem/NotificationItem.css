@@ -1,53 +1,132 @@
 .notification-item {
   display: flex;
   align-items: flex-start;
-  padding: 12px 16px;
+  padding: 16px;
   border-bottom: 1px solid var(--border-color, #eff3f4);
-  transition: background-color 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
-  color: var(--text-color, #0f1419);
+  color: var(--text-primary, #0f1419);
   width: 100%;
+  position: relative;
+  border-radius: 8px;
+  margin: 4px 8px;
+  background-color: var(--bg-primary, #ffffff);
 }
 
 .notification-item:hover {
-  background-color: var(--hover-color, rgba(0, 0, 0, 0.03));
+  background-color: var(--hover-bg, rgba(29, 155, 240, 0.08));
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.notification-item.hovered {
+  background-color: var(--hover-bg, rgba(29, 155, 240, 0.08));
 }
 
 .notification-item.unread {
-  background-color: var(--unread-bg-color, rgba(29, 155, 240, 0.1));
+  background: linear-gradient(
+    90deg,
+    rgba(29, 155, 240, 0.12) 0%,
+    rgba(29, 155, 240, 0.05) 100%
+  );
+  border-left: 3px solid var(--primary-color, #1d9bf0);
+  font-weight: 500;
+}
+
+.notification-item.unread::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(
+    180deg,
+    var(--primary-color, #1d9bf0) 0%,
+    rgba(29, 155, 240, 0.5) 100%
+  );
+  border-radius: 8px 0 0 8px;
 }
 
 .notification-avatar {
   margin-right: 12px;
   flex-shrink: 0;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.notification-item:hover .notification-avatar {
+  transform: scale(1.1);
 }
 
 .notification-content {
   flex: 1;
   min-width: 0;
+  transition: transform 0.2s ease;
 }
 
 .notification-username {
   color: var(--primary-color, #1d9bf0);
   font-weight: 600;
+  transition: color 0.2s ease;
 }
 
 .notification-username:hover {
   text-decoration: underline;
+  color: var(--primary-color-hover, #1a8cd8);
 }
 
 .notification-time {
   font-size: 0.85rem;
-  color: var(--secondary-text-color, #536471);
+  color: var(--text-secondary, #536471);
+  transition: color 0.2s ease;
+}
+
+/* Notification icon animations */
+.notification-avatar .anticon {
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Badge styling */
+.ant-badge-dot {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
 }
 
 /* Mobile styles */
 @media (max-width: 768px) {
   .notification-item {
-    padding: 10px 12px;
+    padding: 12px;
+    margin: 2px 4px;
+    border-radius: 6px;
   }
 
   .notification-avatar {
     margin-right: 10px;
+  }
+
+  .notification-item:hover {
+    transform: translateX(2px);
   }
 }

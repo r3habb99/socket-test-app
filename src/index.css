@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./shared/styles/animations.css";
 
 /* Theme CSS Variables */
 :root {
@@ -15,6 +16,7 @@
   --primary-color-disabled: #8ecdf7;
   --shadow-color: rgba(0, 0, 0, 0.08);
   --hover-bg: rgba(29, 155, 240, 0.1);
+  --like-hover-bg: rgba(224, 36, 94, 0.1);
   --scrollbar-thumb: #cfd9de;
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.4);
 }
@@ -33,6 +35,7 @@
   --primary-color-disabled: #4a7ba7;
   --shadow-color: rgba(0, 0, 0, 0.4);
   --hover-bg: rgba(96, 165, 250, 0.1);
+  --like-hover-bg: rgba(224, 36, 94, 0.1);
   --scrollbar-thumb: #4a5568;
   --scrollbar-thumb-hover: #718096;
 }
