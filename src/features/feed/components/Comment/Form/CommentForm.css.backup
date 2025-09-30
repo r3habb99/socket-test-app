@@ -2,7 +2,7 @@
   display: flex;
   margin-bottom: 16px;
   padding: 12px;
-  background-color: var(--bg-surface);
+  background-color: #f8f9fa;
   width: 100%;
 }
 
@@ -19,12 +19,12 @@
 .comment-input {
   padding: 8px 12px;
   resize: none;
-  border: 1px solid var(--border-color);
+  border: 1px solid #e1e8ed;
   transition: border-color 0.3s;
 }
 
 .comment-input:focus {
-  border-color: var(--primary-color);
+  border-color: #1d9bf0;
   box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.2);
 }
 
@@ -36,7 +36,7 @@
 
 .char-counter {
   font-size: 12px;
-  color: var(--text-secondary);
+  color: #6e767d;
 }
 
 .comment-form-actions {
@@ -45,8 +45,8 @@
 }
 
 .submit-button {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
+  background-color: #1d9bf0;
+  border-color: #1d9bf0;
   display: flex;
   align-items: center;
 }

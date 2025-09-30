@@ -11,8 +11,12 @@
   --border-color: #eff3f4;
   --primary-color: #1d9bf0;
   --primary-color-hover: #1a8cd8;
+  --primary-color-light: rgba(29, 155, 240, 0.1);
+  --primary-color-disabled: #8ecdf7;
   --shadow-color: rgba(0, 0, 0, 0.08);
   --hover-bg: rgba(29, 155, 240, 0.1);
+  --scrollbar-thumb: #cfd9de;
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.4);
 }
 
 /* Dark theme colors */
@@ -25,8 +29,12 @@
   --border-color: #2f3336;
   --primary-color: #60a5fa;
   --primary-color-hover: #93c5fd;
+  --primary-color-light: rgba(96, 165, 250, 0.1);
+  --primary-color-disabled: #4a7ba7;
   --shadow-color: rgba(0, 0, 0, 0.4);
   --hover-bg: rgba(96, 165, 250, 0.1);
+  --scrollbar-thumb: #4a5568;
+  --scrollbar-thumb-hover: #718096;
 }
 
 /* General Styles */
@@ -97,40 +105,44 @@ input[type="tel"] {
   padding: 12px;
   font-size: 1.1rem;
   margin-bottom: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 10px;
   box-sizing: border-box;
   outline: none;
-  background-color: #f0f0f0;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+    color 0.3s ease;
 }
 
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 5px var(--primary-color);
 }
 
 button {
-  background-color: #007bff;
+  background-color: var(--primary-color);
   color: white;
   padding: 12px;
   border: none;
   border-radius: 10px;
   font-size: 1.1rem;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease;
   width: 100%;
 }
 
 /* button:hover {
-  background-color: #0056b3;
+  background-color: var(--primary-color-hover);
 } */
 
 button:disabled {
-  background-color: #ccc;
+  background-color: var(--text-secondary);
   cursor: not-allowed;
-  opacity: 0.7; /* Add opacity change when disabled */
+  opacity: 0.5;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
 }
 
 /* Chat-specific input container styles have been moved to src/components/Messages/css/chat.css */
@@ -143,18 +155,11 @@ button:disabled {
   --sidebar-width: 250px;
   --mobile-nav-height: 60px;
   --mobile-touch-target: 44px;
-  --primary-color: #1d9bf0;
-  --primary-color-hover: #1a8cd8;
-  --primary-color-light: rgba(29, 155, 240, 0.1);
-  --border-color: #eff3f4;
-  --text-color: #0f1419;
-  --secondary-text-color: #536471;
-  --background-color: #ffffff;
   --mobile-padding: 12px;
   --mobile-small-padding: 8px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 3px var(--shadow-color);
+  --shadow-md: 0 4px 12px var(--shadow-color);
+  --shadow-lg: 0 8px 24px var(--shadow-color);
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
   --transition-bounce: cubic-bezier(0.25, 1, 0.5, 1);

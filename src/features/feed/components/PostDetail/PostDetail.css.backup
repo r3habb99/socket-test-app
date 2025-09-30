@@ -1,10 +1,10 @@
 /* Twitter-style Post Detail UI */
 .post-detail-container {
   margin: 0 auto;
-  background-color: var(--bg-primary);
+  background-color: #fff;
   min-height: 100vh;
-  border-left: 1px solid var(--border-color);
-  border-right: 1px solid var(--border-color);
+  border-left: 1px solid #eee;
+  border-right: 1px solid #eee;
 }
 
 /* Header styles */
@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #eee;
   position: sticky;
   top: 0;
   background-color: rgba(255, 255, 255, 0.95);
@@ -24,13 +24,13 @@
   margin-right: 20px;
   font-size: 20px;
   cursor: pointer;
-  color: var(--text-primary);
+  color: #000;
   display: flex;
   align-items: center;
 }
 
 .post-detail-back:hover {
-  color: var(--primary-color);
+  color: #1d9bf0;
 }
 
 .post-detail-title {
@@ -47,7 +47,7 @@
 }
 
 .replying-to-text {
-  color: var(--text-secondary);
+  color: #536471;
   font-size: 14px;
   margin-bottom: 0 !important;
   display: flex;
@@ -59,7 +59,7 @@
   display: inline-block;
   width: 2px;
   height: 2px;
-  background-color: var(--text-secondary);
+  background-color: #536471;
   border-radius: 50%;
   margin: 0 6px;
 }
@@ -76,7 +76,7 @@
 
 /* Override the reply label in PostList component */
 .post-detail-content .reply-label {
-  color: var(--text-secondary);
+  color: #536471;
   margin-left: 0;
   padding-left: 16px;
   display: flex;
@@ -91,7 +91,7 @@
 }
 
 .post-detail-content .reply-label .ant-typography {
-  color: var(--text-secondary);
+  color: #536471;
   margin-bottom: 0;
   display: flex;
   align-items: center;
@@ -101,9 +101,9 @@
 .post-detail-content .original-post-container {
   margin: 8px 0 16px;
   padding: 12px 16px;
-  border: 1px solid var(--border-color);
+  border: 1px solid #eee;
   border-radius: 12px;
-  background-color: var(--bg-surface);
+  background-color: #f7f9fa;
   max-width: 100%;
   overflow: hidden;
 }
@@ -113,7 +113,7 @@
 }
 
 .post-detail-content .original-post-text {
-  color: var(--text-secondary);
+  color: #536471;
   font-size: 15px;
   line-height: 1.4;
   margin: 0;
@@ -123,7 +123,7 @@
 
 /* Content styles */
 .post-detail-content {
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #eee;
 }
 
 .post-detail-content .post-list-container {
@@ -171,19 +171,19 @@
 .post-detail-content .post-user-name {
   font-size: 15px;
   font-weight: bold;
-  color: var(--text-primary);
+  color: #0f1419;
   margin-right: 4px;
 }
 
 .post-detail-content .post-user-handle {
   font-size: 15px;
-  color: var(--text-secondary);
+  color: #536471;
   margin-right: 4px;
 }
 
 .post-detail-content .post-timestamp {
   font-size: 15px;
-  color: var(--text-secondary);
+  color: #536471;
 }
 
 .post-detail-content .post-timestamp::before {
@@ -196,7 +196,7 @@
   font-size: 20px;
   line-height: 1.5;
   margin: 4px 0 12px;
-  color: var(--text-primary);
+  color: #0f1419;
   font-weight: 400;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -206,14 +206,14 @@
   margin: 12px 0;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid var(--border-color);
+  border: 1px solid #eee;
 }
 
 .post-detail-content .post-media-image {
   width: 100%;
   max-height: 400px;
   object-fit: contain;
-  background-color: var(--bg-surface);
+  background-color: #f7f9fa;
 }
 
 .post-detail-content .post-actions {
@@ -221,7 +221,7 @@
   justify-content: space-between;
   margin-top: 12px;
   padding: 8px 0;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid #eee;
 }
 
 .post-detail-content .post-action-group {
@@ -236,7 +236,7 @@
   justify-content: center;
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: #536471;
   font-size: 18px;
   padding: 8px;
   cursor: pointer;
@@ -258,7 +258,7 @@
 }
 
 .post-detail-content .post-action-button:hover {
-  color: var(--primary-color);
+  color: #1d9bf0;
 }
 
 .post-detail-content .post-action-button:hover::before {
@@ -276,14 +276,14 @@
 .post-detail-content .post-action-count {
   font-size: 13px;
   margin-left: 4px;
-  color: var(--text-secondary);
+  color: #536471;
 }
 
 /* Comment form styles */
 .post-detail-comment-form {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-primary);
+  border-bottom: 1px solid #eee;
+  background-color: #fff;
   display: flex;
   align-items: flex-start;
 }
@@ -311,7 +311,7 @@
 .post-detail-comment-form textarea {
   border-radius: 0;
   border: none;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #eee;
   resize: none;
   padding: 12px 0;
   font-size: 16px;
@@ -321,7 +321,7 @@
 
 .post-detail-comment-form textarea:focus {
   box-shadow: none;
-  border-color: var(--primary-color);
+  border-color: #1d9bf0;
 }
 
 .post-detail-comment-form .comment-form-footer {
@@ -333,13 +333,13 @@
 }
 
 .post-detail-comment-form .char-counter {
-  color: var(--text-secondary);
+  color: #536471;
   font-size: 14px;
 }
 
 .post-detail-comment-form button {
   border-radius: 24px;
-  background-color: var(--primary-color);
+  background-color: #1d9bf0;
   color: white;
   font-weight: bold;
   height: 36px;
@@ -360,7 +360,7 @@
   padding: 12px 16px;
   font-size: 20px;
   font-weight: bold;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #eee;
   display: flex;
   align-items: center;
 }
@@ -371,7 +371,7 @@
 
 /* Comments section */
 .post-detail-comments {
-  background-color: var(--bg-primary);
+  background-color: #fff;
 }
 
 .post-detail-comments .comment-list {
@@ -381,7 +381,7 @@
 
 .post-detail-comments .comment-item {
   padding: 16px 0;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #eee;
 }
 
 .post-detail-comments .comment-item:last-child {
@@ -396,25 +396,25 @@
 .post-detail-comments .comment-user-name {
   font-size: 15px;
   font-weight: bold;
-  color: var(--text-primary);
+  color: #0f1419;
 }
 
 .post-detail-comments .comment-user-handle,
 .post-detail-comments .comment-timestamp {
   font-size: 14px;
-  color: var(--text-secondary);
+  color: #536471;
 }
 
 .post-detail-comments .comment-text {
   font-size: 15px;
   line-height: 1.4;
-  color: var(--text-primary);
+  color: #0f1419;
 }
 
 .no-comments {
   padding: 24px 16px;
   text-align: center;
-  color: var(--text-secondary);
+  color: #536471;
   font-size: 15px;
 }
 
@@ -460,7 +460,7 @@
 .retry-button {
   margin-top: 10px;
   padding: 6px 16px;
-  background-color: var(--primary-color);
+  background-color: #1d9bf0;
   color: white;
   border: none;
   border-radius: 20px;

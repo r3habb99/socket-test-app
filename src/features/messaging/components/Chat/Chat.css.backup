@@ -59,7 +59,7 @@
 }
 
 .back-button.ant-btn:hover {
-  background-color: var(--primary-color-light);
+  background-color: rgba(29, 155, 240, 0.1);
   color: var(--primary-color);
 }
 
@@ -83,7 +83,7 @@
   flex-shrink: 0;
   position: relative;
   overflow: hidden; /* Changed back to hidden as we're using UserStatus component instead */
-  border: 2px solid var(--bg-primary);
+  border: 2px solid #fff;
   box-shadow: 0 1px 3px var(--shadow-color);
   display: flex;
   align-items: center;
@@ -96,7 +96,6 @@
   -moz-border-radius: 25px !important;
   -ms-border-radius: 25px !important;
   -o-border-radius: 25px !important;
-  transition: border-color 0.3s ease;
 }
 
 /* Ensure avatar image has the same border-radius */
@@ -203,13 +202,13 @@
   cursor: pointer;
   border-radius: 50%;
   transition: all 0.2s ease;
-  background-color: var(--bg-surface);
+  background-color: #f0f2f5;
   border: none;
   padding: 0;
 }
 
 .header-icon.ant-btn:hover {
-  background-color: var(--hover-bg);
+  background-color: #e4e6eb;
   transform: scale(1.05);
   color: var(--primary-color);
 }
@@ -230,7 +229,7 @@
   position: relative;
   min-height: 0; /* Critical for flexbox scrolling */
   scrollbar-width: thin; /* For Firefox */
-  scrollbar-color: var(--scrollbar-thumb) transparent; /* For Firefox */
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* For Firefox */
 }
 
 /* Top loading indicator for older messages */
@@ -238,12 +237,7 @@
   content: "";
   height: 2px;
   width: 100%;
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--primary-color),
-    transparent
-  );
+  background: linear-gradient(to right, transparent, #1d9bf0, transparent);
   position: absolute;
   top: 0;
   left: 0;
@@ -266,7 +260,7 @@
 
 .load-more-container .ant-btn {
   background-color: var(--bg-surface);
-  border-color: var(--border-color);
+  border-color: #e6e9ea;
   color: var(--primary-color);
   font-weight: 500;
   border-radius: 16px;
@@ -279,9 +273,9 @@
 }
 
 .load-more-container .ant-btn:hover {
-  background-color: var(--primary-color-light);
-  border-color: var(--border-color);
-  color: var(--primary-color-hover);
+  background-color: #e8f5fd;
+  border-color: #d8e8f2;
+  color: #1a8cd8;
 }
 
 .load-more-container .ant-btn .anticon {
@@ -298,12 +292,12 @@
 }
 
 .messages-container::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb);
+  background-color: rgba(0, 0, 0, 0.2);
   border-radius: 10px;
 }
 
 .messages-container::-webkit-scrollbar-thumb:hover {
-  background-color: var(--scrollbar-thumb-hover);
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 .messages-list {
@@ -371,11 +365,10 @@ li.sender .message-bubble {
 
 /* Receiver message bubble */
 li.receiver .message-bubble {
-  background-color: var(--bg-surface);
+  background-color: #eff3f4;
   border-bottom-left-radius: 4px;
   color: var(--text-primary);
   text-align: left;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Message content */
@@ -463,12 +456,12 @@ li.receiver .message-info {
 .no-messages-icon {
   font-size: 32px !important;
   margin-bottom: 16px;
-  color: var(--primary-color) !important;
+  color: #1d9bf0 !important;
 }
 
 .no-messages-hint {
   font-size: 14px !important;
-  color: var(--text-secondary) !important;
+  color: #536471 !important;
   margin-top: 8px !important;
 }
 
@@ -507,7 +500,7 @@ li.receiver .message-info {
   color: var(--text-secondary);
   font-size: 12px;
   padding: 6px 12px;
-  background-color: var(--bg-surface);
+  background-color: rgba(239, 243, 244, 0.5);
   border-radius: 16px;
   width: fit-content;
   margin-left: auto;
@@ -517,7 +510,6 @@ li.receiver .message-info {
   justify-content: center;
   gap: 8px;
   flex-direction: column;
-  transition: background-color 0.3s ease;
 }
 
 /* Connection status indicators */
@@ -581,7 +573,7 @@ li.receiver .message-info {
   top: 50%;
   width: 100%;
   height: 1px;
-  background-color: var(--border-color);
+  background-color: #eff3f4;
   z-index: 1;
 }
 
@@ -639,7 +631,7 @@ li.receiver .message-info {
 }
 
 .message-action-button.ant-btn:hover {
-  background-color: var(--primary-color-light);
+  background-color: rgba(29, 155, 240, 0.1);
   color: var(--primary-color);
 }
 
@@ -683,11 +675,11 @@ li.receiver .message-info {
 }
 
 .send-btn.ant-btn:hover {
-  background-color: var(--primary-color-hover);
+  background-color: #1a8cd8;
 }
 
 .send-btn.ant-btn:disabled {
-  background-color: var(--primary-color-disabled);
+  background-color: #8ecdf7;
   cursor: not-allowed;
 }
 
@@ -756,14 +748,14 @@ li.receiver .message-info {
   flex: 1 !important;
   height: 36px !important;
   font-size: 15px !important;
-  color: var(--text-primary) !important;
+  color: #0f1419 !important;
 }
 
 /* Style the send button in mobile view to match reference image */
 .mobile-input-container .send-btn {
   width: 36px !important;
   height: 36px !important;
-  background-color: var(--primary-color) !important;
+  background-color: #1d9bf0 !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
 }
 

@@ -6,14 +6,17 @@
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 16px;
-  background-color: #fff;
-  border: 1px solid #eff3f4;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .cp-container.reply-mode {
-  background-color: #f7f9fa;
+  background-color: var(--bg-surface);
   border-radius: 12px;
+  transition: background-color 0.3s ease;
 }
 
 .cp-header {
@@ -25,8 +28,9 @@
 .cp-title {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #0f1419;
+  color: var(--text-primary);
   flex: 1;
+  transition: color 0.3s ease;
 }
 
 .cp-form-container {
@@ -61,17 +65,18 @@
   padding: 12px 0 !important;
   border: none !important;
   background-color: transparent !important;
-  color: #0f1419 !important;
+  color: var(--text-primary) !important;
   font-size: 1.25rem !important;
   margin-bottom: 16px;
   outline: none;
   box-shadow: none !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
+  transition: color 0.3s ease !important;
 }
 
 .cp-textarea::placeholder {
-  color: #536471 !important;
+  color: var(--text-secondary) !important;
   font-size: 1.25rem;
 }
 
@@ -87,7 +92,8 @@
   border-radius: 16px;
   overflow: hidden;
   max-height: 300px;
-  border: 1px solid #eff3f4;
+  border: 1px solid var(--border-color);
+  transition: border-color 0.3s ease;
 }
 
 .cp-media-preview {
@@ -95,7 +101,8 @@
   max-height: 300px;
   object-fit: contain;
   border-radius: 16px;
-  background-color: #f7f9fa;
+  background-color: var(--bg-surface);
+  transition: background-color 0.3s ease;
 }
 
 .cp-remove-media {
@@ -127,7 +134,8 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 12px;
-  border-top: 1px solid #eff3f4;
+  border-top: 1px solid var(--border-color);
+  transition: border-color 0.3s ease;
 }
 
 .cp-actions-left {
@@ -144,14 +152,14 @@
 
 .cp-char-count {
   font-size: 14px;
-  color: #536471;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease, color 0.3s ease;
 }
 
 .cp-char-count-warning {
@@ -184,12 +192,13 @@
 }
 
 .cp-media-btn:hover {
-  background-color: rgba(29, 155, 240, 0.1) !important;
+  background-color: var(--hover-bg) !important;
 }
 
 .cp-media-btn:disabled {
-  color: #8899a6 !important;
+  color: var(--text-secondary) !important;
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .cp-visibility-wrapper {
@@ -201,28 +210,30 @@
 .cp-visibility {
   padding: 6px 12px 6px 32px;
   border-radius: 20px;
-  border: 1px solid #eff3f4 !important;
+  border: 1px solid var(--border-color) !important;
   background-color: transparent;
   font-size: 0.9rem;
-  color: #1d9bf0;
+  color: var(--primary-color);
   cursor: pointer;
   outline: none;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+  transition: border-color 0.3s ease, color 0.3s ease;
 }
 
 .cp-visibility option {
-  background-color: #fff;
-  color: #0f1419;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .cp-visibility-icon {
   position: absolute;
   left: 10px;
-  color: #1d9bf0;
+  color: var(--primary-color);
   font-size: 0.9rem;
   pointer-events: none;
+  transition: color 0.3s ease;
 }
 
 .cp-post-btn {

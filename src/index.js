@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import "./index.css"; // Import theme CSS variables and base styles
 import "./output.css";
 // Ant Design 5.x no longer requires explicit CSS import
 // Import our custom responsive styles for Ant Design components

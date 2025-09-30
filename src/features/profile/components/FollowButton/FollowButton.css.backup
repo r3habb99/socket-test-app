@@ -1,5 +1,5 @@
 .follow-btn {
-  background-color: var(--text-primary);
+  background-color: #0f1419;
   color: white;
   padding: 0 16px;
   border: none;
@@ -22,7 +22,7 @@
 
 .follow-btn.following {
   background-color: transparent;
-  color: var(--text-primary);
+  color: #0f1419;
   border: 1px solid #cfd9de;
 }
 

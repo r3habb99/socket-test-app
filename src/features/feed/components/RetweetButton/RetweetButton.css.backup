@@ -10,7 +10,7 @@
 
 /* Retweet Button specific styles */
 .retweet-button-container .retweet-button {
-  color: var(--text-secondary);
+  color: #6e767d;
 }
 
 .retweet-button-container:hover .retweet-button {
@@ -44,7 +44,7 @@
 .retweet-button-container .post-action-count {
   font-size: 13px;
   margin-left: 4px;
-  color: var(--text-secondary);
+  color: #6e767d;
   position: relative;
   z-index: 2;
 }
@@ -53,7 +53,7 @@
 .retweet-label {
   display: flex;
   align-items: center;
-  color: var(--text-secondary);
+  color: #6e767d;
   font-size: 13px;
   margin-bottom: 8px;
 }

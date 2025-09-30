@@ -45,7 +45,7 @@
   display: flex;
   align-items: center;
   font-weight: 700 !important;
-  color: var(--text-primary) !important;
+  color: #0f1419 !important;
 }
 
 .verified-badge {

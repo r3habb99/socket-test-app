@@ -6,6 +6,7 @@
   transition: background-color 0.2s ease;
   text-decoration: none;
   color: var(--text-color, #0f1419);
+  width: 100%;
 }
 
 .notification-item:hover {
@@ -45,7 +46,7 @@
   .notification-item {
     padding: 10px 12px;
   }
-  
+
   .notification-avatar {
     margin-right: 10px;
   }

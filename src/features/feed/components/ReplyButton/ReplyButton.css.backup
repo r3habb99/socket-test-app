@@ -31,7 +31,7 @@
 }
 
 .reply-to-content {
-  color: var(--text-secondary);
+  color: #657786;
   font-size: 14px;
   margin-top: 4px;
   word-break: break-word;

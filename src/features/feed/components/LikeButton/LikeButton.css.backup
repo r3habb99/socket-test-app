@@ -10,7 +10,7 @@
 
 /* Like Button specific styles */
 .like-button-container .like-button {
-  color: var(--text-secondary);
+  color: #6e767d;
 }
 
 .like-button-container:hover .like-button {
@@ -44,7 +44,7 @@
 .like-button-container .post-action-count {
   font-size: 13px;
   margin-left: 4px;
-  color: var(--text-secondary);
+  color: #6e767d;
   position: relative;
   z-index: 2;
 }

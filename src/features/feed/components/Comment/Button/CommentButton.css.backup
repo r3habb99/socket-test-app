@@ -2,7 +2,7 @@
 /* This file contains only additional styles specific to the comment button */
 
 .post-action-group:hover .comment-button {
-  color: var(--primary-color);
+  color: #1d9bf0;
 }
 
 .post-action-group:hover .comment-button::before {
@@ -10,5 +10,5 @@
 }
 
 .post-action-group:hover .post-action-count {
-  color: var(--primary-color);
+  color: #1d9bf0;
 }

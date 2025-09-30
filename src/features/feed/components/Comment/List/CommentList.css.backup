@@ -5,15 +5,15 @@
 .nested-comment-list {
   margin-left: 40px;
   margin-top: 4px;
-  border-left: 2px solid var(--border-color);
+  border-left: 2px solid #eee;
   padding-left: 16px;
-  background-color: var(--bg-surface);
+  background-color: #f9f9f9;
   border-radius: 0 8px 8px 0;
 }
 
 .comment-list .ant-list-item {
   padding: 12px 0;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #eee;
 }
 
 .comment-list .ant-list-item:last-child {

@@ -40,7 +40,7 @@
 /* Status text */
 .status-text {
   font-size: 12px;
-  color: var(--text-secondary);
+  color: #536471;
   white-space: nowrap;
 }
 
