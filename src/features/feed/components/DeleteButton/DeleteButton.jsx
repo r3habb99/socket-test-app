@@ -187,7 +187,9 @@ export const DeleteButton = ({
         okText="Delete"
         cancelText="Cancel"
         placement="top"
-        okButtonProps={{ danger: true }}
+        okButtonProps={{
+          danger: true
+        }}
       >
         <Tooltip title="Delete">
           <Button

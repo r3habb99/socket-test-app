@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button, Tooltip } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -16,6 +16,9 @@ const REACTIONS = [
   { type: "angry", emoji: "😠", label: "Angry", color: "#f05e16" },
 ];
 
+// Storage key for user reactions
+const REACTIONS_STORAGE_KEY = 'user_post_reactions';
+
 /**
  * ReactionButton component for multi-reaction system
  * @param {Object} props - Component props
@@ -25,16 +28,17 @@ const REACTIONS = [
  * @param {Function} props.getPostId - Function to get post ID
  * @returns {JSX.Element} ReactionButton component
  */
-export const ReactionButton = ({ 
-  post, 
-  setPosts, 
+export const ReactionButton = ({
+  post,
+  setPosts,
   onPostsUpdated,
-  getPostId 
+  getPostId
 }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [actionInProgress, setActionInProgress] = useState(false);
   const [selectedReaction, setSelectedReaction] = useState(null);
   const pickerRef = useRef(null);
+  const hoverTimerRef = useRef(null);
   const { connected, emit } = useSocketContext();
   const postId = getPostId(post);
 
@@ -47,14 +51,57 @@ export const ReactionButton = ({
     return post.likes && Array.isArray(post.likes) && post.likes.includes(userId);
   };
 
-  // Get current user's reaction (for now, we'll use the like status)
+  // Get user's reaction from localStorage
+  const getUserReaction = (postId) => {
+    try {
+      const reactions = JSON.parse(localStorage.getItem(REACTIONS_STORAGE_KEY) || '{}');
+      return reactions[postId] || null;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  // Save user's reaction to localStorage
+  const saveUserReaction = (postId, reactionType) => {
+    try {
+      const reactions = JSON.parse(localStorage.getItem(REACTIONS_STORAGE_KEY) || '{}');
+      if (reactionType) {
+        reactions[postId] = reactionType;
+      } else {
+        delete reactions[postId];
+      }
+      localStorage.setItem(REACTIONS_STORAGE_KEY, JSON.stringify(reactions));
+    } catch (error) {
+      console.error('Error saving reaction:', error);
+    }
+  };
+
+  // Initialize selected reaction based on like status and stored reaction
   useEffect(() => {
-    if (isPostLiked(post)) {
-      setSelectedReaction(REACTIONS[0]); // Default to "like"
+    const liked = isPostLiked(post);
+    if (liked) {
+      // Check if user has a stored reaction preference
+      const storedReactionType = getUserReaction(postId);
+      if (storedReactionType) {
+        const reaction = REACTIONS.find(r => r.type === storedReactionType);
+        setSelectedReaction(reaction || REACTIONS[0]);
+      } else {
+        setSelectedReaction(REACTIONS[0]); // Default to "like"
+      }
     } else {
       setSelectedReaction(null);
+      saveUserReaction(postId, null); // Clear stored reaction
     }
-  }, [post]);
+  }, [post, postId]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+    };
+  }, []);
 
   // Close picker when clicking outside
   useEffect(() => {
@@ -82,32 +129,65 @@ export const ReactionButton = ({
     setActionInProgress(true);
     setShowPicker(false);
 
+    const currentlyLiked = isPostLiked(post);
+    const isSameReaction = selectedReaction && reaction && selectedReaction.type === reaction.type;
+
     try {
-      const response = await likePost(postId);
+      // If clicking the same reaction, unlike the post
+      if (currentlyLiked && isSameReaction) {
+        const response = await likePost(postId);
 
-      if (response.error) {
-        toast.error("Error reacting to post. Please try again.");
-        return;
-      }
+        if (response.error) {
+          toast.error("Error removing reaction. Please try again.");
+          return;
+        }
 
-      const updatedPost = response.data;
+        const updatedPost = response.data;
 
-      setPosts((prevPosts) =>
-        prevPosts.map((p) =>
-          getPostId(p) === postId ? { ...p, ...updatedPost } : p
-        )
-      );
+        setPosts((prevPosts) =>
+          prevPosts.map((p) =>
+            getPostId(p) === postId ? { ...p, ...updatedPost } : p
+          )
+        );
 
-      // Update selected reaction
-      if (isPostLiked(updatedPost)) {
-        setSelectedReaction(reaction);
-      } else {
         setSelectedReaction(null);
-      }
+        saveUserReaction(postId, null);
 
-      // Emit socket event if connected
-      if (connected && emit) {
-        emit("post liked", updatedPost);
+        // Emit socket event if connected
+        if (connected && emit) {
+          emit("post liked", updatedPost);
+        }
+      }
+      // If not liked, like the post with the selected reaction
+      else if (!currentlyLiked && reaction) {
+        const response = await likePost(postId);
+
+        if (response.error) {
+          toast.error("Error reacting to post. Please try again.");
+          return;
+        }
+
+        const updatedPost = response.data;
+
+        setPosts((prevPosts) =>
+          prevPosts.map((p) =>
+            getPostId(p) === postId ? { ...p, ...updatedPost } : p
+          )
+        );
+
+        setSelectedReaction(reaction);
+        saveUserReaction(postId, reaction.type);
+
+        // Emit socket event if connected
+        if (connected && emit) {
+          emit("post liked", updatedPost);
+        }
+      }
+      // If already liked but selecting a different reaction, just change the reaction type
+      else if (currentlyLiked && reaction && !isSameReaction) {
+        setSelectedReaction(reaction);
+        saveUserReaction(postId, reaction.type);
+        // No API call needed, just visual change
       }
     } catch (error) {
       toast.error("Error reacting to post. Please try again.");
@@ -122,10 +202,10 @@ export const ReactionButton = ({
    */
   const handleQuickReaction = () => {
     if (selectedReaction) {
-      // If already reacted, remove reaction
-      handleReaction(null);
+      // If already reacted, remove reaction (toggle off)
+      handleReaction(selectedReaction);
     } else {
-      // Quick react with "like"
+      // Quick react with "like" (default reaction)
       handleReaction(REACTIONS[0]);
     }
   };
@@ -137,21 +217,51 @@ export const ReactionButton = ({
     setShowPicker(true);
   };
 
+  /**
+   * Handle mouse enter - show picker after delay
+   */
+  const handleMouseEnter = () => {
+    // Only on desktop
+    if (window.innerWidth > 768) {
+      console.log('Mouse entered reaction button, showing picker in 500ms');
+      hoverTimerRef.current = setTimeout(() => {
+        console.log('Showing reaction picker');
+        setShowPicker(true);
+      }, 500);
+    }
+  };
+
+  /**
+   * Handle mouse leave - cancel timer and hide picker
+   */
+  const handleMouseLeave = () => {
+    // Clear hover timer
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  };
+
+  /**
+   * Handle picker mouse leave - hide picker
+   */
+  const handlePickerMouseLeave = () => {
+    setShowPicker(false);
+  };
+
   const liked = isPostLiked(post);
 
   return (
-    <div className="reaction-button-container post-action-group" ref={pickerRef}>
+    <div
+      className="reaction-button-container post-action-group"
+      ref={pickerRef}
+      onMouseLeave={handleMouseLeave}
+    >
       <Tooltip title={selectedReaction ? `Remove ${selectedReaction.label}` : "React"}>
         <Button
           type="text"
           onClick={handleQuickReaction}
-          onMouseEnter={() => {
-            // Show picker on hover (desktop)
-            if (window.innerWidth > 768) {
-              const timer = setTimeout(() => setShowPicker(true), 500);
-              return () => clearTimeout(timer);
-            }
-          }}
+          onMouseEnter={handleMouseEnter}
           onContextMenu={(e) => {
             e.preventDefault();
             handleLongPress();
@@ -184,6 +294,14 @@ export const ReactionButton = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.8 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
+            onMouseEnter={() => {
+              // Keep picker open when hovering over it
+              if (hoverTimerRef.current) {
+                clearTimeout(hoverTimerRef.current);
+                hoverTimerRef.current = null;
+              }
+            }}
+            onMouseLeave={handlePickerMouseLeave}
           >
             {REACTIONS.map((reaction, index) => (
               <motion.button
@@ -192,13 +310,13 @@ export const ReactionButton = ({
                 onClick={() => handleReaction(reaction)}
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ 
+                transition={{
                   delay: index * 0.05,
                   type: "spring",
                   stiffness: 500,
                   damping: 30
                 }}
-                whileHover={{ 
+                whileHover={{
                   scale: 1.3,
                   y: -8,
                   transition: { duration: 0.2 }

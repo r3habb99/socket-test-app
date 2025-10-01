@@ -9,11 +9,10 @@ import { getImageUrl } from "../../../../shared/utils/imageUtils";
 import { ImageProxy } from "../../../../shared/components";
 import { FaRetweet, FaShare, FaReply, FaEye } from "react-icons/fa";
 import { Card, Avatar, Typography, Button, List, Tooltip, Empty, Modal } from "antd";
-import { LikeButton } from "../LikeButton";
+import { ReactionButton } from "../ReactionButton";
 import { RetweetButton } from "../RetweetButton";
 import { DeleteButton } from "../DeleteButton";
 import { CommentButton } from "../Comment";
-import { ReplyButton } from "../ReplyButton";
 import { getPostId, formatTimestamp, navigateToUserProfile } from "./PostListHelpers";
 import "./PostList.css";
 
@@ -221,7 +220,6 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                   <Card
                     key={postId}
                     className="post-card"
-                    style={{ padding: '12px 16px', border: 'none' }}
                     onClick={() => navigate(`/post/${postId}`)}
                   >
                     {renderPostContent(post)}
@@ -232,13 +230,6 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                         getPostId={getPostId}
                       />
 
-                      <ReplyButton
-                        post={post}
-                        setPosts={setPosts}
-                        onPostsUpdated={onPostsUpdated}
-                        getPostId={getPostId}
-                      />
-
                       <RetweetButton
                         post={post}
                         setPosts={setPosts}
@@ -246,14 +237,14 @@ export const PostList = ({ posts, setPosts, onPostsUpdated }) => {
                         getPostId={getPostId}
                       />
 
-                      <LikeButton
+                      <ReactionButton
                         post={post}
                         setPosts={setPosts}
                         onPostsUpdated={onPostsUpdated}
                         getPostId={getPostId}
                       />
 
-                      <div className="post-action-group">
+                      <div className="post-action-group share-action-group">
                         <Tooltip title="Share">
                           <Button
                             type="text"

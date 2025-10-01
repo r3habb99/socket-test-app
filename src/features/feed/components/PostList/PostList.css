@@ -46,7 +46,7 @@
 /* Post Card Styles - Using Grid Layout */
 .post-card {
   color: var(--text-primary);
-  padding: 12px 16px;
+  padding: 16px 20px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   display: grid;
@@ -57,9 +57,11 @@
     "avatar media"
     "actions actions";
   column-gap: 12px;
+  row-gap: 8px;
   border-bottom: 1px solid var(--border-color);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  background-color: var(--bg-primary);
 }
 
 .post-card::before {
@@ -67,33 +69,44 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 0;
-  height: 100%;
-  background: var(--gradient-subtle);
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 0;
+  width: 3px;
+  height: 0;
+  background: linear-gradient(
+    180deg,
+    var(--primary-color),
+    var(--primary-color-light, #60a5fa)
+  );
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+  border-radius: 0 2px 2px 0;
 }
 
 .post-card:hover {
   background-color: var(--hover-bg);
-  transform: translateX(4px);
 }
 
 .post-card:hover::before {
-  width: 100%;
+  height: 100%;
 }
 
 /* Ant Design Card Override */
 .post-card.ant-card {
   background-color: var(--bg-primary);
-  border-radius: 10px;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 4px var(--shadow-color);
-  transition: box-shadow 0.2s, background-color 0.3s ease;
+  border-radius: 0;
+  margin-bottom: 0;
+  box-shadow: none;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
 }
 
 .post-card.ant-card:hover {
-  box-shadow: 0 4px 12px var(--shadow-color);
+  background-color: var(--hover-bg);
+  box-shadow: none;
+}
+
+.post-card.ant-card .ant-card-body {
+  padding: 0;
 }
 
 /* Retweet and Reply Labels */
@@ -292,17 +305,36 @@
   grid-area: actions;
   display: flex;
   justify-content: space-between;
-  margin-top: 8px;
-  padding: 0;
+  align-items: center;
+  gap: 0;
+  margin-top: 12px;
+  padding: 8px 0 4px 0;
+  position: relative;
+  z-index: 1;
+  max-width: 500px;
 }
 
 .post-action-group {
   display: flex;
   align-items: center;
   position: relative;
-  min-width: auto;
-  justify-content: flex-start;
+  justify-content: center;
   flex: 1;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* First action group (Comment) - align left */
+.post-action-group:first-child {
+  justify-content: flex-start;
+  margin-left: -8px;
+}
+
+/* Last action group (Delete) - align right */
+.post-action-group:last-child {
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  margin-right: -8px;
 }
 
 /* Regular button styles */
@@ -316,28 +348,45 @@
   font-size: 16px;
   padding: 8px;
   cursor: pointer;
-  transition: color 0.2s, background-color 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  border-radius: 9999px;
+  min-width: 36px;
+  height: 36px;
+  flex-shrink: 0;
 }
 
 .post-action-button::before {
   content: "";
   position: absolute;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
   background-color: transparent;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   z-index: 0;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.post-action-button:hover::before {
+  transform: translate(-50%, -50%) scale(1.15);
 }
 
 .post-action-button svg {
-  font-size: 16px;
+  font-size: 18px;
   position: relative;
   z-index: 1;
+  transition: transform 0.2s ease;
+}
+
+.post-action-button:hover svg {
+  transform: scale(1.1);
+}
+
+.post-action-button:active {
+  transform: scale(0.95);
 }
 
 /* Ant Design button override */
@@ -345,14 +394,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
   color: var(--text-secondary);
   font-size: 18px;
-  padding: 8px;
+  padding: 8px !important;
   cursor: pointer;
-  transition: color 0.2s, background-color 0.3s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  border-radius: 9999px;
+  min-width: 36px;
+  height: 36px;
+  flex-shrink: 0;
 }
 
 .post-action-button.ant-btn::before {
@@ -360,52 +414,167 @@
   position: absolute;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 9999px;
   background-color: transparent;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   z-index: 0;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.post-action-button.ant-btn:hover::before {
+  transform: translate(-50%, -50%) scale(1.15);
 }
 
 .post-action-button.ant-btn svg {
   font-size: 18px;
   position: relative;
   z-index: 1;
+  transition: transform 0.2s ease;
+}
+
+.post-action-button.ant-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.post-action-button.ant-btn:active {
+  transform: scale(0.95);
 }
 
 .post-action-count {
   font-size: 13px;
-  margin-left: 4px;
+  margin-left: 2px;
   color: var(--text-secondary);
   position: relative;
   z-index: 2;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
-  transition: color 0.3s ease;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  min-width: 16px;
+  text-align: left;
+  user-select: none;
 }
 
 /* Comment Button */
-.post-action-group:hover .comment-button {
+.post-action-group:has(.comment-button):hover .comment-button {
   color: var(--primary-color);
 }
 
-.post-action-group:hover .comment-button::before {
-  background-color: var(--hover-bg);
+.post-action-group:has(.comment-button):hover .comment-button::before {
+  background-color: rgba(29, 155, 240, 0.1);
 }
 
-.post-action-group:hover .post-action-count {
+.post-action-group:has(.comment-button):hover .post-action-count {
   color: var(--primary-color);
+}
+
+/* Reply Button */
+.post-action-group:has(.reply-button):hover .reply-button {
+  color: #7856ff;
+}
+
+.post-action-group:has(.reply-button):hover .reply-button::before {
+  background-color: rgba(120, 86, 255, 0.1);
+}
+
+.post-action-group:has(.reply-button):hover .post-action-count {
+  color: #7856ff;
+}
+
+/* Like Button */
+.post-action-group:has(.like-button):hover .like-button {
+  color: #f91880;
+}
+
+.post-action-group:has(.like-button):hover .like-button::before {
+  background-color: rgba(249, 24, 128, 0.1);
+}
+
+.post-action-group:has(.like-button):hover .post-action-count {
+  color: #f91880;
+}
+
+.like-button.liked {
+  color: #f91880 !important;
+}
+
+.like-button.liked::before {
+  background-color: rgba(249, 24, 128, 0.1);
+}
+
+/* Retweet Button */
+.post-action-group:has(.retweet-button):hover .retweet-button {
+  color: #00ba7c;
+}
+
+.post-action-group:has(.retweet-button):hover .retweet-button::before {
+  background-color: rgba(0, 186, 124, 0.1);
+}
+
+.post-action-group:has(.retweet-button):hover .post-action-count {
+  color: #00ba7c;
+}
+
+.retweet-button.retweeted {
+  color: #00ba7c !important;
+}
+
+.retweet-button.retweeted::before {
+  background-color: rgba(0, 186, 124, 0.1);
+}
+
+/* Reaction Button - Enhanced Styling */
+.post-action-group:has(.reaction-button):hover .reaction-button:not(.reacted) {
+  color: #fbbf24;
+}
+
+.post-action-group:has(.reaction-button):hover .reaction-button::before {
+  background-color: rgba(251, 191, 36, 0.1);
+}
+
+.post-action-group:has(.reaction-button):hover .post-action-count {
+  color: #fbbf24;
+}
+
+.reaction-button.reacted {
+  color: #fbbf24 !important;
+}
+
+.reaction-button.reacted::before {
+  background-color: rgba(251, 191, 36, 0.15);
 }
 
 /* Share Button */
-.post-action-group:hover .share-button {
+.post-action-group:has(.share-button):hover .share-button {
   color: var(--primary-color);
 }
 
-.post-action-group:hover .share-button::before {
-  background-color: var(--hover-bg);
+.post-action-group:has(.share-button):hover .share-button::before {
+  background-color: rgba(29, 155, 240, 0.1);
+}
+
+.post-action-group:has(.share-button):hover .post-action-count {
+  color: var(--primary-color);
+}
+
+/* Delete Button */
+.delete-button-container {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.post-card:hover .delete-button-container {
+  opacity: 1;
+}
+
+.post-action-group:has(.delete-button):hover .delete-button {
+  color: #f91880;
+}
+
+.post-action-group:has(.delete-button):hover .delete-button::before {
+  background-color: rgba(249, 24, 128, 0.1);
 }
 
 /* Disabled Button */
@@ -538,8 +707,9 @@
 }
 
 .ant-list-item {
-  padding: 0px;
-  margin-bottom: 12px;
+  padding: 0;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
 .original-post-container {
@@ -587,8 +757,8 @@
   }
 
   .post-card {
-    padding: 8px 10px;
-    column-gap: 8px;
+    padding: 12px 14px;
+    column-gap: 10px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -600,42 +770,75 @@
     overflow-wrap: break-word;
     word-break: break-word;
     hyphens: auto;
+    font-size: 14px;
   }
 
   .avatar,
   .avatar.ant-avatar {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
   }
 
   .post-action-group {
-    min-width: auto;
+    min-width: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     flex: 1;
+    gap: 4px;
   }
 
-  /* Ensure delete button is visible */
-  .post-action-group.delete-button-container {
-    flex: 0 0 auto !important;
-    width: auto !important;
-    min-width: 36px !important;
-    max-width: 36px !important;
-    display: flex !important;
-    visibility: visible !important;
+  /* First action group (Comment) - align left on mobile */
+  .post-action-group:first-child {
+    justify-content: flex-start;
+    margin-left: -6px;
+  }
+
+  /* Last action group (Delete) - align right on mobile */
+  .post-action-group:last-child {
+    justify-content: flex-end;
+    flex: 0 0 auto;
+    margin-right: -6px;
+  }
+
+  /* Ensure delete button is visible on mobile */
+  .delete-button-container {
     opacity: 1 !important;
-    z-index: 10;
   }
 
   .post-actions {
-    padding: 4px 0;
+    padding: 8px 0 4px 0;
     width: 100%;
+    max-width: 100%;
     display: flex;
     justify-content: space-between;
-    margin-top: 8px;
+    margin-top: 10px;
     position: relative;
     flex-wrap: nowrap;
+    gap: 0;
+  }
+
+  .post-action-button,
+  .post-action-button.ant-btn {
+    padding: 6px !important;
+    min-width: 32px;
+    height: 32px;
+  }
+
+  .post-action-button::before,
+  .post-action-button.ant-btn::before {
+    width: 32px;
+    height: 32px;
+  }
+
+  .post-action-button svg,
+  .post-action-button.ant-btn svg {
+    font-size: 16px;
+  }
+
+  .post-action-count {
+    font-size: 12px;
+    min-width: 12px;
   }
 
   .post-action-button {

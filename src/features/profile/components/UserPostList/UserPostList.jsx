@@ -8,7 +8,7 @@ import {
 } from '../../../../constants';
 import { getImageUrl } from '../../../../shared/utils/imageUtils';
 import { ImageProxy } from '../../../../shared/components';
-import { LikeButton } from '../../../feed/components/LikeButton';
+import { ReactionButton } from '../../../feed/components/ReactionButton';
 import { RetweetButton } from '../../../feed/components/RetweetButton';
 import { DeleteButton } from '../../../feed/components/DeleteButton';
 import { CommentButton } from '../../../feed/components/Comment';
@@ -333,7 +333,7 @@ export const UserPostList = ({ userId, activeTab }) => {
                       getPostId={getPostId}
                     />
 
-                    <LikeButton
+                    <ReactionButton
                       post={post}
                       setPosts={setPosts}
                       onPostsUpdated={handlePostsUpdated}

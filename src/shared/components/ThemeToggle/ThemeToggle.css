@@ -9,6 +9,10 @@
   background-color: rgba(0, 0, 0, 0);
   cursor: pointer;
   border-radius: 9999px;
+}
+
+/* When not in sidebar, apply margin */
+.theme-toggle-container:not(.sidebar-bottom .theme-toggle-container) {
   margin: 0 10px;
   width: calc(100% - 20px);
 }
@@ -31,7 +35,8 @@
   text-align: left;
 }
 
-.theme-toggle-button:hover {
+/* Only apply hover styles when not in sidebar (sidebar has its own hover styles) */
+.theme-toggle-button:hover:not(.sidebar-bottom .theme-toggle-button) {
   background-color: var(--hover-bg);
   color: var(--primary-color);
 }

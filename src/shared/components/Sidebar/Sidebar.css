@@ -53,6 +53,12 @@
   margin: 0;
 }
 
+.sidebar-bottom li {
+  padding: 0;
+  margin: 4px 0;
+  width: 100%;
+}
+
 .sidebar-nav li {
   padding: 0;
   margin: 4px 0;
@@ -60,7 +66,9 @@
 }
 
 .sidebar-nav a,
-.sidebar-nav .logout-button {
+.sidebar-nav .logout-button,
+.sidebar-bottom .theme-toggle-button,
+.sidebar-bottom .theme-selector-button {
   display: flex;
   align-items: center;
   padding: 12px 20px;
@@ -82,7 +90,9 @@
 }
 
 .sidebar-nav a::before,
-.sidebar-nav .logout-button::before {
+.sidebar-nav .logout-button::before,
+.sidebar-bottom .theme-toggle-button::before,
+.sidebar-bottom .theme-selector-button::before {
   content: "";
   position: absolute;
   left: 0;
@@ -96,14 +106,18 @@
 }
 
 .sidebar-nav a:hover,
-.sidebar-nav .logout-button:hover {
+.sidebar-nav .logout-button:hover,
+.sidebar-bottom .theme-toggle-button:hover,
+.sidebar-bottom .theme-selector-button:hover {
   background-color: var(--hover-bg);
   color: var(--primary-color);
   transform: translateX(4px);
 }
 
 .sidebar-nav a:hover::before,
-.sidebar-nav .logout-button:hover::before {
+.sidebar-nav .logout-button:hover::before,
+.sidebar-bottom .theme-toggle-button:hover::before,
+.sidebar-bottom .theme-selector-button:hover::before {
   width: 100%;
 }
 
@@ -127,7 +141,9 @@
 }
 
 /* Icon styling */
-.nav-icon {
+.nav-icon,
+.sidebar-bottom .theme-toggle-icon,
+.sidebar-bottom .theme-selector-button .anticon {
   display: inline-block;
   margin-right: 12px;
   font-size: 1.2rem;
@@ -137,12 +153,54 @@
 }
 
 .sidebar-nav a:hover .nav-icon,
-.sidebar-nav .logout-button:hover .nav-icon {
+.sidebar-nav .logout-button:hover .nav-icon,
+.sidebar-bottom .theme-toggle-button:hover .theme-toggle-icon,
+.sidebar-bottom .theme-selector-button:hover .anticon {
   transform: scale(1.2) rotate(5deg);
 }
 
 .sidebar-nav a.active .nav-icon {
   animation: pulse 2s ease-in-out infinite;
+}
+
+/* Override theme component specific styles to match sidebar */
+.sidebar-bottom .theme-toggle-container {
+  margin: 0;
+  width: 100%;
+}
+
+.sidebar-bottom .theme-selector-button {
+  padding: 12px 20px !important;
+  gap: 12px !important;
+  border-radius: 9999px !important;
+  font-size: 1.1rem !important;
+  font-weight: 500 !important;
+  justify-content: flex-start !important;
+  margin: 0 10px !important;
+  width: calc(100% - 20px) !important;
+}
+
+.sidebar-bottom .theme-toggle-label {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.sidebar-bottom .theme-selector-label {
+  font-size: 1.1rem !important;
+  font-weight: 500 !important;
+}
+
+/* Ensure theme components follow the same hover behavior */
+.sidebar-bottom .theme-selector-button:hover {
+  background-color: var(--hover-bg) !important;
+  color: var(--primary-color) !important;
+  transform: translateX(4px) !important;
+}
+
+.sidebar-bottom .theme-toggle-button:hover {
+  background-color: var(--hover-bg) !important;
+  color: var(--primary-color) !important;
+  transform: translateX(4px) !important;
 }
 
 /* Mobile styles removed - sidebar is only used on desktop */
