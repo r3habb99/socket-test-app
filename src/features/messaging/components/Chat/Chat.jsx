@@ -5,6 +5,8 @@ import { useChatLogic } from "./ChatLogic";
 import { useChatHandlers } from "./ChatHandlers";
 import { useMessageHandlers } from "./MessageHandlers";
 import { ChatHeader, MessageInput, MessagesContainer } from "./ChatUI";
+import { CallModal, CallDebugger } from "../WebRTC";
+import { useCall } from "../../hooks";
 // import { SocketDebugPanel } from "../SocketDebugPanel";
 import "./Chat.css";
 
@@ -71,6 +73,27 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     handleTyping
   });
 
+  // WebRTC functionality
+  const webrtcCall = useCall({
+    onIncomingCall: (callData) => {
+      console.log('Incoming call in Chat component:', callData);
+    },
+    onCallStateChange: (state) => {
+      console.log('Call state changed in Chat component:', state);
+    }
+  });
+
+  // Call handlers
+  const handleStartVideoCall = (toUserId, chatId) => {
+    console.log('Starting video call to:', toUserId, 'in chat:', chatId);
+    webrtcCall.startVideoCall(toUserId, chatId);
+  };
+
+  const handleStartAudioCall = (toUserId, chatId) => {
+    console.log('Starting audio call to:', toUserId, 'in chat:', chatId);
+    webrtcCall.startAudioCall(toUserId, chatId);
+  };
+
   // Check if a chat is selected
   if (!selectedChat) {
     return (
@@ -90,6 +113,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         onBackClick={onBackClick}
         socketContext={socketContext}
         setShowProfileModal={setShowProfileModal}
+        onStartVideoCall={handleStartVideoCall}
+        onStartAudioCall={handleStartAudioCall}
+        isCallAvailable={webrtcCall.isAvailableForCalls()}
       />
 
       <MessagesContainer
@@ -120,8 +146,31 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         />
       )}
 
+      {/* WebRTC Call Modal */}
+      <CallModal
+        show={webrtcCall.showCallModal}
+        callType={webrtcCall.currentCall?.callType}
+        modalType={webrtcCall.callModalType}
+        callState={webrtcCall.callState}
+        currentCall={webrtcCall.currentCall}
+        incomingCall={webrtcCall.incomingCall}
+        localVideoRef={webrtcCall.localVideoRef}
+        remoteVideoRef={webrtcCall.remoteVideoRef}
+        isVideoEnabled={webrtcCall.isVideoEnabled}
+        isAudioEnabled={webrtcCall.isAudioEnabled}
+        onAccept={webrtcCall.acceptCall}
+        onReject={webrtcCall.rejectCall}
+        onEnd={webrtcCall.endCall}
+        onToggleVideo={webrtcCall.toggleVideo}
+        onToggleAudio={webrtcCall.toggleAudio}
+        onClose={webrtcCall.closeCallModal}
+      />
+
       {/* Socket Debug Panel - only shown in development mode */}
       {/* {showDebug && <SocketDebugPanel />} */}
+
+      {/* WebRTC Call Debugger for testing */}
+      <CallDebugger />
     </div>
   );
 };

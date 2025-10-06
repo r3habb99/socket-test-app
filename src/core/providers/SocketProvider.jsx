@@ -4,6 +4,8 @@ import { useSocket } from "../../features/messaging/hooks";
 import { useAuthContext } from "./AuthProvider";
 import { toast } from "react-toastify";
 import { SOCKET_URL } from "../../constants";
+import webrtcService, { CALL_STATES } from "../../features/messaging/api/webrtcService";
+import { CallModal } from "../../features/messaging/components/WebRTC";
 
 // Create context
 const SocketContext = createContext(null);
@@ -18,9 +20,117 @@ export const SocketProvider = ({ children }) => {
   const [lastReconnectAttempt, setLastReconnectAttempt] = useState(0);
   const reconnectCooldown = 5000; // 5 seconds between reconnect attempts
 
+  // Global call state
+  const [globalIncomingCall, setGlobalIncomingCall] = useState(null);
+  const [showGlobalCallModal, setShowGlobalCallModal] = useState(false);
+  const [globalCallState, setGlobalCallState] = useState(CALL_STATES.IDLE);
+
   // Use socket URL from constants with user information and enable silent mode
   // This will prevent connection-related toast notifications
   const socket = useSocket(SOCKET_URL, { silentMode: true });
+
+  // Initialize WebRTC service globally when socket is connected
+  useEffect(() => {
+    if (socket.connected && socket.getSocket() && isAuthenticated()) {
+      try {
+        console.log('🔧 [SocketProvider] Initializing WebRTC service globally');
+        webrtcService.initialize(socket.getSocket());
+        console.log('✅ [SocketProvider] WebRTC service initialized globally');
+
+        // Set up global incoming call handler (for debugging only)
+        const handleGlobalIncomingCall = (callData) => {
+          console.log('📞 [SocketProvider] Global incoming call received:', callData);
+
+          // For now, just show a toast notification
+          // The actual call handling should be done by useWebRTC hook
+          toast.info(`📞 Incoming ${callData.callType} call from ${callData.from}`, {
+            position: "top-right",
+            autoClose: 10000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        };
+
+        // Set up global call state change handler
+        const handleGlobalCallStateChange = ({ currentState }) => {
+          console.log('📞 [SocketProvider] Global call state changed:', currentState);
+          setGlobalCallState(currentState);
+
+          // Hide modal when call ends
+          if (currentState === CALL_STATES.ENDED ||
+              currentState === CALL_STATES.REJECTED ||
+              currentState === CALL_STATES.FAILED) {
+            setShowGlobalCallModal(false);
+            setGlobalIncomingCall(null);
+          }
+        };
+
+        // Listen for incoming calls and state changes globally
+        webrtcService.on('incomingCall', handleGlobalIncomingCall);
+        webrtcService.on('callStateChange', handleGlobalCallStateChange);
+
+        // Cleanup function
+        return () => {
+          webrtcService.off('incomingCall', handleGlobalIncomingCall);
+          webrtcService.off('callStateChange', handleGlobalCallStateChange);
+        };
+      } catch (error) {
+        console.error('❌ [SocketProvider] Failed to initialize WebRTC service:', error);
+      }
+    }
+  }, [socket.connected, socket.getSocket, isAuthenticated]);
+
+  // Global call action handlers
+  const handleGlobalAcceptCall = async () => {
+    try {
+      if (globalIncomingCall) {
+        console.log('📞 [SocketProvider] Accepting global incoming call');
+        await webrtcService.acceptCall(globalIncomingCall);
+      }
+    } catch (error) {
+      console.error('❌ [SocketProvider] Failed to accept call:', error);
+      toast.error('Failed to accept call');
+    }
+  };
+
+  const handleGlobalRejectCall = () => {
+    try {
+      if (globalIncomingCall) {
+        console.log('📞 [SocketProvider] Rejecting global incoming call');
+        webrtcService.rejectCall(globalIncomingCall);
+        setShowGlobalCallModal(false);
+        setGlobalIncomingCall(null);
+      }
+    } catch (error) {
+      console.error('❌ [SocketProvider] Failed to reject call:', error);
+      toast.error('Failed to reject call');
+    }
+  };
+
+  const handleGlobalEndCall = () => {
+    try {
+      console.log('📞 [SocketProvider] Ending global call');
+      webrtcService.endCall();
+      setShowGlobalCallModal(false);
+      setGlobalIncomingCall(null);
+    } catch (error) {
+      console.error('❌ [SocketProvider] Failed to end call:', error);
+      toast.error('Failed to end call');
+    }
+  };
+
+  const handleGlobalCloseModal = () => {
+    if (globalCallState === CALL_STATES.RINGING && globalIncomingCall) {
+      // If there's an incoming call, reject it
+      handleGlobalRejectCall();
+    } else {
+      // Otherwise just close the modal
+      setShowGlobalCallModal(false);
+      setGlobalIncomingCall(null);
+    }
+  };
 
   // Log socket connection status changes
   useEffect(() => {
@@ -50,6 +160,14 @@ export const SocketProvider = ({ children }) => {
       if (socket.connected) {
         console.log("Socket connected successfully");
         // We don't show toast notifications here since we're using silent mode
+      } else if (socket.connectionStatus === 'disconnected') {
+        // Cleanup WebRTC service when socket disconnects
+        try {
+          webrtcService.destroy();
+          console.log("WebRTC service cleaned up on disconnect");
+        } catch (error) {
+          console.error("Error cleaning up WebRTC service:", error);
+        }
       }
     }
   }, [socket.connected, socket.connectionStatus, socket.error, isAuthenticated]);
@@ -118,7 +236,29 @@ export const SocketProvider = ({ children }) => {
   }
 
   return (
-    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
+    <SocketContext.Provider value={socket}>
+      {children}
+
+      {/* Global Call Modal - Disabled for now, using Chat component's modal */}
+      {false && <CallModal
+        show={showGlobalCallModal}
+        callType={globalIncomingCall?.callType}
+        modalType="incoming"
+        callState={globalCallState}
+        currentCall={null}
+        incomingCall={globalIncomingCall}
+        localVideoRef={null}
+        remoteVideoRef={null}
+        isVideoEnabled={true}
+        isAudioEnabled={true}
+        onAccept={handleGlobalAcceptCall}
+        onReject={handleGlobalRejectCall}
+        onEnd={handleGlobalEndCall}
+        onToggleVideo={() => {}}
+        onToggleAudio={() => {}}
+        onClose={handleGlobalCloseModal}
+      />}
+    </SocketContext.Provider>
   );
 };
 

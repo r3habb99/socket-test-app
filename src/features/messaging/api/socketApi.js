@@ -606,3 +606,356 @@ export const onPostDeleted = (callback) => {
     delete eventHandlers["post deleted"];
   };
 };
+
+// ============================================================================
+// WebRTC CALLING FUNCTIONALITY
+// ============================================================================
+
+/**
+ * Initiate a call to another user
+ * @param {string} toUserId - Target user ID
+ * @param {string} callType - 'audio' or 'video'
+ * @param {string} chatId - Optional chat ID
+ * @param {Function} callback - Callback function
+ */
+export const initiateCall = (toUserId, callType, chatId = null, callback) => {
+  if (!socket) {
+    console.error("Cannot initiate call: socket not initialized");
+    if (callback) callback({ success: false, error: "Socket not initialized" });
+    return;
+  }
+
+  const callData = {
+    to: toUserId,
+    callType,
+    chatId
+  };
+
+  console.log("Initiating call:", callData);
+  socket.emit("call:initiate", callData, callback);
+};
+
+/**
+ * Accept an incoming call
+ * @param {string} callId - Call ID
+ * @param {string} fromUserId - Caller user ID
+ * @param {Function} callback - Callback function
+ */
+export const acceptCall = (callId, fromUserId, callback) => {
+  if (!socket) {
+    console.error("Cannot accept call: socket not initialized");
+    if (callback) callback({ success: false, error: "Socket not initialized" });
+    return;
+  }
+
+  const acceptData = {
+    callId,
+    from: fromUserId
+  };
+
+  console.log("Accepting call:", acceptData);
+  socket.emit("call:accept", acceptData, callback);
+};
+
+/**
+ * Reject an incoming call
+ * @param {string} callId - Call ID
+ * @param {string} fromUserId - Caller user ID
+ * @param {Function} callback - Callback function
+ */
+export const rejectCall = (callId, fromUserId, callback) => {
+  if (!socket) {
+    console.error("Cannot reject call: socket not initialized");
+    if (callback) callback({ success: false, error: "Socket not initialized" });
+    return;
+  }
+
+  const rejectData = {
+    callId,
+    from: fromUserId
+  };
+
+  console.log("Rejecting call:", rejectData);
+  socket.emit("call:reject", rejectData, callback);
+};
+
+/**
+ * End an active call
+ * @param {string} callId - Call ID
+ * @param {string} toUserId - Other participant user ID
+ * @param {Function} callback - Callback function
+ */
+export const endCall = (callId, toUserId, callback) => {
+  if (!socket) {
+    console.error("Cannot end call: socket not initialized");
+    if (callback) callback({ success: false, error: "Socket not initialized" });
+    return;
+  }
+
+  const endData = {
+    callId,
+    to: toUserId
+  };
+
+  console.log("Ending call:", endData);
+  socket.emit("call:end", endData, callback);
+};
+
+/**
+ * Send WebRTC offer
+ * @param {string} callId - Call ID
+ * @param {string} toUserId - Target user ID
+ * @param {Object} sdp - SDP offer
+ */
+export const sendOffer = (callId, toUserId, sdp) => {
+  if (!socket) {
+    console.error("Cannot send offer: socket not initialized");
+    return;
+  }
+
+  const offerData = {
+    callId,
+    to: toUserId,
+    sdp
+  };
+
+  console.log("Sending WebRTC offer:", offerData);
+  socket.emit("webrtc:offer", offerData);
+};
+
+/**
+ * Send WebRTC answer
+ * @param {string} callId - Call ID
+ * @param {string} toUserId - Target user ID
+ * @param {Object} sdp - SDP answer
+ */
+export const sendAnswer = (callId, toUserId, sdp) => {
+  if (!socket) {
+    console.error("Cannot send answer: socket not initialized");
+    return;
+  }
+
+  const answerData = {
+    callId,
+    to: toUserId,
+    sdp
+  };
+
+  console.log("Sending WebRTC answer:", answerData);
+  socket.emit("webrtc:answer", answerData);
+};
+
+/**
+ * Send ICE candidate
+ * @param {string} callId - Call ID
+ * @param {string} toUserId - Target user ID
+ * @param {Object} candidate - ICE candidate
+ */
+export const sendIceCandidate = (callId, toUserId, candidate) => {
+  if (!socket) {
+    console.error("Cannot send ICE candidate: socket not initialized");
+    return;
+  }
+
+  const candidateData = {
+    callId,
+    to: toUserId,
+    candidate
+  };
+
+  console.log("Sending ICE candidate:", candidateData);
+  socket.emit("webrtc:ice-candidate", candidateData);
+};
+
+// ============================================================================
+// WebRTC EVENT LISTENERS
+// ============================================================================
+
+/**
+ * Register event handler for incoming call
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onCallIncoming = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized when setting up call incoming handler");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["call:incoming"]) {
+    socket.off("call:incoming", eventHandlers["call:incoming"]);
+  }
+
+  // Add new handler
+  socket.on("call:incoming", callback);
+  eventHandlers["call:incoming"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("call:incoming", callback);
+    delete eventHandlers["call:incoming"];
+  };
+};
+
+/**
+ * Register event handler for call accepted
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onCallAccepted = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized when setting up call accepted handler");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["call:accepted"]) {
+    socket.off("call:accepted", eventHandlers["call:accepted"]);
+  }
+
+  // Add new handler
+  socket.on("call:accepted", callback);
+  eventHandlers["call:accepted"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("call:accepted", callback);
+    delete eventHandlers["call:accepted"];
+  };
+};
+
+/**
+ * Register event handler for call rejected
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onCallRejected = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized when setting up call rejected handler");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["call:rejected"]) {
+    socket.off("call:rejected", eventHandlers["call:rejected"]);
+  }
+
+  // Add new handler
+  socket.on("call:rejected", callback);
+  eventHandlers["call:rejected"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("call:rejected", callback);
+    delete eventHandlers["call:rejected"];
+  };
+};
+
+/**
+ * Register event handler for call ended
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onCallEnded = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized when setting up call ended handler");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["call:ended"]) {
+    socket.off("call:ended", eventHandlers["call:ended"]);
+  }
+
+  // Add new handler
+  socket.on("call:ended", callback);
+  eventHandlers["call:ended"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("call:ended", callback);
+    delete eventHandlers["call:ended"];
+  };
+};
+
+/**
+ * Register event handler for WebRTC offer
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onWebRTCOffer = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized when setting up WebRTC offer handler");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["webrtc:offer"]) {
+    socket.off("webrtc:offer", eventHandlers["webrtc:offer"]);
+  }
+
+  // Add new handler
+  socket.on("webrtc:offer", callback);
+  eventHandlers["webrtc:offer"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("webrtc:offer", callback);
+    delete eventHandlers["webrtc:offer"];
+  };
+};
+
+/**
+ * Register event handler for WebRTC answer
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onWebRTCAnswer = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized when setting up WebRTC answer handler");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["webrtc:answer"]) {
+    socket.off("webrtc:answer", eventHandlers["webrtc:answer"]);
+  }
+
+  // Add new handler
+  socket.on("webrtc:answer", callback);
+  eventHandlers["webrtc:answer"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("webrtc:answer", callback);
+    delete eventHandlers["webrtc:answer"];
+  };
+};
+
+/**
+ * Register event handler for ICE candidate
+ * @param {Function} callback - Callback function
+ * @returns {Function} Unsubscribe function
+ */
+export const onIceCandidate = (callback) => {
+  if (!socket) {
+    console.warn("Socket not initialized when setting up ICE candidate handler");
+    return () => {};
+  }
+
+  // Remove existing handler if any
+  if (eventHandlers["webrtc:ice-candidate"]) {
+    socket.off("webrtc:ice-candidate", eventHandlers["webrtc:ice-candidate"]);
+  }
+
+  // Add new handler
+  socket.on("webrtc:ice-candidate", callback);
+  eventHandlers["webrtc:ice-candidate"] = callback;
+
+  // Return unsubscribe function
+  return () => {
+    socket.off("webrtc:ice-candidate", callback);
+    delete eventHandlers["webrtc:ice-candidate"];
+  };
+};

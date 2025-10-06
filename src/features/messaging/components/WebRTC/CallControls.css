@@ -1,0 +1,162 @@
+/* Call Controls Styles */
+
+.call-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 25px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.control-button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.control-button:hover {
+  transform: scale(1.1);
+}
+
+.control-button:active {
+  transform: scale(0.95);
+}
+
+.control-icon {
+  font-size: 20px;
+  z-index: 2;
+  position: relative;
+}
+
+/* Audio button */
+.audio-button.enabled {
+  background: rgba(74, 222, 128, 0.8);
+  color: white;
+}
+
+.audio-button.enabled:hover {
+  background: rgba(74, 222, 128, 1);
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+}
+
+.audio-button.disabled {
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+}
+
+.audio-button.disabled:hover {
+  background: rgba(239, 68, 68, 1);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+/* Video button */
+.video-button.enabled {
+  background: rgba(59, 130, 246, 0.8);
+  color: white;
+}
+
+.video-button.enabled:hover {
+  background: rgba(59, 130, 246, 1);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+}
+
+.video-button.disabled {
+  background: rgba(107, 114, 128, 0.8);
+  color: white;
+}
+
+.video-button.disabled:hover {
+  background: rgba(107, 114, 128, 1);
+  box-shadow: 0 0 20px rgba(107, 114, 128, 0.5);
+}
+
+/* End call button */
+.end-button {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  transform: rotate(135deg);
+}
+
+.end-button:hover {
+  background: rgba(239, 68, 68, 1);
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+  transform: rotate(135deg) scale(1.1);
+}
+
+.end-button:active {
+  transform: rotate(135deg) scale(0.95);
+}
+
+/* Ripple effect */
+.control-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.control-button:active::before {
+  width: 100%;
+  height: 100%;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .call-controls {
+    gap: 12px;
+    padding: 12px;
+  }
+  
+  .control-button {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .control-icon {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .call-controls {
+    gap: 10px;
+    padding: 10px;
+  }
+  
+  .control-button {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .control-icon {
+    font-size: 16px;
+  }
+}
+
+/* Accessibility */
+.control-button:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.control-button:focus:not(:focus-visible) {
+  outline: none;
+}

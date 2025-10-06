@@ -218,6 +218,25 @@
   font-size: 16px;
 }
 
+/* Call button specific styles */
+.call-button.ant-btn {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.call-button.ant-btn:hover {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(29, 155, 240, 0.3);
+}
+
+.call-button.ant-btn:active {
+  transform: scale(0.95);
+}
+
 /* Messages Area */
 .messages-container {
   flex: 1;

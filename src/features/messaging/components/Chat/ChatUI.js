@@ -9,7 +9,9 @@ import {
   MailOutlined,
   DisconnectOutlined,
   LoadingOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  VideoCameraOutlined,
+  PhoneOutlined
 } from "@ant-design/icons";
 import { getImageUrl } from "../../../../shared/utils";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
@@ -24,7 +26,10 @@ export const ChatHeader = ({
   chatPartner,
   onBackClick,
   socketContext,
-  setShowProfileModal
+  setShowProfileModal,
+  onStartVideoCall,
+  onStartAudioCall,
+  isCallAvailable = true
 }) => {
   return (
     <Layout.Header className="chat-header-container">
@@ -98,6 +103,26 @@ export const ChatHeader = ({
         </div>
       </div>
       <div className="chat-header-actions">
+        {/* Call buttons - only show for 1:1 chats */}
+        {!selectedChat.isGroupChat && chatPartner && isCallAvailable && (
+          <>
+            <Button
+              type="text"
+              icon={<PhoneOutlined />}
+              className="header-icon call-button"
+              title="Audio Call"
+              onClick={() => onStartAudioCall && onStartAudioCall(chatPartner._id || chatPartner.id, selectedChat._id)}
+            />
+            <Button
+              type="text"
+              icon={<VideoCameraOutlined />}
+              className="header-icon call-button"
+              title="Video Call"
+              onClick={() => onStartVideoCall && onStartVideoCall(chatPartner._id || chatPartner.id, selectedChat._id)}
+            />
+          </>
+        )}
+
         <Button
           type="text"
           icon={<SearchOutlined />}
