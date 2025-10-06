@@ -45,19 +45,24 @@ export const useWebRTC = (options = {}) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
 
-  // Initialize WebRTC service when socket is available (if not already initialized globally)
+  // Check WebRTC service initialization status when socket is available
   useEffect(() => {
     if (socketContext && socketContext.socket && socketContext.connected) {
       if (!webrtcService.isInitialized) {
         try {
-          console.log('🔧 [useWebRTC] Initializing WebRTC service with socket:', socketContext.socket.id);
+          console.log('🔧 [useWebRTC] WebRTC service not initialized, initializing with socket:', socketContext.socket.id);
           webrtcService.initialize(socketContext.socket);
-          console.log('✅ [useWebRTC] WebRTC service initialized with socket');
+          console.log('✅ [useWebRTC] WebRTC service initialized from useWebRTC hook');
         } catch (error) {
           console.error('❌ [useWebRTC] Failed to initialize WebRTC service:', error);
         }
       } else {
-        console.log('✅ [useWebRTC] WebRTC service already initialized globally');
+        console.log('✅ [useWebRTC] WebRTC service already initialized globally, ensuring socket is current');
+        // Ensure the service has the current socket instance
+        if (webrtcService.socket !== socketContext.socket) {
+          console.log('🔧 [useWebRTC] Updating WebRTC service socket instance');
+          webrtcService.initialize(socketContext.socket);
+        }
       }
     } else {
       console.log('⏳ [useWebRTC] Waiting for socket connection...', {
@@ -67,7 +72,7 @@ export const useWebRTC = (options = {}) => {
         socketId: socketContext?.socket?.id
       });
     }
-  }, [socketContext?.connected, socketContext?.socket]);
+  }, [socketContext]);
 
   // Initialize WebRTC service event listeners
   useEffect(() => {
@@ -87,7 +92,10 @@ export const useWebRTC = (options = {}) => {
       }
       
       if (autoAcceptCalls) {
-        acceptCall(callData);
+        // Auto-accept the call by calling the service directly
+        webrtcService.acceptCall(callData).catch(error => {
+          console.error('Error auto-accepting call:', error);
+        });
       } else {
         toast.info(`Incoming ${callData.callType} call from ${callData.from}`, {
           autoClose: false,
@@ -219,10 +227,14 @@ export const useWebRTC = (options = {}) => {
     try {
       setError(null);
 
-      // Ensure WebRTC service is initialized (should already be initialized globally)
-      if (!webrtcService.isInitialized && socketContext?.socket) {
-        console.log('🔧 [useWebRTC] WebRTC not initialized, initializing now...');
-        webrtcService.initialize(socketContext.socket);
+      // Ensure WebRTC service is initialized
+      if (!webrtcService.isInitialized) {
+        if (socketContext?.socket) {
+          console.log('🔧 [useWebRTC] WebRTC not initialized, initializing now...');
+          webrtcService.initialize(socketContext.socket);
+        } else {
+          throw new Error('Socket not available for WebRTC initialization');
+        }
       }
 
       await webrtcService.startCall(toUserId, callType, chatId);
@@ -244,10 +256,14 @@ export const useWebRTC = (options = {}) => {
         throw new Error('No incoming call to accept');
       }
 
-      // Ensure WebRTC service is initialized (should already be initialized globally)
-      if (!webrtcService.isInitialized && socketContext?.socket) {
-        console.log('🔧 [useWebRTC] WebRTC not initialized, initializing now...');
-        webrtcService.initialize(socketContext.socket);
+      // Ensure WebRTC service is initialized
+      if (!webrtcService.isInitialized) {
+        if (socketContext?.socket) {
+          console.log('🔧 [useWebRTC] WebRTC not initialized, initializing now...');
+          webrtcService.initialize(socketContext.socket);
+        } else {
+          throw new Error('Socket not available for WebRTC initialization');
+        }
       }
 
       await webrtcService.acceptCall(dataToUse);
@@ -329,7 +345,7 @@ export const useWebRTC = (options = {}) => {
    */
   const isInCall = useCallback(() => {
     return webrtcService.isInCall();
-  }, [callState]);
+  }, []);
 
   return {
     // State

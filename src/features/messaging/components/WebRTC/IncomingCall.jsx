@@ -2,8 +2,9 @@
  * Incoming Call Component - Interface for incoming call notifications
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useUserData } from '../../hooks/useUserData';
+import audioNotificationManager from '../../utils/audioNotifications';
 import './IncomingCall.css';
 
 export const IncomingCall = ({
@@ -11,10 +12,44 @@ export const IncomingCall = ({
   onAccept,
   onReject
 }) => {
-  if (!callData) return null;
-
+  // Always call hooks at the top level, before any early returns
   // Fetch caller user data
-  const { userData: callerData, loading: callerLoading } = useUserData(callData.from);
+  const { userData: callerData, loading: callerLoading } = useUserData(callData?.from);
+
+  // Start ringtone when component mounts
+  useEffect(() => {
+    if (!callData) return;
+
+    const startRingtone = async () => {
+      try {
+        await audioNotificationManager.startIncomingCallRingtone();
+      } catch (error) {
+        console.warn('Failed to start ringtone:', error);
+      }
+    };
+
+    startRingtone();
+
+    // Cleanup: stop ringtone when component unmounts
+    return () => {
+      audioNotificationManager.stopIncomingCallRingtone();
+    };
+  }, [callData]);
+
+  // Handle accept call with ringtone cleanup
+  const handleAccept = () => {
+    audioNotificationManager.stopIncomingCallRingtone();
+    onAccept(callData);
+  };
+
+  // Handle reject call with ringtone cleanup
+  const handleReject = () => {
+    audioNotificationManager.stopIncomingCallRingtone();
+    onReject(callData);
+  };
+
+  // Early return after all hooks have been called
+  if (!callData) return null;
 
   const getCallTypeText = () => {
     return callData.callType === 'video' ? 'Video Call' : 'Audio Call';
@@ -59,16 +94,19 @@ export const IncomingCall = ({
         {/* Caller info */}
         <div className="caller-info">
           <h3 className="caller-name">
-            {callerData?.displayName || callData.from || 'Unknown User'}
+            {callerLoading ? 'Loading...' : (callerData?.displayName || callData.from || 'Unknown User')}
           </h3>
           <p className="incoming-text">Incoming {callData.callType} call</p>
+          {callerData?.username && callerData.username !== callerData.displayName && (
+            <p className="caller-username">@{callerData.username}</p>
+          )}
         </div>
 
         {/* Call actions */}
         <div className="call-actions">
           <button
             className="action-button reject-button"
-            onClick={() => onReject(callData)}
+            onClick={handleReject}
             title="Reject call"
           >
             <span className="action-icon reject-icon">📞</span>
@@ -76,7 +114,7 @@ export const IncomingCall = ({
 
           <button
             className="action-button accept-button"
-            onClick={() => onAccept(callData)}
+            onClick={handleAccept}
             title="Accept call"
           >
             <span className="action-icon accept-icon">📞</span>

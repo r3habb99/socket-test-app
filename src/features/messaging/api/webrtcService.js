@@ -2,6 +2,8 @@
  * WebRTC Service for managing peer connections and call state
  */
 
+import audioNotificationManager from '../utils/audioNotifications';
+
 // No longer need socketApi imports since we use direct socket calls
 
 // WebRTC configuration
@@ -347,6 +349,9 @@ class WebRTCService {
     try {
       console.log('Accepting call:', callData);
 
+      // Stop ringtone when accepting call
+      audioNotificationManager.stopIncomingCallRingtone();
+
       // Check socket availability first
       if (!this.socket) {
         throw new Error('Socket not available');
@@ -403,6 +408,9 @@ class WebRTCService {
   rejectCall(callData) {
     console.log('Rejecting call:', callData);
 
+    // Stop ringtone when rejecting call
+    audioNotificationManager.stopIncomingCallRingtone();
+
     if (this.socket) {
       this.socket.emit('call:reject', { callId: callData.callId, from: callData.from }, (response) => {
         if (response && response.success) {
@@ -453,6 +461,14 @@ class WebRTCService {
 
     this.setCallState(CALL_STATES.RINGING);
 
+    // Start audio notification for incoming call
+    try {
+      audioNotificationManager.startIncomingCallRingtone();
+      console.log('🔊 [WebRTC] Started ringtone for incoming call');
+    } catch (error) {
+      console.warn('⚠️ [WebRTC] Failed to start ringtone:', error);
+    }
+
     console.log('📞 [WebRTC] Emitting incomingCall event');
     this.emit('incomingCall', data);
 
@@ -500,6 +516,10 @@ class WebRTCService {
    */
   handleCallRejected(data) {
     console.log('Call rejected:', data);
+
+    // Stop ringtone
+    audioNotificationManager.stopIncomingCallRingtone();
+
     this.setCallState(CALL_STATES.REJECTED);
     this.emit('callRejected', data);
     this.cleanup();
@@ -511,6 +531,10 @@ class WebRTCService {
    */
   handleCallEnded(data) {
     console.log('Call ended:', data);
+
+    // Stop ringtone
+    audioNotificationManager.stopIncomingCallRingtone();
+
     this.setCallState(CALL_STATES.ENDED);
     this.emit('callEnded', data);
     this.cleanup();
@@ -665,6 +689,9 @@ class WebRTCService {
    */
   cleanup() {
     console.log('Cleaning up WebRTC resources');
+
+    // Stop ringtone
+    audioNotificationManager.stopIncomingCallRingtone();
 
     // Stop local stream
     if (this.localStream) {

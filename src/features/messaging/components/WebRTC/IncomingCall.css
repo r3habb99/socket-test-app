@@ -116,6 +116,14 @@
   color: white;
 }
 
+.caller-username {
+  font-size: 14px;
+  margin: 4px 0 0 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 300;
+  font-style: italic;
+}
+
 .incoming-text {
   font-size: 16px;
   color: rgba(255, 255, 255, 0.8);

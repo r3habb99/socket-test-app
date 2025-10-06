@@ -37,12 +37,15 @@ export const SocketProvider = ({ children }) => {
         webrtcService.initialize(socket.getSocket());
         console.log('✅ [SocketProvider] WebRTC service initialized globally');
 
-        // Set up global incoming call handler (for debugging only)
+        // Set up global incoming call handler
         const handleGlobalIncomingCall = (callData) => {
           console.log('📞 [SocketProvider] Global incoming call received:', callData);
 
-          // For now, just show a toast notification
-          // The actual call handling should be done by useWebRTC hook
+          // Show global call modal for incoming calls
+          setGlobalIncomingCall(callData);
+          setShowGlobalCallModal(true);
+
+          // Also show a toast notification as backup
           toast.info(`📞 Incoming ${callData.callType} call from ${callData.from}`, {
             position: "top-right",
             autoClose: 10000,
@@ -50,6 +53,10 @@ export const SocketProvider = ({ children }) => {
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
+            onClick: () => {
+              // Focus on the call modal when toast is clicked
+              setShowGlobalCallModal(true);
+            }
           });
         };
 
@@ -80,7 +87,7 @@ export const SocketProvider = ({ children }) => {
         console.error('❌ [SocketProvider] Failed to initialize WebRTC service:', error);
       }
     }
-  }, [socket.connected, socket.getSocket, isAuthenticated]);
+  }, [socket, isAuthenticated]);
 
   // Global call action handlers
   const handleGlobalAcceptCall = async () => {
@@ -239,8 +246,8 @@ export const SocketProvider = ({ children }) => {
     <SocketContext.Provider value={socket}>
       {children}
 
-      {/* Global Call Modal - Disabled for now, using Chat component's modal */}
-      {false && <CallModal
+      {/* Global Call Modal - Handles incoming calls across the application */}
+      <CallModal
         show={showGlobalCallModal}
         callType={globalIncomingCall?.callType}
         modalType="incoming"
@@ -257,7 +264,7 @@ export const SocketProvider = ({ children }) => {
         onToggleVideo={() => {}}
         onToggleAudio={() => {}}
         onClose={handleGlobalCloseModal}
-      />}
+      />
     </SocketContext.Provider>
   );
 };

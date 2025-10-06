@@ -5,7 +5,8 @@ import { useChatLogic } from "./ChatLogic";
 import { useChatHandlers } from "./ChatHandlers";
 import { useMessageHandlers } from "./MessageHandlers";
 import { ChatHeader, MessageInput, MessagesContainer } from "./ChatUI";
-import { CallModal, CallDebugger } from "../WebRTC";
+// import { CallModal, CallDebugger, CallTestButton } from "../WebRTC";
+import { CallModal } from "../WebRTC";
 import { useCall } from "../../hooks";
 // import { SocketDebugPanel } from "../SocketDebugPanel";
 import "./Chat.css";
@@ -170,7 +171,12 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       {/* {showDebug && <SocketDebugPanel />} */}
 
       {/* WebRTC Call Debugger for testing */}
-      <CallDebugger />
+      {/* <CallDebugger /> */}
+
+      {/* Call Test Button - only shown in development mode */}
+      {/* {process.env.NODE_ENV === 'development' && (
+        <CallTestButton targetUserId={chatPartner?._id || chatPartner?.id} />
+      )} */}
     </div>
   );
 };
