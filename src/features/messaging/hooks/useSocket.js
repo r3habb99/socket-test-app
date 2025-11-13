@@ -21,6 +21,10 @@ import {
   trackRoomLeave,
   isRoomJoined
 } from "../utils/socketDebug";
+import {
+  sanitizeMessageObject,
+  convertObjectIdToString
+} from "../utils/objectIdUtils";
 
 /**
  * Custom hook for socket.io functionality
@@ -60,6 +64,8 @@ export const useSocket = (
   const maxReconnectAttempts = 10;
   const reconnectDelayBase = 1000; // Base delay in ms
 
+
+
   // Initialize refs with initial state values
   useEffect(() => {
     // Only set the ref if it's not already set (first time)
@@ -81,7 +87,6 @@ export const useSocket = (
     // Load offline queue
     const queue = getOfflineQueue();
     if (queue.length > 0) {
-      console.log(`Loaded ${queue.length} messages from offline queue`);
       // Process offline queue directly instead of setting state
     }
 
@@ -107,6 +112,232 @@ export const useSocket = (
       }
     }
   }, []);
+// Helper function to ensure message listeners are always registered
+const ensureMessageListenersRegistered = useCallback((socket) => {
+  if (!socket) {
+    return;
+  }
+
+  if (!socket.connected) {
+    // Set up a one-time listener to register when connected
+    socket.once('connect', () => {
+      ensureMessageListenersRegistered(socket);
+    });
+    return;
+  }
+
+  // Check if message received listener is already registered by checking our flag
+  const hasMessageHandler = socket._hasMessageReceivedHandler;
+
+  if (!hasMessageHandler) {
+
+    // Create the message received handler
+    const messageReceivedHandler = (newMessage) => {
+      debugLog("Message received event handler called", newMessage);
+
+      // Process the message (same logic as before)
+      if (!newMessage || !newMessage.sender) {
+        console.warn("Invalid message received:", newMessage);
+        return;
+      }
+
+      // Convert messageId to string to ensure proper comparison and read receipts
+      let messageId = newMessage._id || newMessage.id;
+      if (messageId && typeof messageId === 'object') {
+        // Convert ObjectId to string using our utility function
+        messageId = convertObjectIdToString(messageId);
+      }
+
+      const localMessageId = newMessage.localId;
+      const messageContent = newMessage.content;
+
+      // Extract chat ID properly from object or string
+      let messageChat;
+
+      if (typeof newMessage.chat === "string") {
+        messageChat = newMessage.chat;
+      } else if (newMessage.chat && typeof newMessage.chat === "object") {
+        let potentialId = newMessage.chat._id || newMessage.chat.id || newMessage.chat.$oid;
+
+        if (typeof potentialId === "string") {
+          messageChat = potentialId;
+        } else if (potentialId && typeof potentialId === "object") {
+          // Method 1: Try standard ObjectId methods
+          if (typeof potentialId.toString === "function") {
+            try {
+              const stringResult = potentialId.toString();
+              if (stringResult && stringResult !== "[object Object]" && stringResult.length === 24) {
+                messageChat = stringResult;
+              }
+            } catch (e) {}
+          }
+
+          // Method 2: Try toHexString method
+          if (!messageChat && typeof potentialId.toHexString === "function") {
+            try {
+              messageChat = potentialId.toHexString();
+            } catch (e) {}
+          }
+
+          // Method 3: Try $oid property
+          if (!messageChat && potentialId.$oid) {
+            messageChat = potentialId.$oid;
+          }
+
+          // Method 4: Try str property
+          if (!messageChat && potentialId.str) {
+            messageChat = potentialId.str;
+          }
+
+          // Method 5: Handle BSON ObjectId buffer property (updated)
+          if (!messageChat && potentialId.buffer) {
+            const buffer = potentialId.buffer;
+
+            if (typeof buffer === 'object' && buffer !== null) {
+              const keys = Object.keys(buffer);
+              if (
+                keys.length === 12 &&
+                keys.every(key => !isNaN(key) && parseInt(key) >= 0 && parseInt(key) <= 11)
+              ) {
+                // --- Option 1: Safe manual conversion ---
+                const bytes = [];
+                for (let i = 0; i < 12; i++) {
+                  const val = buffer[i];
+                  if (typeof val !== 'number' || val < 0 || val > 255) {
+                    continue;
+                  }
+                  bytes.push(val);
+                }
+                messageChat = bytes.map(byte => byte.toString(16).padStart(2, '0')).join('');
+
+                // --- Option 2: Cleaner Node.js-native version (optional) ---
+                // const bytes = Uint8Array.from(Object.values(buffer));
+                // messageChat = Buffer.from(bytes).toString('hex');
+              }
+            }
+          }
+
+          // Method 6: Try direct property access for hex string
+          if (!messageChat) {
+            const possibleHexProps = ['hex', 'hexString', 'id'];
+            for (const prop of possibleHexProps) {
+              if (
+                potentialId[prop] &&
+                typeof potentialId[prop] === 'string' &&
+                potentialId[prop].length === 24
+              ) {
+                messageChat = potentialId[prop];
+                break;
+              }
+            }
+          }
+        }
+
+        // Last resort: try toString on the chat object itself
+        if (!messageChat && typeof newMessage.chat.toString === "function") {
+          const stringified = newMessage.chat.toString();
+          if (stringified !== "[object Object]") {
+            messageChat = stringified;
+          }
+        }
+      } else {
+        messageChat = newMessage.chatId || newMessage.chat;
+      }
+
+      // Convert senderId to string to ensure proper comparison
+      let senderId = newMessage.sender._id || newMessage.sender.id || newMessage.sender;
+      if (senderId && typeof senderId === 'object') {
+        // Convert ObjectId to string using our utility function
+        senderId = convertObjectIdToString(senderId);
+      }
+
+      const senderUsername = newMessage.sender.username || newMessage.sender.name || "Unknown";
+      const currentUserId = localStorage.getItem("userId");
+      const isFromCurrentUser = senderId === currentUserId;
+
+      // Only process messages for the current chat
+      if (messageChat !== currentChatIdRef.current) {
+        return;
+      }
+
+      if (isFromCurrentUser) {
+        const isRecentlySentMessage =
+          recentlySentMessagesRef.current[messageId] ||
+          (localMessageId && recentlySentMessagesRef.current[localMessageId]) ||
+          Object.keys(recentlySentMessagesRef.current).some((key) =>
+            key.startsWith(`${messageContent}-`)
+          );
+
+        if (isRecentlySentMessage) {
+          debugLog(`Skipping recently sent message: ${messageId || localMessageId}`);
+          return;
+        }
+      }
+
+      setMessages((prevMessages) => {
+        const existingMessage = prevMessages.find(
+          (msg) =>
+            (msg._id && msg._id === messageId) ||
+            (msg.id && msg.id === messageId) ||
+            (localMessageId &&
+              ((msg._id && msg._id === localMessageId) ||
+                (msg.id && msg.id === localMessageId)))
+        );
+
+        if (existingMessage) {
+          return prevMessages;
+        }
+
+        // Sanitize the message object to convert all ObjectIds to strings before storing in state
+        const sanitizedMessage = sanitizeMessageObject(newMessage);
+
+        const messageWithStatus = {
+          ...sanitizedMessage,
+          status: MESSAGE_STATUS.DELIVERED,
+        };
+
+        const updatedMessages = [...prevMessages, messageWithStatus];
+
+        if (updatedMessages.length > 0 && updatedMessages[0].createdAt) {
+          return updatedMessages.sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          );
+        }
+
+        return updatedMessages;
+      });
+
+      if (!isFromCurrentUser && messageChat === currentChatIdRef.current && socket?.connected) {
+        socket.emit("message read", {
+          messageId,
+          chatId: messageChat,
+          userId: currentUserId,
+        });
+      }
+
+      if (!isFromCurrentUser) {
+        if (window.location.pathname.includes('/messages')) {
+          toast.info(`New message from ${senderUsername}`, {
+            onClick: () => {
+              if (socket && messageChat !== currentChatIdRef.current) {
+                if (socket.connected) {
+                  socket.emit("join room", messageChat);
+                }
+              }
+            },
+            autoClose: 5000,
+          });
+        }
+      }
+    };
+
+    socket.on("message received", messageReceivedHandler);
+
+    socket._messageReceivedHandler = messageReceivedHandler;
+    socket._hasMessageReceivedHandler = true;
+  }
+}, [currentChatIdRef, recentlySentMessagesRef, setMessages]);
+
 
   // Helper function to create a socket connection
   const createSocketConnection = useCallback(() => {
@@ -161,6 +392,17 @@ export const useSocket = (
         setConnectionStatus('connecting');
         socketRef.current.connect();
       }
+
+      // Always ensure message event listeners are registered
+      // Wait for socket to be connected before registering listeners
+      if (socketRef.current.connected) {
+        ensureMessageListenersRegistered(socketRef.current);
+      } else {
+        // Register listeners once socket connects
+        socketRef.current.once('connect', () => {
+          ensureMessageListenersRegistered(socketRef.current);
+        });
+      }
       return;
     }
 
@@ -175,6 +417,9 @@ export const useSocket = (
       setConnectionStatus('connected');
       setError(null);
       setReconnectAttempts(0);
+
+      // Ensure message listeners are registered on connect
+      ensureMessageListenersRegistered(socket);
 
       // Join current chat if any
       if (currentChatIdRef.current) {
@@ -214,16 +459,12 @@ export const useSocket = (
       // Process offline queue
       const queue = getOfflineQueue();
       if (queue.length > 0) {
-        console.log(`Processing ${queue.length} messages from offline queue`);
-
         // Process each message in the queue
         queue.forEach(queuedMessage => {
           // Increment attempt count
           const updatedMessage = incrementAttemptCount(queuedMessage._id || queuedMessage.id);
 
           if (updatedMessage && updatedMessage.attempts <= 3) {
-            console.log(`Sending queued message: ${updatedMessage._id || updatedMessage.id} (Attempt ${updatedMessage.attempts})`);
-
             // Prepare message payload
             const messagePayload = {
               content: updatedMessage.content,
@@ -238,7 +479,6 @@ export const useSocket = (
               } else {
                 // Remove from queue on success
                 removeFromOfflineQueue(updatedMessage._id || updatedMessage.id);
-                console.log(`Successfully sent queued message: ${updatedMessage._id || updatedMessage.id}`);
 
                 // Update message status to sent
                 setMessages(prevMessages => {
@@ -254,7 +494,6 @@ export const useSocket = (
             });
           } else if (updatedMessage) {
             // Too many attempts, mark as permanently failed
-            console.warn(`Giving up on queued message after ${updatedMessage.attempts} attempts: ${updatedMessage._id || updatedMessage.id}`);
             removeFromOfflineQueue(updatedMessage._id || updatedMessage.id);
           }
         });
@@ -290,7 +529,6 @@ export const useSocket = (
     });
 
     socket.on("disconnect", (reason) => {
-      console.log(`Socket disconnected: ${reason}`);
       setConnected(false);
       setConnectionStatus('disconnected');
 
@@ -323,8 +561,6 @@ export const useSocket = (
           30000 // Max 30 seconds
         );
 
-        console.log(`Attempting to reconnect in ${delay}ms (attempt ${attempts}/${maxReconnectAttempts})`);
-
         // Clear any existing timeout
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
@@ -333,7 +569,6 @@ export const useSocket = (
         // Set new timeout for reconnection
         reconnectTimeoutRef.current = setTimeout(() => {
           if (attempts <= maxReconnectAttempts && !socket.connected) {
-            console.log(`Reconnection attempt ${attempts}/${maxReconnectAttempts}`);
             socket.connect();
           } else if (attempts > maxReconnectAttempts) {
             console.error("Max reconnection attempts reached");
@@ -345,7 +580,6 @@ export const useSocket = (
 
     // Handle user online events
     socket.on("user online", (data) => {
-      console.log(`User online: ${data.username || data.userId}`);
       debugLog(`User online event received for user ${data.userId}`);
 
       // Update online users state
@@ -431,8 +665,7 @@ export const useSocket = (
       }
     });
 
-    socket.on("reconnect", (attemptNumber) => {
-      console.log(`Socket reconnected after ${attemptNumber} attempts`);
+    socket.on("reconnect", () => {
       setConnected(true);
       setConnectionStatus('connected');
       setReconnectAttempts(0);
@@ -440,191 +673,16 @@ export const useSocket = (
 
       // Rejoin current chat if any
       if (currentChatIdRef.current) {
-        console.log(`Rejoining chat room ${currentChatIdRef.current} after reconnection`);
         socket.emit("join room", currentChatIdRef.current);
       }
     });
 
-    // Message received handler - updated to match backend event
-    const messageReceivedHandler = (newMessage) => {
-      debugLog("Message received event handler called", newMessage);
+    // 🔥 NOTE: Message received handler is now managed by ensureMessageListenersRegistered function
 
-      // Normalize chat ID (might be an object or a string)
-      const messageChat =
-        typeof newMessage.chat === "object"
-          ? newMessage.chat._id || newMessage.chat.id
-          : newMessage.chat || newMessage.chatId; // Also check for chatId
-
-      // Get message ID (might be _id or id)
-      const messageId = newMessage._id || newMessage.id;
-
-      // Check for local message ID (for matching with locally sent messages)
-      const localMessageId = newMessage.localMessageId;
-
-      // Get message content
-      const messageContent = newMessage.content;
-
-      // Get sender ID (might be _id or id or an object with _id/id)
-      const senderId =
-        typeof newMessage.sender === "object"
-          ? newMessage.sender._id || newMessage.sender.id
-          : newMessage.sender;
-
-      // Set message status based on sender
-      const currentUserId = localStorage.getItem("userId");
-      const isFromCurrentUser = String(senderId) === String(currentUserId);
-
-      // If the message is from the current user, mark it as delivered
-      // If it's from another user, mark it as read (since we're seeing it)
-      const messageStatus = isFromCurrentUser ? MESSAGE_STATUS.DELIVERED : MESSAGE_STATUS.READ;
-
-      // IMPORTANT: Make sure we're in the right chat room
-      // If this message is for a chat we're not currently in, join that chat room
-      if (
-        messageChat &&
-        messageChat !== currentChatIdRef.current &&
-        socketRef.current
-      ) {
-        // We don't want to automatically switch chats, but we do want to make sure
-        // we're joined to the chat room to receive future messages
-        if (socketRef.current.connected) {
-          debugLog(`Joining chat room ${messageChat} to receive future messages`);
-          socketRef.current.emit("join room", messageChat);
-          trackRoomJoin(messageChat);
-        }
-      }
-
-      // Check if this is a message we just sent (to avoid duplicates)
-      // Use the ref for recentlySentMessages to avoid dependency on state
-      const isRecentlySentMessage =
-        recentlySentMessagesRef.current[messageId] ||
-        (localMessageId && recentlySentMessagesRef.current[localMessageId]) ||
-        Object.keys(recentlySentMessagesRef.current).some((key) =>
-          key.startsWith(`${messageContent}-`)
-        );
-
-      if (isRecentlySentMessage) {
-        debugLog(`Skipping recently sent message: ${messageId || localMessageId}`);
-        // This is a message we just sent, so we don't need to add it again
-        return;
-      }
-
-
-
-      setMessages((prevMessages) => {
-        // Check if message already exists by ID or if it's a local message that needs to be replaced
-        const existsById = prevMessages.some(
-          (msg) =>
-            // Check by ID if available
-            (messageId && ((msg._id && msg._id === messageId) || (msg.id && msg.id === messageId)))
-        );
-
-        // Check if this is a response to a local message we sent
-        const localMessageIndex = prevMessages.findIndex(
-          (msg) =>
-            msg._id && msg._id.startsWith('local-') &&
-            msg.content === messageContent &&
-            String(msg.sender?._id || msg.sender?.id) === String(senderId)
-        );
-
-        if (existsById) {
-          console.log(`Message already exists in state (ID: ${messageId}), updating status only`);
-          // If message exists, just update its status
-          return updateMessageStatus(prevMessages, messageId, messageStatus);
-        }
-
-        // If this is a response to a local message, replace the local message with the server message
-        if (localMessageIndex !== -1) {
-          console.log(`Replacing local message with server message for content: ${messageContent.substring(0, 20)}...`);
-          const updatedMessages = [...prevMessages];
-          updatedMessages[localMessageIndex] = {
-            ...newMessage,
-            status: messageStatus
-          };
-          return updatedMessages;
-        }
-
-        // Only add the message if it's for the current chat
-        if (messageChat === currentChatIdRef.current) {
-          console.log(`Adding new message to chat ${messageChat}: ${messageContent.substring(0, 20)}...`);
-
-          // Add the new message with status
-          const messageWithStatus = {
-            ...newMessage,
-            status: messageStatus, // Use the status we determined earlier
-            _id: messageId || `generated-${Date.now()}`, // Ensure it has an _id
-            id: messageId || `generated-${Date.now()}` // Ensure it has an id
-          };
-
-          // Add the new message
-          const updatedMessages = [...prevMessages, messageWithStatus];
-
-          // Sort messages by timestamp if available
-          if (updatedMessages.length > 0 && updatedMessages[0].createdAt) {
-            return updatedMessages.sort(
-              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-            );
-          }
-
-          return updatedMessages;
-        }
-
-        return prevMessages;
-      });
-
-      // If the message is from another user, emit a read receipt
-      if (!isFromCurrentUser && messageChat === currentChatIdRef.current && socketRef.current?.connected) {
-        console.log(`Sending read receipt for message ${messageId}`);
-        socketRef.current.emit("message read", {
-          messageId,
-          chatId: messageChat,
-          userId: currentUserId
-        });
-      }
-
-      // Force a notification for new messages from other users
-      // We'll show notifications for ALL messages, even if they're not for the current chat
-      if (senderId !== localStorage.getItem("userId")) {
-        // Get sender username from the message if available
-        const senderUsername =
-          typeof newMessage.sender === "object"
-            ? newMessage.sender.username
-            : "User";
-
-
-        // Only show notification if we're in the messages section
-        if (window.location.pathname.includes('/messages')) {
-          // Show a toast notification
-          toast.info(`New message from ${senderUsername}`, {
-            onClick: () => {
-              // If we have a socket and the message is for a different chat,
-              // we could potentially switch to that chat here
-              if (socketRef.current && messageChat !== currentChatIdRef.current) {
-                // Make sure we're joined to the chat room
-                if (socketRef.current.connected) {
-                  socketRef.current.emit("join room", messageChat);
-                }
-              }
-            },
-            autoClose: 5000,
-          });
-        }
-      }
-    };
-
-    // Register the handler for only one event name to prevent duplicate processing
-    // The backend should be consistent with its event naming
-    debugLog(`Registered message event handlers for chat ${currentChatIdRef.current}`);
-    socket.on("message received", messageReceivedHandler);
-
-    // We'll keep a reference to the handler for cleanup
-    const messageHandler = messageReceivedHandler;
-
-    // We'll use the message handler reference for cleanup later
+    // Set up other socket event handlers (message received handler is managed by ensureMessageListenersRegistered)
 
     // Handle message delivery status updates
     socket.on("message delivered", (data) => {
-      console.log("Message delivered:", data);
       const messageId = data.messageId || data._id || data.id;
       if (messageId) {
         setMessages(prevMessages =>
@@ -635,7 +693,6 @@ export const useSocket = (
 
     // Handle message read status updates
     socket.on("message read", (data) => {
-      console.log("Message read:", data);
       const messageId = data.messageId || data._id || data.id;
       if (messageId) {
         setMessages(prevMessages =>
@@ -646,7 +703,6 @@ export const useSocket = (
 
     // Handle bulk read status updates (when a user reads multiple messages at once)
     socket.on("messages bulk read", (data) => {
-      console.log("Messages bulk read:", data);
       if (data.messageIds && Array.isArray(data.messageIds)) {
         setMessages(prevMessages => {
           let updatedMessages = [...prevMessages];
@@ -707,6 +763,13 @@ export const useSocket = (
 
     // Clean up on unmount
     return () => {
+      // Prevent multiple cleanup calls
+      if (socket._isCleaningUp) {
+        debugLog("Cleanup already in progress, skipping");
+        return;
+      }
+      socket._isCleaningUp = true;
+
       // Leave current chat room if any - use ref instead of state
       if (currentChatIdRef.current && socket.connected) {
         debugLog(`Leaving chat room ${currentChatIdRef.current} on component unmount`);
@@ -725,8 +788,9 @@ export const useSocket = (
       socket.off("disconnect");
       socket.off("reconnect");
 
-      // Message events - use the saved reference to ensure we remove the correct handler
-      socket.off("message received", messageHandler);
+      // Message events - remove all message received listeners
+      socket.removeAllListeners("message received");
+      socket._hasMessageReceivedHandler = false;
 
       // Message status events
       socket.off("message delivered");
@@ -819,7 +883,12 @@ export const useSocket = (
           setConnectionStatus('connected');
 
           // Join the chat room now that we're connected
-          socket.emit("join room", chatId);
+          socket.emit("join room", chatId, (response) => {
+            if (response && response.success) {
+              socket._currentRoom = chatId;
+              debugLog(`Successfully joined room ${chatId} on connect`);
+            }
+          });
           trackRoomJoin(chatId);
 
           // Emit a ready event to let the server know we're ready to receive messages
@@ -858,8 +927,16 @@ export const useSocket = (
 
         // Join the new chat room
         debugLog(`Emitting join room event for ${chatId}`);
-        socketRef.current.emit("join room", chatId);
+        socketRef.current.emit("join room", chatId, (response) => {
+          if (response && response.success) {
+            socketRef.current._currentRoom = chatId;
+            debugLog(`Successfully joined room ${chatId}`);
+          }
+        });
         trackRoomJoin(chatId);
+
+        // Ensure message listeners are registered when joining chat
+        ensureMessageListenersRegistered(socketRef.current);
 
         // Emit a ready event to let the server know we're ready to receive messages
         // This can help with ensuring we get the latest messages
@@ -880,10 +957,18 @@ export const useSocket = (
         // Set up a one-time connect handler to join the room when connected
         socketRef.current.once("connect", () => {
           debugLog(`Socket reconnected, joining chat room ${chatId}`);
-          socketRef.current.emit("join room", chatId);
+          socketRef.current.emit("join room", chatId, (response) => {
+            if (response && response.success) {
+              socketRef.current._currentRoom = chatId;
+              debugLog(`Successfully rejoined room ${chatId} after reconnection`);
+            }
+          });
           trackRoomJoin(chatId);
           setConnected(true);
           setConnectionStatus('connected');
+
+          // Ensure message listeners are registered after reconnection
+          ensureMessageListenersRegistered(socketRef.current);
 
           // Emit a ready event after a short delay
           setTimeout(() => {
@@ -907,13 +992,22 @@ export const useSocket = (
   // Leave a chat room
   const leaveChat = useCallback(
     (chatId) => {
-      if (socketRef.current && chatId) {
+      if (socketRef.current && chatId && socketRef.current.connected) {
+        // Check if we're actually in this room to avoid unnecessary leave calls
+        if (socketRef.current._currentRoom !== chatId) {
+          debugLog(`Not currently in room ${chatId}, skipping leave`);
+          return;
+        }
+
         // Use only the event name that matches the backend
         debugLog(`Leaving chat room: ${chatId} on component unmount`);
         socketRef.current.emit("leave room", chatId);
 
         // Track the room leave
         trackRoomLeave(chatId);
+
+        // Clear the current room marker
+        socketRef.current._currentRoom = null;
 
         // Also notify the server that we're leaving this chat
         debugLog(`Notifying server that we're leaving chat ${chatId}`);
@@ -960,8 +1054,6 @@ export const useSocket = (
       }
 
       try {
-        console.log(`Sending message to chat ${chatId}: ${messageData.content.trim().substring(0, 20)}...`);
-
         // Track this message to prevent duplication when it comes back from the server
         const trackingKey = `${messageData.content.trim()}-${Date.now()}`;
 
@@ -1008,7 +1100,6 @@ export const useSocket = (
 
         // Initialize socket if it doesn't exist
         if (!socketRef.current) {
-          console.log("No socket connection exists, creating one before sending message...");
           const socket = createSocketConnection();
 
           if (!socket) {
@@ -1019,7 +1110,6 @@ export const useSocket = (
 
           // Set up event handlers for the new socket
           socket.on("connect", () => {
-            console.log(`Socket connected, joining chat room ${chatId} before sending message`);
             setConnected(true);
             setConnectionStatus('connected');
 
@@ -1027,7 +1117,6 @@ export const useSocket = (
             socket.emit("join room", chatId);
 
             // Then send the message
-            console.log("Sending message after connection established");
             socket.emit("new message", messagePayload, (response) => {
               if (response && !response.success) {
                 console.warn("Message delivery failed:", response);
@@ -1037,7 +1126,6 @@ export const useSocket = (
                 toast.error("Failed to send message");
               } else {
                 // Message sent successfully
-                console.log("Message sent successfully");
               }
             });
           });
@@ -1114,18 +1202,49 @@ export const useSocket = (
           setCurrentChatId(chatId);
         }
 
+        // 🔥 OPTIMISTIC UPDATE: Add message to UI immediately
+        const optimisticMessage = {
+          _id: `local-${Date.now()}`,
+          id: `local-${Date.now()}`,
+          content: messagePayload.content,
+          chat: chatId,
+          sender: {
+            _id: userId,
+            id: userId,
+            username: username || "You"
+          },
+          createdAt: new Date().toISOString(),
+          status: "sending"
+        };
+
+        setMessages(prevMessages => [...prevMessages, optimisticMessage]);
+
         // Send message with callback to handle acknowledgement
-        console.log("Sending message to connected socket");
         socketRef.current.emit("new message", messagePayload, (response) => {
           if (response && !response.success) {
             console.warn("Message delivery failed:", response);
             toast.warning("Message may not have been delivered. Please check your connection.");
 
+            // Update optimistic message to show error
+            setMessages(prevMessages =>
+              prevMessages.map(msg =>
+                msg._id === optimisticMessage._id
+                  ? { ...msg, status: "failed" }
+                  : msg
+              )
+            );
+
             // Show error toast
             toast.error("Failed to send message");
           } else {
-            // Message sent successfully
-            console.log("Message sent successfully");
+            // Message sent successfully - update optimistic message
+            setMessages(prevMessages =>
+              prevMessages.map(msg =>
+                msg._id === optimisticMessage._id
+                  ? { ...msg, status: "sent" }
+                  : msg
+              )
+            );
           }
         });
       } catch (error) {
@@ -1172,7 +1291,6 @@ export const useSocket = (
 
       // Initialize socket if it doesn't exist
       if (!socketRef.current) {
-        console.log("No socket connection exists, creating one before sending typing indicator...");
         const socket = createSocketConnection();
 
         if (!socket) {
@@ -1182,7 +1300,6 @@ export const useSocket = (
 
         // Set up event handlers for the new socket
         socket.on("connect", () => {
-          console.log(`Socket connected, joining chat room ${roomId} before sending typing indicator`);
           setConnected(true);
           setConnectionStatus('connected');
 
@@ -1190,7 +1307,6 @@ export const useSocket = (
           socket.emit("join room", roomId);
 
           // Then send the typing indicator
-          console.log(`Sending typing indicator (isTyping=${isTyping}) after connection established`);
           socket.emit("typing", payload);
         });
 
@@ -1323,6 +1439,8 @@ export const useSocket = (
 
   // Get the socket instance (for direct access if needed)
   const getSocket = useCallback(() => socketRef.current, []);
+
+
 
   return {
     // Connection state

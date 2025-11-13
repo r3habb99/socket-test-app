@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import { debugLog } from "../../utils/socketDebug";
 
 /**
@@ -20,110 +20,9 @@ export const useMessageHandlers = ({
   // Track the chat ID for which we've registered event handlers
   const registeredChatIdRef = useRef(null);
 
-  // Handle incoming messages from socket - improved to better handle duplicates
-  useEffect(() => {
-    // Get the current chat ID
-    const chatId = selectedChat?._id || selectedChat?.id;
-
-    // Skip if no chat is selected
-    if (!chatId) return;
-
-    // If we've already registered handlers for this chat, don't register again
-    if (registeredChatIdRef.current === chatId) {
-      debugLog(`Event handlers already registered for chat ${chatId}, skipping`);
-      return;
-    }
-
-    // Update the registered chat ID ref
-    registeredChatIdRef.current = chatId;
-
-    // Clear the received messages map when changing chats
-    receivedMessagesRef.current.clear();
-
-    debugLog(`Setting up message event handlers for chat ${chatId}`);
-
-    const handleMessageReceived = (newMessage) => {
-      // Check if the new message belongs to the currently selected chat
-      const messageChatId = newMessage.chat?._id || newMessage.chat?.id || newMessage.chatId;
-
-      // Skip if the message is not for the current chat
-      if (String(messageChatId) !== String(chatId)) {
-        return;
-      }
-
-      // Create a unique identifier for this message
-      const messageId = newMessage._id || newMessage.id;
-      const messageContent = newMessage.content;
-      const senderId = newMessage.sender?._id || newMessage.sender?.id;
-
-      // Create a unique signature for this message
-      const messageSignature = `${messageId || ''}:${messageContent}:${senderId}:${messageChatId}`;
-
-      // If we've already processed this message recently (within last 10 seconds), ignore it
-      const now = Date.now();
-      const lastProcessed = receivedMessagesRef.current.get(messageSignature);
-
-      if (lastProcessed && (now - lastProcessed) < 10000) {
-        debugLog(`Ignoring duplicate message: ${messageSignature}`);
-        return;
-      }
-
-      // Add this message to our tracking map with current timestamp
-      receivedMessagesRef.current.set(messageSignature, now);
-
-      // Keep the map from growing too large
-      if (receivedMessagesRef.current.size > 100) {
-        // Remove entries older than 5 minutes
-        const fiveMinutesAgo = now - 300000;
-
-        // Use for...of with entries to safely delete while iterating
-        for (const [key, timestamp] of receivedMessagesRef.current.entries()) {
-          if (timestamp < fiveMinutesAgo) {
-            receivedMessagesRef.current.delete(key);
-          }
-        }
-      }
-
-      // Update messages state with the new message
-      socketContext.setMessages((prevMessages) => {
-        const prevMessagesArray = Array.isArray(prevMessages) ? prevMessages : [];
-
-        // Check if message already exists by ID
-        const existsById = messageId && prevMessagesArray.some(
-          (msg) => (msg._id === messageId) || (msg.id === messageId)
-        );
-
-        if (existsById) {
-          debugLog(`Message with ID ${messageId} already exists, not adding`);
-          return prevMessagesArray;
-        }
-
-        // If we get here, it's a new message, so add it
-        debugLog(`Adding new message: ${messageContent.substring(0, 20)}...`);
-        return [...prevMessagesArray, newMessage];
-      });
-
-      // Scroll to the bottom when a new message is received
-      setTimeout(scrollToBottom, 100);
-    };
-
-    // Register the socket event listener using the subscribe method
-    // This ensures proper cleanup and prevents memory leaks
-    const unsubscribe = socketContext.subscribe("message received", handleMessageReceived);
-
-    // Also register for the "new message" event in case the backend uses that name
-    const unsubscribeNewMessage = socketContext.subscribe("new message", handleMessageReceived);
-
-    debugLog(`Registered message event handlers for chat ${chatId}`);
-
-    // Cleanup the listeners on component unmount or when dependencies change
-    return () => {
-      debugLog(`Cleaning up message event handlers for chat ${chatId}`);
-      unsubscribe();
-      unsubscribeNewMessage();
-      // Don't reset registeredChatIdRef here as it will cause issues with re-registering
-    };
-  }, [selectedChat?._id, selectedChat?.id, socketContext, scrollToBottom]); // Only depend on the chat ID properties
+  // Note: Message receiving is now handled centrally in useSocket.js
+  // This component focuses only on sending messages and UI interactions
+  // The real-time message updates are managed by the socket context
 
   // Track the last sent message to prevent duplicates
   const lastSentMessageRef = useRef({ content: '', timestamp: 0 });
@@ -180,34 +79,14 @@ export const useMessageHandlers = ({
       // Clear the input field immediately after sending
       debugLog(`Sending message via socket: ${messageContent.substring(0, 20)}...`);
 
-      // Create a message object to display immediately
-      const newMessage = {
-        _id: `local-${Date.now()}`,
-        id: `local-${Date.now()}`,
-        content: messageContent,
-        sender: {
-          _id: userId,
-          id: userId
-        },
-        createdAt: new Date().toISOString(),
-        chat: {
-          _id: chatId,
-          id: chatId
-        },
-        status: 'sent'
-      };
-
-      // Add the message to the UI immediately
-      socketContext.setMessages(prev => {
-        const prevMessages = Array.isArray(prev) ? prev : [];
-        return [...prevMessages, newMessage];
-      });
+      // Note: We don't add the message locally anymore
+      // The socket handler in useSocket.js will handle the message response
+      // This prevents duplicate messages and ensures proper state management
 
       // Send message via socket context
       socketContext.sendMessage({
         content: messageContent,
-        chatId: chatId,
-        localMessageId: newMessage._id // Include local message ID to help with matching on the response
+        chatId: chatId
       });
 
       // Remove from pending set after 10 seconds (should be delivered by then)

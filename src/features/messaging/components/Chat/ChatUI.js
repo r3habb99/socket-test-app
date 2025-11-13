@@ -18,6 +18,58 @@ import { DEFAULT_PROFILE_PIC } from "../../../../constants";
 import MessageStatus from "../MessageStatus";
 import UserStatus from "../UserStatus";
 import "./Chat.css";
+
+/**
+ * Typing indicator component with animated dots
+ */
+const TypingIndicator = ({ typingUsers, currentUserId }) => {
+  // Add debugging
+  console.log('TypingIndicator - typingUsers:', typingUsers);
+  console.log('TypingIndicator - currentUserId:', currentUserId);
+
+  // Filter out current user from typing users
+  const otherUsersTyping = Object.entries(typingUsers || {}).filter(
+    ([userId]) => userId !== currentUserId
+  );
+
+  console.log('TypingIndicator - otherUsersTyping:', otherUsersTyping);
+
+  // Don't render if no one else is typing
+  if (otherUsersTyping.length === 0) {
+    console.log('TypingIndicator - No other users typing, returning null');
+    return null;
+  }
+
+  // Get usernames of typing users
+  const typingUsernames = otherUsersTyping.map(([, userData]) => userData.username);
+
+  // Create display text based on number of users
+  let displayText;
+  if (typingUsernames.length === 1) {
+    displayText = `${typingUsernames[0]} is typing`;
+  } else if (typingUsernames.length === 2) {
+    displayText = `${typingUsernames[0]} and ${typingUsernames[1]} are typing`;
+  } else {
+    displayText = `${typingUsernames[0]} and ${typingUsernames.length - 1} others are typing`;
+  }
+
+  console.log('TypingIndicator - Rendering with displayText:', displayText);
+
+  return (
+    <div className="typing-indicator">
+      <div className="typing-bubble">
+        <div className="typing-content">
+          <span className="typing-text">{displayText}</span>
+          <div className="typing-dots">
+            <span className="dot"></span>
+            <span className="dot"></span>
+            <span className="dot"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 /**
  * Renders the chat header with user info and actions
  */
@@ -161,6 +213,8 @@ export const MessageInput = ({
   handleSendMessage,
   socketContext
 }) => {
+  const isDisabled = !message.trim() || !socketContext.connected;
+
   return (
     <div className="input-container mobile-input-container">
       <div className="message-actions">
@@ -192,7 +246,7 @@ export const MessageInput = ({
         icon={<SendOutlined />}
         className="send-btn"
         onClick={handleSendMessage}
-        disabled={!message.trim() || !socketContext.connected}
+        disabled={isDisabled}
       />
     </div>
   );
@@ -209,15 +263,18 @@ export const MessagesContainer = ({
   isAtTop,
   userId,
   formatMessageDate,
-  getMessageDate
+  getMessageDate,
+  messages // Add messages prop
 }) => {
+
+
   return (
     <div className="messages-container" ref={messagesContainerRef}>
       {loadingMessages ? (
         <div className="loading-messages">
           <Spin size="large" tip="Loading messages..." />
         </div>
-      ) : !socketContext.messages || socketContext.messages.length === 0 ? (
+      ) : !messages || messages.length === 0 ? (
         <div className="no-messages">
           <div className="no-messages-content">
             <Empty
@@ -299,7 +356,7 @@ export const MessagesContainer = ({
           </div>
 
           {/* Group messages by date */}
-          {(socketContext.messages || []).map((msg, index) => {
+          {(messages || []).map((msg, index) => {
             // Skip rendering if message doesn't have content
             if (!msg || !msg.content) {
               console.warn(`Skipping message ${index} - no content:`, msg);
@@ -357,6 +414,13 @@ export const MessagesContainer = ({
               </React.Fragment>
             );
           })}
+
+          {/* Typing indicator */}
+          <TypingIndicator
+            typingUsers={socketContext.typingUsers}
+            currentUserId={userId}
+          />
+
           <div ref={messagesEndRef} className="messages-end-ref" />
         </ul>
       ) : (

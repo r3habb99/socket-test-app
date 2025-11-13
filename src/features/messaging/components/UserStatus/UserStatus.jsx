@@ -25,19 +25,6 @@ const UserStatus = ({
   // Check if user is online
   const isOnline = socketContext.isUserOnline(userId);
 
-  // Add debug logging for online status
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`UserStatus: User ${userId} is ${isOnline ? 'online' : 'offline'}`);
-    console.log(`UserStatus: Online users:`, socketContext.onlineUsers);
-
-    // Log the specific user's online status from the onlineUsers object
-    if (socketContext.onlineUsers && socketContext.onlineUsers[userId]) {
-      console.log(`UserStatus: User ${userId} details:`, socketContext.onlineUsers[userId]);
-    } else {
-      console.log(`UserStatus: User ${userId} not found in onlineUsers`);
-    }
-  }
-
   // Get last seen time if user is offline and showLastSeen is true
   const lastSeen = !isOnline && showLastSeen
     ? socketContext.getLastSeen(userId)

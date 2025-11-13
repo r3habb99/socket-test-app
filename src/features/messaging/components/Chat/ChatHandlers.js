@@ -33,18 +33,21 @@ export const useChatHandlers = ({
     setTimeout(scrollToBottom, 200);
   }, [scrollToBottom]);
 
+  // Single useEffect to manage chat room joining/leaving - CONSOLIDATED
   useEffect(() => {
     // Extract chat ID to a variable for dependency array
     const chatId = selectedChat?._id || selectedChat?.id;
 
-    // Only join if the chat ID has actually changed
+    // Only join if we have a valid chat ID and it has actually changed
     if (chatId && chatId !== previousChatIdRef.current) {
       debugLog(`Chat ID changed from ${previousChatIdRef.current} to ${chatId}`);
+      debugLog(`🔧 FIXED: Using SINGLE useEffect for room management`);
 
       // Store the current chat ID in the ref
       previousChatIdRef.current = chatId;
 
       // Join the chat room via socket
+      debugLog(`🚀 Joining chat room via socketContext.joinChat(${chatId})`);
       socketContext.joinChat(chatId);
 
       // Wait for a short time and then check if we're connected to the room
@@ -55,14 +58,38 @@ export const useChatHandlers = ({
           socketContext.socket?.emit("ready", { chatId });
         }
       }, 500);
-
-      // Clean up function will only run on unmount or when chat ID changes
-      return () => {
-        debugLog(`Leaving chat room ${chatId} due to chat change or unmount`);
-        socketContext.leaveChat(chatId);
-        // Don't reset previousChatIdRef here, it will be updated in the next effect run
-      };
     }
+
+    // SINGLE cleanup function that handles both chat change AND component unmount
+    return () => {
+      const currentChatId = previousChatIdRef.current;
+      if (currentChatId) {
+        debugLog(`🔧 FIXED: SINGLE cleanup function running for chat ${currentChatId}`);
+        debugLog(`Leaving chat room ${currentChatId} due to chat change or component unmount`);
+
+        // Clear typing timeout if exists
+        if (typingTimeout) {
+          clearTimeout(typingTimeout);
+          debugLog(`Sending stopped typing event for chat ${currentChatId} on cleanup`);
+          socketContext.sendTyping(false, currentChatId);
+        }
+
+        // Leave the chat room
+        debugLog(`🚪 Calling socketContext.leaveChat(${currentChatId}) - SINGLE CALL ONLY`);
+        socketContext.leaveChat(currentChatId);
+
+        // Notify the server that we're leaving the chat
+        if (socketContext.socket && socketContext.connected) {
+          debugLog(`Notifying server that we're leaving chat ${currentChatId}`);
+          socketContext.socket.emit("leave chat", { chatId: currentChatId });
+        }
+
+        // Reset the previous chat ID ref only on unmount (not on chat change)
+        if (!selectedChat?._id && !selectedChat?.id) {
+          previousChatIdRef.current = null;
+        }
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChat?._id, selectedChat?.id]); // Only depend on the chat ID properties
 
@@ -99,37 +126,7 @@ export const useChatHandlers = ({
     }
   }, [selectedChat, socketContext, typingTimeout, setTypingTimeout]);
 
-  // Clean up typing timeout on unmount and leave chat room
-  useEffect(() => {
-    return () => {
-      if (typingTimeout) {
-        clearTimeout(typingTimeout);
-
-        // Get the chat ID from the selected chat
-        const chatId = selectedChat?._id || selectedChat?.id;
-
-        if (chatId) {
-          // Also send a stopped typing event when unmounting
-          debugLog(`Sending stopped typing event for chat ${chatId} on unmount`);
-          socketContext.sendTyping(false, chatId);
-        }
-      }
-
-      // Leave chat room on component unmount
-      const chatId = selectedChat?._id || selectedChat?.id;
-      if (chatId) {
-        debugLog(`Leaving chat room ${chatId} on component unmount`);
-        socketContext.leaveChat(chatId);
-
-        // Notify the server that we're leaving the chat
-        if (socketContext.socket && socketContext.connected) {
-          debugLog(`Notifying server that we're leaving chat ${chatId}`);
-          socketContext.socket.emit("leave chat", { chatId });
-        }
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChat?._id, selectedChat?.id]); // Only depend on the chat ID properties
+  // REMOVED: Duplicate cleanup useEffect - now handled in the consolidated useEffect above
 
   // Effect to scroll to bottom when new messages are received
   useEffect(() => {

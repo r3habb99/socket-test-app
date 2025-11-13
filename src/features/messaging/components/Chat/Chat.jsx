@@ -7,8 +7,8 @@ import { useMessageHandlers } from "./MessageHandlers";
 import { ChatHeader, MessageInput, MessagesContainer } from "./ChatUI";
 // import { CallModal, CallDebugger, CallTestButton } from "../WebRTC";
 import { CallModal } from "../WebRTC";
+// import { WebRTCTestComponent } from "../WebRTC/WebRTCTestComponent";
 import { useCall } from "../../hooks";
-// import { SocketDebugPanel } from "../SocketDebugPanel";
 import "./Chat.css";
 
 export const Chat = ({ selectedChat, onBackClick }) => {
@@ -74,6 +74,8 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     handleTyping
   });
 
+
+
   // WebRTC functionality
   const webrtcCall = useCall({
     onIncomingCall: (callData) => {
@@ -131,6 +133,8 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         messages={messages} // Pass messages explicitly
       />
 
+
+
       <MessageInput
         message={message}
         setMessage={setMessage}
@@ -146,6 +150,8 @@ export const Chat = ({ selectedChat, onBackClick }) => {
           onClose={() => setShowProfileModal(false)}
         />
       )}
+
+
 
       {/* WebRTC Call Modal */}
       <CallModal
@@ -176,6 +182,11 @@ export const Chat = ({ selectedChat, onBackClick }) => {
       {/* Call Test Button - only shown in development mode */}
       {/* {process.env.NODE_ENV === 'development' && (
         <CallTestButton targetUserId={chatPartner?._id || chatPartner?.id} />
+      )} */}
+
+      {/* WebRTC Enhancement Test Component - only shown in development mode */}
+      {/* {process.env.NODE_ENV === 'development' && (
+        <WebRTCTestComponent />
       )} */}
     </div>
   );

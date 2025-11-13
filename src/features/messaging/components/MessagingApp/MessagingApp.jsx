@@ -8,9 +8,9 @@ import { Layout, Alert, Button } from "antd";
 import {
   MessageOutlined,
   ReloadOutlined,
-  DisconnectOutlined,
-  LoadingOutlined
+  DisconnectOutlined
 } from "@ant-design/icons";
+// import SocketDebugPanel from "../../../../components/SocketDebugPanel";
 import "./MessagingApp.css";
 
 const MessagingApp = () => {
@@ -40,11 +40,16 @@ const MessagingApp = () => {
 
   // Handle socket reconnection if needed - only on mount
   useEffect(() => {
-    if (!socketContext.connected) {
-      // Silent reconnection - no toast notifications
-      console.log("Silently reconnecting socket from MessagingApp component");
-      socketContext.reconnect();
-    }
+    // Add a small delay to prevent race conditions with SocketProvider
+    const reconnectTimer = setTimeout(() => {
+      if (!socketContext.connected && socketContext.connectionStatus !== 'connecting') {
+        // Silent reconnection - no toast notifications
+        console.log("Silently reconnecting socket from MessagingApp component");
+        socketContext.reconnect();
+      }
+    }, 1000); // 1 second delay
+
+    return () => clearTimeout(reconnectTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Intentionally omitting socketContext to prevent reconnection loops
 
@@ -103,15 +108,27 @@ const MessagingApp = () => {
           if (existingChat) {
             // Use the chat from the list to ensure consistency
             setSelectedChat(existingChat);
+            // Join the chat room via socket
+            if (socketContext.joinChat) {
+              socketContext.joinChat(existingChat._id);
+            }
           } else {
             // If not found (unlikely), use the normalized chat
             console.log("Existing chat not found in list, using provided chat");
             setSelectedChat(normalizedChat);
+            // Join the chat room via socket
+            if (socketContext.joinChat) {
+              socketContext.joinChat(normalizedChat._id);
+            }
           }
         } else {
           // For new chats, just use the normalized chat
           console.log("Using new chat");
           setSelectedChat(normalizedChat);
+          // Join the chat room via socket
+          if (socketContext.joinChat) {
+            socketContext.joinChat(normalizedChat._id);
+          }
         }
       } else {
         console.error("Invalid chat data structure (no id or _id):", initialChatData);
@@ -140,6 +157,13 @@ const MessagingApp = () => {
     };
 
     setSelectedChat(normalizedChat);
+
+    // Join the chat room via socket
+    if (socketContext.joinChat) {
+      socketContext.joinChat(normalizedChat._id);
+    } else {
+      console.error('joinChat function not available in socketContext');
+    }
   };
 
   const { Content } = Layout;
@@ -178,39 +202,7 @@ const MessagingApp = () => {
           />
         )}
 
-        {socketContext.connectionStatus === 'connecting' && (
-          <Alert
-            message="Connecting to chat server..."
-            type="warning"
-            showIcon
-            icon={<LoadingOutlined spin />}
-            className="connection-status-banner"
-          />
-        )}
-
-        {socketContext.connectionStatus === 'reconnecting' && (
-          <Alert
-            message={`Reconnecting to chat server (Attempt ${socketContext.reconnectAttempts}/${10})`}
-            type="warning"
-            showIcon
-            icon={<LoadingOutlined spin />}
-            action={
-              <Button
-                size="small"
-                type="primary"
-                icon={<ReloadOutlined />}
-                onClick={() => {
-                  // Silent reconnection - no toast notifications
-                  console.log("Silently reconnecting socket from MessagingApp component");
-                  socketContext.reconnect();
-                }}
-              >
-                Try Now
-              </Button>
-            }
-            className="connection-status-banner"
-          />
-        )}
+        {/* Connection status alerts removed - reconnection happens silently in background */}
 
         {/* Main content container */}
         <Content
@@ -311,6 +303,9 @@ const MessagingApp = () => {
           </div>
         </Content>
       </div>
+
+      {/* Debug Panel for development */}
+      {/* <SocketDebugPanel /> */}
     </Layout>
   );
 };

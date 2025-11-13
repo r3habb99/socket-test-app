@@ -12,10 +12,12 @@ export const OutgoingCall = ({
   callState,
   onEnd
 }) => {
-  if (!callData) return null;
-
+  // Always call hooks at the top level, before any early returns
   // Fetch recipient user data
-  const { userData: recipientData, loading: recipientLoading } = useUserData(callData.otherUserId);
+  const { userData: recipientData, loading: recipientLoading } = useUserData(callData?.otherUserId);
+
+  // Early return after all hooks have been called
+  if (!callData) return null;
 
   const getCallTypeText = () => {
     return callData.callType === 'video' ? 'Video Call' : 'Audio Call';
@@ -73,7 +75,12 @@ export const OutgoingCall = ({
         {/* Recipient info */}
         <div className="recipient-info">
           <h3 className="recipient-name">
-            {recipientData?.displayName || callData.otherUserId || 'Unknown User'}
+            {recipientLoading ? 'Loading...' : (
+              recipientData?.displayName ||
+              callData.otherUsername ||
+              callData.otherUserId ||
+              'Unknown User'
+            )}
           </h3>
           <p className="status-text">{getStatusText()}</p>
         </div>

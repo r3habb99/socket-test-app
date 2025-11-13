@@ -2,7 +2,7 @@
  * Incoming Call Component - Interface for incoming call notifications
  */
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useUserData } from '../../hooks/useUserData';
 import audioNotificationManager from '../../utils/audioNotifications';
 import './IncomingCall.css';
@@ -94,11 +94,17 @@ export const IncomingCall = ({
         {/* Caller info */}
         <div className="caller-info">
           <h3 className="caller-name">
-            {callerLoading ? 'Loading...' : (callerData?.displayName || callData.from || 'Unknown User')}
+            {callerLoading ? 'Loading...' : (
+              callerData?.displayName ||
+              callData.fromUsername ||
+              callData.from ||
+              'Unknown User'
+            )}
           </h3>
           <p className="incoming-text">Incoming {callData.callType} call</p>
-          {callerData?.username && callerData.username !== callerData.displayName && (
-            <p className="caller-username">@{callerData.username}</p>
+          {(callerData?.username || callData.fromUsername) &&
+           (callerData?.username || callData.fromUsername) !== (callerData?.displayName || callData.fromUsername) && (
+            <p className="caller-username">@{callerData?.username || callData.fromUsername}</p>
           )}
         </div>
 

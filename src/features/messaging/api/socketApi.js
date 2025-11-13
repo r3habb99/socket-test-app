@@ -100,18 +100,15 @@ export const joinChatRoom = (roomId) => {
 
   console.log(`Joining chat room: ${roomId}`);
 
-  // First leave any existing rooms to avoid memory leaks
-  socket.emit("leave room", roomId);
-
-  // Then join the new room
-  socket.emit("join room", roomId);
-
-  // Add acknowledgment callback
+  // Join the new room with acknowledgment callback
+  // Note: Server-side will handle leaving previous rooms automatically
   socket.emit("join room", roomId, (response) => {
     if (response && response.success) {
-      console.log(`Successfully joined chat room: ${roomId}`);
+      console.log(`✅ Successfully joined chat room: ${roomId}`);
+      // Mark that we're successfully in this room
+      socket._currentRoom = roomId;
     } else {
-      console.error(`Failed to join chat room: ${roomId}`, response);
+      console.error(`❌ Failed to join chat room: ${roomId}`, response);
     }
   });
 

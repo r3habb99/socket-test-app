@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { getMessagesForChat } from "../../api/messagingApi";
+import { sanitizeMessagesArray } from "../../utils/objectIdUtils";
 
 /**
  * Custom hook that contains all the logic for the Chat component
@@ -46,7 +47,6 @@ export const useChatLogic = (selectedChat, socketContext) => {
   const handleScrollToTop = useCallback(() => {
     if (messagesContainerRef.current && messagesContainerRef.current.scrollTop === 0) {
       // We're at the top of the container, could load older messages here
-      console.log('Scrolled to top of messages, could load older messages');
 
       // Add a visual indicator that we're at the top
       messagesContainerRef.current.classList.add('at-top');
@@ -67,7 +67,6 @@ export const useChatLogic = (selectedChat, socketContext) => {
       return Promise.resolve([]);
     }
 
-    console.log(`Loading messages for chat: ${chatId}`);
     setLoadingMessages(true); // Set loading state
 
     // Create a timeout to ensure loading state is reset even if the API call hangs
@@ -78,7 +77,6 @@ export const useChatLogic = (selectedChat, socketContext) => {
 
     return getMessagesForChat(chatId)
       .then((response) => {
-        console.log("Messages API response received:", response);
         clearTimeout(loadingTimeout); // Clear the safety timeout
 
         // Handle API errors
@@ -153,8 +151,10 @@ export const useChatLogic = (selectedChat, socketContext) => {
         // Sort messages by timestamp
         normalizedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-        console.log(`Successfully loaded ${normalizedMessages.length} messages for chat ${chatId}`);
-        return normalizedMessages;
+        // Sanitize messages to convert ObjectIds to strings before storing in React state
+        const sanitizedMessages = sanitizeMessagesArray(normalizedMessages);
+
+        return sanitizedMessages;
       })
       .catch((err) => {
         console.error(`Failed to load messages for chat ${chatId}:`, err);
@@ -164,7 +164,6 @@ export const useChatLogic = (selectedChat, socketContext) => {
       .finally(() => {
         // Always reset loading state in finally block
         clearTimeout(loadingTimeout); // Ensure timeout is cleared
-        console.log(`Resetting loading state for chat ${chatId} in finally block`);
         setLoadingMessages(false);
       });
   }, []);
@@ -183,7 +182,6 @@ export const useChatLogic = (selectedChat, socketContext) => {
     const isNewChat = chatId !== lastLoadedChatIdRef.current;
 
     if (isNewChat) {
-      console.log(`Chat changed from ${lastLoadedChatIdRef.current || 'none'} to ${chatId}, loading messages...`);
 
       // Clear existing messages immediately to avoid showing messages from previous chat
       socketContext.setMessages([]);
@@ -201,13 +199,12 @@ export const useChatLogic = (selectedChat, socketContext) => {
       let isMounted = true;
 
       // Load messages immediately - no need for delay as the socket join is asynchronous
-      console.log(`Loading messages for chat ${chatId}`);
 
       loadMessagesForChat(chatId)
         .then((msgs) => {
           if (!isMounted) return;
 
-          console.log(`Successfully loaded ${msgs.length} messages for chat ${chatId}`);
+
 
           // Set messages in the socket context to maintain state across components
           socketContext.setMessages(msgs);
@@ -224,7 +221,6 @@ export const useChatLogic = (selectedChat, socketContext) => {
         .finally(() => {
           // Always ensure loading state is reset, even if there was an error
           if (isMounted) {
-            console.log(`Finished loading messages for chat ${chatId}, resetting loading state`);
             setLoadingMessages(false);
           }
         });
@@ -243,6 +239,7 @@ export const useChatLogic = (selectedChat, socketContext) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChat?._id, selectedChat?.id]); // Depend on the chat ID properties specifically
+
 
   return {
     message,
@@ -263,6 +260,6 @@ export const useChatLogic = (selectedChat, socketContext) => {
     handleScrollToTop,
     lastLoadedChatIdRef,
     loadMessagesForChat,
-    messages: socketContext.messages, // Added messages state from socketContext
+    messages: socketContext.messages || [], // Added messages state from socketContext with fallback
   };
 };

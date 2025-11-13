@@ -9,8 +9,6 @@ import { CALL_TYPES } from '../../api/webrtcService';
 
 export const CallTestButton = ({ targetUserId = 'test-user-123' }) => {
   const simulateIncomingCall = (callType = CALL_TYPES.VIDEO) => {
-    console.log('🧪 Simulating incoming call...');
-    
     // Create mock call data
     const mockCallData = {
       callId: `test-call-${Date.now()}`,
@@ -23,7 +21,6 @@ export const CallTestButton = ({ targetUserId = 'test-user-123' }) => {
     // Trigger the incoming call handler directly
     if (webrtcService.isInitialized) {
       webrtcService.handleIncomingCall(mockCallData);
-      console.log('✅ Mock incoming call triggered');
     } else {
       console.error('❌ WebRTC service not initialized');
       alert('WebRTC service not initialized. Please ensure you are connected to the socket.');
@@ -42,7 +39,6 @@ export const CallTestButton = ({ targetUserId = 'test-user-123' }) => {
     try {
       const audioNotificationManager = (await import('../../utils/audioNotifications')).default;
       await audioNotificationManager.playNotificationSound();
-      console.log('✅ Audio notification test completed');
     } catch (error) {
       console.error('❌ Audio notification test failed:', error);
     }

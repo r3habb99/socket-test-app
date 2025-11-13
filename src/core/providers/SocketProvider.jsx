@@ -29,17 +29,20 @@ export const SocketProvider = ({ children }) => {
   // This will prevent connection-related toast notifications
   const socket = useSocket(SOCKET_URL, { silentMode: true });
 
+  // Extract messages state to make SocketProvider reactive to changes
+  const messages = socket?.messages || [];
+  const setMessages = socket?.setMessages || (() => {});
+
+
+
   // Initialize WebRTC service globally when socket is connected
   useEffect(() => {
     if (socket.connected && socket.getSocket() && isAuthenticated()) {
       try {
-        console.log('🔧 [SocketProvider] Initializing WebRTC service globally');
         webrtcService.initialize(socket.getSocket());
-        console.log('✅ [SocketProvider] WebRTC service initialized globally');
 
         // Set up global incoming call handler
         const handleGlobalIncomingCall = (callData) => {
-          console.log('📞 [SocketProvider] Global incoming call received:', callData);
 
           // Show global call modal for incoming calls
           setGlobalIncomingCall(callData);
@@ -62,7 +65,6 @@ export const SocketProvider = ({ children }) => {
 
         // Set up global call state change handler
         const handleGlobalCallStateChange = ({ currentState }) => {
-          console.log('📞 [SocketProvider] Global call state changed:', currentState);
           setGlobalCallState(currentState);
 
           // Hide modal when call ends
@@ -93,7 +95,6 @@ export const SocketProvider = ({ children }) => {
   const handleGlobalAcceptCall = async () => {
     try {
       if (globalIncomingCall) {
-        console.log('📞 [SocketProvider] Accepting global incoming call');
         await webrtcService.acceptCall(globalIncomingCall);
       }
     } catch (error) {
@@ -105,7 +106,6 @@ export const SocketProvider = ({ children }) => {
   const handleGlobalRejectCall = () => {
     try {
       if (globalIncomingCall) {
-        console.log('📞 [SocketProvider] Rejecting global incoming call');
         webrtcService.rejectCall(globalIncomingCall);
         setShowGlobalCallModal(false);
         setGlobalIncomingCall(null);
@@ -118,7 +118,6 @@ export const SocketProvider = ({ children }) => {
 
   const handleGlobalEndCall = () => {
     try {
-      console.log('📞 [SocketProvider] Ending global call');
       webrtcService.endCall();
       setShowGlobalCallModal(false);
       setGlobalIncomingCall(null);
@@ -165,13 +164,11 @@ export const SocketProvider = ({ children }) => {
       }
 
       if (socket.connected) {
-        console.log("Socket connected successfully");
         // We don't show toast notifications here since we're using silent mode
       } else if (socket.connectionStatus === 'disconnected') {
         // Cleanup WebRTC service when socket disconnects
         try {
           webrtcService.destroy();
-          console.log("WebRTC service cleaned up on disconnect");
         } catch (error) {
           console.error("Error cleaning up WebRTC service:", error);
         }
@@ -186,28 +183,26 @@ export const SocketProvider = ({ children }) => {
     // 2. Not on login page
     // 3. Socket is not connected OR connection status is 'disconnected'
     // 4. We haven't attempted reconnection recently (to prevent spam)
+    // 5. Socket is not currently connecting or reconnecting
     const now = Date.now();
     const shouldReconnect =
       isAuthenticated() &&
       (!socket.connected || socket.connectionStatus === 'disconnected') &&
       window.location.pathname !== '/login' &&
+      socket.connectionStatus !== 'connecting' &&
+      socket.connectionStatus !== 'reconnecting' &&
       (now - lastReconnectAttempt > reconnectCooldown);
 
     // Additional check for messaging page - more aggressive reconnection
     const isOnMessagingPage = window.location.pathname.includes('/messages');
 
     if (shouldReconnect) {
-      console.log(`Attempting to reconnect socket... (On messaging page: ${isOnMessagingPage})`);
       setLastReconnectAttempt(now);
 
       try {
         socket.reconnect();
 
         // We're using silent mode, so we don't show toast notifications for reconnection attempts
-        // Only log to console
-        if (isOnMessagingPage && socket.connectionStatus === 'disconnected') {
-          console.log("Reconnecting to chat server...");
-        }
       } catch (error) {
         console.error("Error reconnecting socket:", error);
 
@@ -228,10 +223,14 @@ export const SocketProvider = ({ children }) => {
     window.location.pathname
   ]);
 
-  // Reconnect when user information changes
+  // Reconnect when user information changes - with cooldown
   useEffect(() => {
-    if (user && isAuthenticated() && !socket.connected) {
-      console.log("User information changed, reconnecting socket...");
+    const now = Date.now();
+    if (user && isAuthenticated() && !socket.connected &&
+        socket.connectionStatus !== 'connecting' &&
+        socket.connectionStatus !== 'reconnecting' &&
+        (now - lastReconnectAttempt > reconnectCooldown)) {
+      setLastReconnectAttempt(now);
       socket.reconnect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -242,8 +241,23 @@ export const SocketProvider = ({ children }) => {
     return children;
   }
 
+  // Create enhanced context value that includes both socket and messages state
+  const contextValue = {
+    ...socket,
+    // Expose messages state and functions that components expect (using extracted reactive variables)
+    messages,
+    setMessages,
+    // Ensure all socket functions are available
+    connected: socket.connected,
+    getSocket: socket.getSocket,
+    joinChat: socket.joinChat,
+    sendMessage: socket.sendMessage,
+    subscribe: socket.subscribe || (() => () => {}), // Add subscribe method if missing
+  };
+
+
   return (
-    <SocketContext.Provider value={socket}>
+    <SocketContext.Provider value={contextValue}>
       {children}
 
       {/* Global Call Modal - Handles incoming calls across the application */}
