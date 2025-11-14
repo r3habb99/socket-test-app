@@ -4,17 +4,21 @@ import { UserProfileModal } from "../UserProfileModal";
 import { useChatLogic } from "./ChatLogic";
 import { useChatHandlers } from "./ChatHandlers";
 import { useMessageHandlers } from "./MessageHandlers";
-import { ChatHeader, MessageInput, MessagesContainer } from "./ChatUI";
+import { ChatHeader, MessageInput, MessagesContainer, MessageSearchDrawer } from "./ChatUI";
 // import { CallModal, CallDebugger, CallTestButton } from "../WebRTC";
 import { CallModal } from "../WebRTC";
 // import { WebRTCTestComponent } from "../WebRTC/WebRTCTestComponent";
 import { useCall } from "../../hooks";
 import "./Chat.css";
+import { useState, useEffect } from "react";
 
 export const Chat = ({ selectedChat, onBackClick }) => {
   const socketContext = useSocketContext();
   // Define showDebug state at the top level, not conditionally
   // const [showDebug] = useState(process.env.NODE_ENV === 'development');
+
+  // Search functionality state
+  const [showSearchDrawer, setShowSearchDrawer] = useState(false);
 
   // Use the custom hooks to get all the logic and state
   const {
@@ -97,6 +101,34 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     webrtcCall.startAudioCall(toUserId, chatId);
   };
 
+  // Search handlers
+  const handleSearchClick = () => {
+    setShowSearchDrawer(true);
+  };
+
+  const handleSearchClose = () => {
+    setShowSearchDrawer(false);
+  };
+
+  // Global keyboard shortcut for search (Ctrl+F or Cmd+F)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Check for Ctrl+F (Windows/Linux) or Cmd+F (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault(); // Prevent browser's default find
+        setShowSearchDrawer(true);
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   // Check if a chat is selected
   if (!selectedChat) {
     return (
@@ -119,6 +151,14 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         onStartVideoCall={handleStartVideoCall}
         onStartAudioCall={handleStartAudioCall}
         isCallAvailable={webrtcCall.isAvailableForCalls()}
+        onSearchClick={handleSearchClick}
+      />
+
+      {/* WhatsApp-like Message Search Bar */}
+      <MessageSearchDrawer
+        visible={showSearchDrawer}
+        onClose={handleSearchClose}
+        selectedChat={selectedChat}
       />
 
       <MessagesContainer

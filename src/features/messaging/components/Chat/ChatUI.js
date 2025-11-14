@@ -1,5 +1,5 @@
-import React from "react";
-import { Layout, Button, Avatar, Input, Spin, Empty, Typography } from "antd";
+import React, { useState, useRef, useEffect } from "react";
+import { Layout, Button, Avatar, Input, Spin, Typography, Empty } from "antd";
 import {
   ArrowLeftOutlined,
   SearchOutlined,
@@ -11,32 +11,265 @@ import {
   LoadingOutlined,
   ReloadOutlined,
   VideoCameraOutlined,
-  PhoneOutlined
+  PhoneOutlined,
+  CloseOutlined,
+  UpOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { getImageUrl } from "../../../../shared/utils";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
+import { searchMessages } from "../../api/messagingApi";
 import MessageStatus from "../MessageStatus";
 import UserStatus from "../UserStatus";
 import "./Chat.css";
 
 /**
+ * WhatsApp-like Message Search Bar Component
+ * Appears inline below the chat header with navigation controls
+ */
+const MessageSearchBar = ({
+  visible,
+  onClose,
+  selectedChat
+}) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [currentResultIndex, setCurrentResultIndex] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef(null);
+
+  // Handle search with debounce
+  const handleSearch = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setCurrentResultIndex(0);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await searchMessages(selectedChat._id, query);
+
+      if (response.success && response.data) {
+        // The handleApiResponse function processes the response, so response.data contains the processed data
+        // Based on the actual response structure: response.data.results
+        const results = response.data.results || [];
+
+        setSearchResults(results);
+        setCurrentResultIndex(results.length > 0 ? 0 : -1);
+
+        // Scroll to first result if available
+        if (results.length > 0) {
+          scrollToMessage(results[0]);
+        }
+      } else {
+        setSearchResults([]);
+        setCurrentResultIndex(-1);
+      }
+    } catch (error) {
+      console.error("Error searching messages:", error);
+      setSearchResults([]);
+      setCurrentResultIndex(-1);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Scroll to a specific message and highlight it
+  const scrollToMessage = (message) => {
+    if (!message) return;
+
+    setTimeout(() => {
+      const messageElement = document.querySelector(`[data-message-id="${message._id}"]`);
+      if (messageElement) {
+        // Scroll to the message with smooth animation
+        messageElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
+        });
+
+        // Highlight the message temporarily (WhatsApp-style with dark theme)
+        const originalBackground = messageElement.style.backgroundColor;
+        const originalBoxShadow = messageElement.style.boxShadow;
+        const originalTransform = messageElement.style.transform;
+
+        messageElement.style.backgroundColor = 'rgba(0, 168, 132, 0.3)';
+        messageElement.style.boxShadow = '0 0 0 2px rgba(0, 168, 132, 0.4)';
+        messageElement.style.transform = 'scale(1.01)';
+        messageElement.style.transition = 'all 0.3s ease';
+
+        // Fade to lighter highlight
+        setTimeout(() => {
+          messageElement.style.backgroundColor = 'rgba(0, 168, 132, 0.2)';
+        }, 300);
+
+        // Remove highlight after 2 seconds
+        setTimeout(() => {
+          messageElement.style.backgroundColor = originalBackground;
+          messageElement.style.boxShadow = originalBoxShadow;
+          messageElement.style.transform = originalTransform;
+        }, 2000);
+      } else {
+        console.log("Message not found in current view. Message ID:", message._id);
+      }
+    }, 100);
+  };
+
+  // Navigate to previous search result
+  const handlePreviousResult = () => {
+    if (searchResults.length === 0) return;
+
+    const newIndex = currentResultIndex > 0 ? currentResultIndex - 1 : searchResults.length - 1;
+    setCurrentResultIndex(newIndex);
+    scrollToMessage(searchResults[newIndex]);
+  };
+
+  // Navigate to next search result
+  const handleNextResult = () => {
+    if (searchResults.length === 0) return;
+
+    const newIndex = currentResultIndex < searchResults.length - 1 ? currentResultIndex + 1 : 0;
+    setCurrentResultIndex(newIndex);
+    scrollToMessage(searchResults[newIndex]);
+  };
+
+  // Handle search input change with debounce
+  const handleSearchInputChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set a new timeout to delay the search
+    searchTimeoutRef.current = setTimeout(() => {
+      handleSearch(query);
+    }, 500); // 500ms delay
+  };
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e) => {
+    // Enter key - navigate to next result
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (searchResults.length > 0) {
+        handleNextResult();
+      }
+    }
+    // Shift + Enter - navigate to previous result
+    else if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      if (searchResults.length > 0) {
+        handlePreviousResult();
+      }
+    }
+    // Escape key - close search
+    else if (e.key === 'Escape') {
+      e.preventDefault();
+      onClose();
+    }
+  };
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Clear search when search bar closes
+  useEffect(() => {
+    if (!visible) {
+      setSearchQuery("");
+      setSearchResults([]);
+      setCurrentResultIndex(0);
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <div className="message-search-bar">
+      <div className="search-input-wrapper">
+        <Input
+          placeholder="Search messages... (Enter: next, Shift+Enter: prev, Esc: close)"
+          value={searchQuery}
+          onChange={handleSearchInputChange}
+          onKeyDown={handleKeyDown}
+          prefix={<SearchOutlined className="search-icon" />}
+          suffix={
+            isSearching ? (
+              <Spin size="small" />
+            ) : searchQuery && searchResults.length === 0 && !isSearching ? (
+              <span className="no-results-text">No results</span>
+            ) : null
+          }
+          autoFocus
+          className="search-input"
+        />
+      </div>
+
+      {searchResults.length > 0 && (
+        <div className="search-navigation">
+          <span className="result-counter">
+            {currentResultIndex + 1} of {searchResults.length}
+          </span>
+          <div className="navigation-buttons">
+            <Button
+              type="text"
+              size="small"
+              icon={<UpOutlined />}
+              onClick={handlePreviousResult}
+              disabled={searchResults.length === 0}
+              className="nav-button"
+              title="Previous result (Shift + Enter)"
+            />
+            <Button
+              type="text"
+              size="small"
+              icon={<DownOutlined />}
+              onClick={handleNextResult}
+              disabled={searchResults.length === 0}
+              className="nav-button"
+              title="Next result (Enter)"
+            />
+          </div>
+        </div>
+      )}
+
+      <Button
+        type="text"
+        size="small"
+        icon={<CloseOutlined />}
+        onClick={onClose}
+        className="close-button"
+        title="Close search (Esc)"
+      />
+    </div>
+  );
+};
+
+/**
  * Typing indicator component with animated dots
  */
 const TypingIndicator = ({ typingUsers, currentUserId }) => {
-  // Add debugging
-  console.log('TypingIndicator - typingUsers:', typingUsers);
-  console.log('TypingIndicator - currentUserId:', currentUserId);
 
   // Filter out current user from typing users
   const otherUsersTyping = Object.entries(typingUsers || {}).filter(
     ([userId]) => userId !== currentUserId
   );
 
-  console.log('TypingIndicator - otherUsersTyping:', otherUsersTyping);
 
   // Don't render if no one else is typing
   if (otherUsersTyping.length === 0) {
-    console.log('TypingIndicator - No other users typing, returning null');
     return null;
   }
 
@@ -52,8 +285,6 @@ const TypingIndicator = ({ typingUsers, currentUserId }) => {
   } else {
     displayText = `${typingUsernames[0]} and ${typingUsernames.length - 1} others are typing`;
   }
-
-  console.log('TypingIndicator - Rendering with displayText:', displayText);
 
   return (
     <div className="typing-indicator">
@@ -81,7 +312,8 @@ export const ChatHeader = ({
   setShowProfileModal,
   onStartVideoCall,
   onStartAudioCall,
-  isCallAvailable = true
+  isCallAvailable = true,
+  onSearchClick
 }) => {
   return (
     <Layout.Header className="chat-header-container">
@@ -179,7 +411,8 @@ export const ChatHeader = ({
           type="text"
           icon={<SearchOutlined />}
           className="header-icon"
-          title="Search"
+          title="Search Messages"
+          onClick={onSearchClick}
         />
         <Button
           type="text"
@@ -303,6 +536,7 @@ export const MessagesContainer = ({
                 onClick={() => {
                   console.log("Load more messages functionality would be implemented here");
                   // Future implementation: Load older messages
+
                 }}
               >
                 Load older messages
@@ -323,7 +557,6 @@ export const MessagesContainer = ({
                   icon={<ReloadOutlined />}
                   onClick={() => {
                     // Use silent reconnect
-                    console.log("Manual reconnection initiated from Chat component");
                     socketContext.reconnect();
                   }}
                 >
@@ -343,7 +576,6 @@ export const MessagesContainer = ({
                   icon={<ReloadOutlined />}
                   onClick={() => {
                     // Use silent reconnect
-                    console.log("Manual reconnection initiated from Chat component");
                     socketContext.reconnect();
                   }}
                 >
@@ -400,7 +632,10 @@ export const MessagesContainer = ({
                   </div>
                 )}
 
-                <li className={`${messageClass}`}>
+                <li
+                  className={`${messageClass}`}
+                  data-message-id={msg._id || msg.id}
+                >
                   <div className="message-bubble">
                     <div className="message-content">{msg.content}</div>
                     <div className="message-info">
@@ -440,3 +675,7 @@ export const MessagesContainer = ({
     </div>
   );
 };
+
+// Export the MessageSearchBar component (keeping old name for backward compatibility)
+export { MessageSearchBar };
+export { MessageSearchBar as MessageSearchDrawer };
