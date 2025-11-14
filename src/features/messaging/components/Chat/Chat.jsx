@@ -26,6 +26,8 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     setMessage,
     loadingMessages,
     setLoadingMessages,
+    loadingOlderMessages,
+    hasMoreMessages,
     showProfileModal,
     setShowProfileModal,
     typingTimeout,
@@ -40,6 +42,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     handleScrollToTop,
     lastLoadedChatIdRef,
     loadMessagesForChat,
+    loadOlderMessages,
     messages // Added messages from useChatLogic
   } = useChatLogic(selectedChat, socketContext);
 
@@ -171,6 +174,9 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         formatMessageDate={formatMessageDate}
         getMessageDate={getMessageDate}
         messages={messages} // Pass messages explicitly
+        loadOlderMessages={loadOlderMessages}
+        loadingOlderMessages={loadingOlderMessages}
+        hasMoreMessages={hasMoreMessages}
       />
 
 

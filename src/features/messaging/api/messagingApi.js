@@ -111,11 +111,15 @@ export const getUnreadMessageCount = async () => {
 /**
  * Get all messages for a chat
  * @param {string} chatId - Chat ID
+ * @param {number} limit - Number of messages to retrieve (default: 20)
+ * @param {number} skip - Number of messages to skip (default: 0)
  * @returns {Promise<Object>} Response object
  */
-export const getMessages = async (chatId) => {
+export const getMessages = async (chatId, limit = 20, skip = 0) => {
   try {
-    const response = await apiClient.get(endpoints.message.getAll(chatId));
+    const response = await apiClient.get("/message/chat", {
+      params: { chatId, limit, skip }
+    });
     return handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);

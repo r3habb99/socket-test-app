@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { getMessagesForChat } from "../../api/messagingApi";
+import { getMessagesForChat, getMessages } from "../../api/messagingApi";
 import { sanitizeMessagesArray } from "../../utils/objectIdUtils";
 
 /**
@@ -11,9 +11,11 @@ import { sanitizeMessagesArray } from "../../utils/objectIdUtils";
 export const useChatLogic = (selectedChat, socketContext) => {
   const [message, setMessage] = useState("");
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [isAtTop, setIsAtTop] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
@@ -168,6 +170,82 @@ export const useChatLogic = (selectedChat, socketContext) => {
       });
   }, []);
 
+  // Function to load older messages with pagination
+  const loadOlderMessages = useCallback(async () => {
+    const chatId = selectedChat?._id || selectedChat?.id;
+
+    if (!chatId || loadingOlderMessages || !hasMoreMessages) {
+      return;
+    }
+
+    setLoadingOlderMessages(true);
+
+    try {
+      const currentMessages = socketContext.messages || [];
+      const skip = currentMessages.length;
+      const limit = 20;
+
+      const response = await getMessages(chatId, limit, skip);
+
+      // Extract messages from the response
+      let olderMessages = [];
+      if (Array.isArray(response)) {
+        olderMessages = response;
+      } else if (response.data) {
+        if (Array.isArray(response.data)) {
+          olderMessages = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          olderMessages = response.data.data;
+        }
+      }
+
+      // Filter and normalize messages
+      const validMessages = olderMessages.filter(msg => msg && msg.content);
+      const normalizedMessages = validMessages.map(msg => ({
+        ...msg,
+        _id: msg._id || msg.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        id: msg.id || msg._id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        sender: msg.sender || { _id: msg.senderId, id: msg.senderId },
+        chat: msg.chat || { _id: chatId, id: chatId },
+        createdAt: msg.createdAt || msg.timestamp || new Date().toISOString()
+      }));
+
+      // Sanitize messages
+      const sanitizedMessages = sanitizeMessagesArray(normalizedMessages);
+
+      if (sanitizedMessages.length === 0) {
+        // No more messages to load
+        setHasMoreMessages(false);
+     } else {
+        // Save current scroll position
+        const container = messagesContainerRef.current;
+        const previousScrollHeight = container?.scrollHeight || 0;
+
+        // Prepend older messages to existing messages
+        const updatedMessages = [...sanitizedMessages, ...currentMessages];
+
+        // Sort by timestamp to ensure correct order
+        updatedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+        socketContext.setMessages(updatedMessages);
+
+        // Restore scroll position to prevent jumping
+        setTimeout(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            const scrollDiff = newScrollHeight - previousScrollHeight;
+            container.scrollTop = scrollDiff;
+          }
+        }, 0);
+
+      }
+    } catch (error) {
+      console.error("Error loading older messages:", error);
+    } finally {
+      setLoadingOlderMessages(false);
+    }
+  }, [selectedChat, socketContext, loadingOlderMessages, hasMoreMessages, messagesContainerRef]);
+
   // Load messages when chat is selected - simplified to avoid race conditions and ensure messages load correctly
   useEffect(() => {
     // Extract chat ID to a variable for dependency array
@@ -185,6 +263,9 @@ export const useChatLogic = (selectedChat, socketContext) => {
 
       // Clear existing messages immediately to avoid showing messages from previous chat
       socketContext.setMessages([]);
+
+      // Reset pagination state
+      setHasMoreMessages(true);
 
       // Update the ref to track this chat ID
       lastLoadedChatIdRef.current = chatId;
@@ -246,6 +327,8 @@ export const useChatLogic = (selectedChat, socketContext) => {
     setMessage,
     loadingMessages,
     setLoadingMessages,
+    loadingOlderMessages,
+    hasMoreMessages,
     showProfileModal,
     setShowProfileModal,
     typingTimeout,
@@ -260,6 +343,7 @@ export const useChatLogic = (selectedChat, socketContext) => {
     handleScrollToTop,
     lastLoadedChatIdRef,
     loadMessagesForChat,
+    loadOlderMessages,
     messages: socketContext.messages || [], // Added messages state from socketContext with fallback
   };
 };

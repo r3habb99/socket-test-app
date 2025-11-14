@@ -497,7 +497,10 @@ export const MessagesContainer = ({
   userId,
   formatMessageDate,
   getMessageDate,
-  messages // Add messages prop
+  messages, // Add messages prop
+  loadOlderMessages, // Add loadOlderMessages function
+  loadingOlderMessages, // Add loading state for older messages
+  hasMoreMessages // Add hasMoreMessages flag
 }) => {
 
 
@@ -528,18 +531,16 @@ export const MessagesContainer = ({
       ) : Array.isArray(socketContext.messages) ? (
         <ul className="messages-list">
           {/* Load more messages button - only shown when at the top */}
-          {isAtTop && socketContext.messages && socketContext.messages.length > 0 && (
+          {isAtTop && socketContext.messages && socketContext.messages.length > 0 && hasMoreMessages && (
             <div className="load-more-container">
               <Button
                 size="small"
-                icon={<ReloadOutlined />}
-                onClick={() => {
-                  console.log("Load more messages functionality would be implemented here");
-                  // Future implementation: Load older messages
-
-                }}
+                icon={<ReloadOutlined spin={loadingOlderMessages} />}
+                onClick={loadOlderMessages}
+                loading={loadingOlderMessages}
+                disabled={loadingOlderMessages}
               >
-                Load older messages
+                {loadingOlderMessages ? "Loading..." : "Load older messages"}
               </Button>
             </div>
           )}
