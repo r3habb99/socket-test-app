@@ -714,6 +714,25 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       }
     });
 
+    // Handle message deleted event
+    socket.on("message deleted", (data) => {
+      debugLog("Message deleted event received:", data);
+      const messageId = data.messageId || data._id || data.id;
+
+      if (messageId) {
+        // Remove the deleted message from the messages list
+        setMessages(prevMessages => {
+          const filteredMessages = prevMessages.filter(msg => {
+            const msgId = msg._id || msg.id;
+            return msgId !== messageId;
+          });
+
+          debugLog(`Removed message ${messageId} from messages list. Before: ${prevMessages.length}, After: ${filteredMessages.length}`);
+          return filteredMessages;
+        });
+      }
+    });
+
     // User typing handlers - updated to match backend events
     const userTypingHandler = (data) => {
       // Extract the chat/room ID from the data
@@ -796,6 +815,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       socket.off("message delivered");
       socket.off("message read");
       socket.off("messages bulk read");
+      socket.off("message deleted");
 
       // Typing events
       socket.off("user typing", userTypingHandler);

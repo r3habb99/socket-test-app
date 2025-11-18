@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Layout, Button, Avatar, Input, Spin, Typography, Empty, Image as AntImage } from "antd";
+import { Layout, Button, Avatar, Input, Spin, Typography, Empty, Image as AntImage, Popconfirm } from "antd";
 import {
   ArrowLeftOutlined,
   SearchOutlined,
@@ -604,7 +604,8 @@ export const MessagesContainer = ({
   messages, // Add messages prop
   loadOlderMessages, // Add loadOlderMessages function
   loadingOlderMessages, // Add loading state for older messages
-  hasMoreMessages // Add hasMoreMessages flag
+  hasMoreMessages, // Add hasMoreMessages flag
+  handleDeleteMessage // Add delete message handler
 }) => {
 
 
@@ -742,6 +743,26 @@ export const MessagesContainer = ({
                   data-message-id={msg._id || msg.id}
                 >
                   <div className="message-bubble">
+                    {/* Delete button - only show for sender's messages */}
+                    {isSender && handleDeleteMessage && (
+                      <Popconfirm
+                        title="Delete message"
+                        description="Are you sure you want to delete this message?"
+                        onConfirm={() => handleDeleteMessage(msg._id || msg.id)}
+                        okText="Delete"
+                        cancelText="Cancel"
+                        okButtonProps={{ danger: true }}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<DeleteOutlined />}
+                          className="message-delete-btn"
+                          title="Delete message"
+                        />
+                      </Popconfirm>
+                    )}
+
                     {/* Render text content if present */}
                     {msg.content && <div className="message-content">{msg.content}</div>}
 

@@ -200,12 +200,16 @@ export const sendMessage = async (messageData) => {
 /**
  * Delete a message
  * @param {string} messageId - Message ID
+ * @param {string} chatId - Chat ID (required by backend for socket event)
  * @returns {Promise<Object>} Response object
  */
-export const deleteMessage = async (messageId) => {
+export const deleteMessage = async (messageId, chatId) => {
   try {
     const response = await apiClient.delete(
-      endpoints.message.delete(messageId)
+      endpoints.message.delete(messageId),
+      {
+        data: { chatId } // Include chatId in request body
+      }
     );
     return handleApiResponse(response);
   } catch (error) {

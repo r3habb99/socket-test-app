@@ -1,6 +1,7 @@
 import { useRef, useCallback } from "react";
+import { message as antMessage } from "antd";
 import { debugLog } from "../../utils/socketDebug";
-import { sendMessage as sendMessageApi } from "../../api/messagingApi";
+import { sendMessage as sendMessageApi, deleteMessage as deleteMessageApi } from "../../api/messagingApi";
 
 /**
  * Custom hook that contains all the message handling logic for the Chat component
@@ -158,11 +159,38 @@ export const useMessageHandlers = ({
     return date.toLocaleDateString();
   };
 
+  // Handle delete message
+  const handleDeleteMessage = useCallback(async (messageId) => {
+    const chatId = selectedChat?._id || selectedChat?.id;
+
+    if (!messageId || !chatId) {
+      debugLog("Cannot delete message: missing messageId or chatId");
+      return;
+    }
+
+    try {
+      debugLog(`Deleting message ${messageId} from chat ${chatId}`);
+
+      const response = await deleteMessageApi(messageId, chatId);
+
+      if (response.success) {
+        debugLog("Message deleted successfully via API");
+        antMessage.success("Message deleted successfully");
+      } else {
+        throw new Error(response.message || "Failed to delete message");
+      }
+    } catch (error) {
+      debugLog("Error deleting message:", error);
+      antMessage.error("Failed to delete message. Please try again.");
+    }
+  }, [selectedChat]);
+
   return {
     handleSendMessage,
     handleKeyPress,
     formatMessageDate,
     getMessageDate,
+    handleDeleteMessage,
     receivedMessagesRef,
     registeredChatIdRef
   };

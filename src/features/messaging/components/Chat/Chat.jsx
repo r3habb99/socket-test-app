@@ -74,7 +74,8 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     handleSendMessage,
     handleKeyPress,
     formatMessageDate,
-    getMessageDate
+    getMessageDate,
+    handleDeleteMessage
   } = useMessageHandlers({
     selectedChat,
     socketContext,
@@ -184,6 +185,7 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         loadOlderMessages={loadOlderMessages}
         loadingOlderMessages={loadingOlderMessages}
         hasMoreMessages={hasMoreMessages}
+        handleDeleteMessage={handleDeleteMessage}
       />
 
 
