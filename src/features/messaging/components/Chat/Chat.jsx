@@ -34,6 +34,10 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     setTypingTimeout,
     isAtTop,
     setIsAtTop,
+    selectedMedia,
+    setSelectedMedia,
+    mediaPreview,
+    setMediaPreview,
     messagesEndRef,
     messagesContainerRef,
     userId,
@@ -78,7 +82,10 @@ export const Chat = ({ selectedChat, onBackClick }) => {
     setMessage,
     userId,
     scrollToBottom,
-    handleTyping
+    handleTyping,
+    selectedMedia,
+    setSelectedMedia,
+    setMediaPreview
   });
 
 
@@ -187,6 +194,10 @@ export const Chat = ({ selectedChat, onBackClick }) => {
         handleKeyPress={handleKeyPress}
         handleSendMessage={handleSendMessage}
         socketContext={socketContext}
+        selectedMedia={selectedMedia}
+        setSelectedMedia={setSelectedMedia}
+        mediaPreview={mediaPreview}
+        setMediaPreview={setMediaPreview}
       />
 
       {/* User Profile Modal */}

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Layout, Button, Avatar, Input, Spin, Typography, Empty } from "antd";
+import { Layout, Button, Avatar, Input, Spin, Typography, Empty, Image as AntImage } from "antd";
 import {
   ArrowLeftOutlined,
   SearchOutlined,
@@ -15,6 +15,8 @@ import {
   CloseOutlined,
   UpOutlined,
   DownOutlined,
+  PlayCircleOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { getImageUrl } from "../../../../shared/utils";
 import { DEFAULT_PROFILE_PIC } from "../../../../constants";
@@ -437,42 +439,144 @@ export const ChatHeader = ({
 };
 
 /**
- * Renders the message input area
+ * Renders the message input area with media upload support
  */
 export const MessageInput = ({
   message,
   setMessage,
   handleKeyPress,
   handleSendMessage,
-  socketContext
+  socketContext,
+  selectedMedia,
+  setSelectedMedia,
+  mediaPreview,
+  setMediaPreview
 }) => {
-  const isDisabled = !message.trim() || !socketContext.connected;
+  const fileInputRef = useRef(null);
+
+  // Handle file selection
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Limit to 5 files
+    const filesToAdd = files.slice(0, 5 - (selectedMedia?.length || 0));
+
+    if (filesToAdd.length < files.length) {
+      console.warn(`Only ${5 - (selectedMedia?.length || 0)} more files can be added (max 5 total)`);
+    }
+
+    // Validate files
+    const validFiles = [];
+    const previews = [];
+
+    filesToAdd.forEach(file => {
+      // Check file type
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+
+      if (!isImage && !isVideo) {
+        console.warn(`File ${file.name} is not an image or video`);
+        return;
+      }
+
+      // Check file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        console.warn(`File ${file.name} exceeds 5MB limit`);
+        return;
+      }
+
+      validFiles.push(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        previews.push({
+          file,
+          url: reader.result,
+          type: isImage ? 'image' : 'video'
+        });
+
+        // Update state when all previews are ready
+        if (previews.length === validFiles.length) {
+          setSelectedMedia(prev => [...(prev || []), ...validFiles]);
+          setMediaPreview(prev => [...(prev || []), ...previews]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Reset file input
+    e.target.value = '';
+  };
+
+  // Remove a selected media file
+  const handleRemoveMedia = (index) => {
+    setSelectedMedia(prev => prev.filter((_, i) => i !== index));
+    setMediaPreview(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Check if send button should be disabled
+  const isDisabled = (!message.trim() && (!selectedMedia || selectedMedia.length === 0)) || !socketContext.connected;
 
   return (
     <div className="input-container mobile-input-container">
+      {/* Media Preview */}
+      {mediaPreview && mediaPreview.length > 0 && (
+        <div className="media-preview-container">
+          {mediaPreview.map((preview, index) => (
+            <div key={index} className="media-preview-item">
+              {preview.type === 'image' ? (
+                <img src={preview.url} alt={`Preview ${index + 1}`} className="media-preview-image" />
+              ) : (
+                <div className="media-preview-video">
+                  <PlayCircleOutlined className="video-icon" />
+                  <video src={preview.url} className="media-preview-video-element" />
+                </div>
+              )}
+              <Button
+                type="text"
+                danger
+                size="small"
+                icon={<DeleteOutlined />}
+                className="media-preview-remove"
+                onClick={() => handleRemoveMedia(index)}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="message-actions">
-        <Button
-          type="text"
-          className="message-action-button"
-          title="Add photo"
-          icon={<PictureOutlined />}
+        {/* Hidden file input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*,video/*"
+          multiple
+          style={{ display: 'none' }}
         />
+
         <Button
           type="text"
           className="message-action-button"
-          title="Add GIF"
-        >
-          GIF
-        </Button>
+          title="Add photo or video"
+          icon={<PictureOutlined />}
+          onClick={() => fileInputRef.current?.click()}
+          disabled={selectedMedia && selectedMedia.length >= 5}
+        />
       </div>
+
       <Input
-        placeholder="Start a new message"
+        placeholder={selectedMedia && selectedMedia.length > 0 ? "Add a caption (optional)" : "Start a new message"}
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyPress}
         variant="borderless"
         className="message-input"
       />
+
       <Button
         type="primary"
         shape="circle"
@@ -590,9 +694,9 @@ export const MessagesContainer = ({
 
           {/* Group messages by date */}
           {(messages || []).map((msg, index) => {
-            // Skip rendering if message doesn't have content
-            if (!msg || !msg.content) {
-              console.warn(`Skipping message ${index} - no content:`, msg);
+            // Skip rendering if message doesn't have content OR media
+            if (!msg || (!msg.content && (!msg.media || msg.media.length === 0))) {
+              console.warn(`Skipping message ${index} - no content or media:`, msg);
               return null;
             }
 
@@ -638,7 +742,39 @@ export const MessagesContainer = ({
                   data-message-id={msg._id || msg.id}
                 >
                   <div className="message-bubble">
-                    <div className="message-content">{msg.content}</div>
+                    {/* Render text content if present */}
+                    {msg.content && <div className="message-content">{msg.content}</div>}
+
+                    {/* Render media if present */}
+                    {msg.media && msg.media.length > 0 && (
+                      <div className={`message-media-grid grid-${msg.media.length}`}>
+                        {msg.media.map((mediaUrl, mediaIndex) => {
+                          const isVideo = mediaUrl.match(/\.(mp4|mov|avi|webm)$/i);
+                          return (
+                            <div key={mediaIndex} className="message-media-item">
+                              {isVideo ? (
+                                <video
+                                  src={mediaUrl}
+                                  controls
+                                  className="message-media-video"
+                                  preload="metadata"
+                                />
+                              ) : (
+                                <AntImage
+                                  src={mediaUrl}
+                                  alt={`Media ${mediaIndex + 1}`}
+                                  className="message-media-image"
+                                  preview={{
+                                    mask: <div>Click to view</div>
+                                  }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     <div className="message-info">
                       <div className="message-timestamp">
                         {formatMessageDate(msg.createdAt)}

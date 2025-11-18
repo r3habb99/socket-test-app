@@ -141,17 +141,55 @@ export const getMessagesForChat = async (chatId) => {
 };
 
 /**
- * Send a message
+ * Send a message with optional media files
  * @param {Object} messageData - Message data
- * @param {string} messageData.content - Message content
+ * @param {string} messageData.content - Message content (optional if media is provided)
  * @param {string} messageData.chatId - Chat ID
+ * @param {Array<File>} messageData.media - Array of media files (optional)
  * @returns {Promise<Object>} Response object
  */
 export const sendMessage = async (messageData) => {
   try {
+    // Check if we have media files to upload
+    const hasMedia = messageData.media && messageData.media.length > 0;
+
+    let requestData;
+    let config = {};
+
+    if (hasMedia) {
+      // Create FormData for multipart/form-data request
+      const formData = new FormData();
+      formData.append('content', messageData.content || '');
+      formData.append('chatId', messageData.chatId);
+
+      // Append media files
+      messageData.media.forEach((file) => {
+        formData.append('media', file);
+      });
+
+      // Add other optional fields
+      if (messageData.messageType) {
+        formData.append('messageType', messageData.messageType);
+      }
+      if (messageData.replyToId) {
+        formData.append('replyToId', messageData.replyToId);
+      }
+
+      requestData = formData;
+      config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+    } else {
+      // Regular JSON request
+      requestData = messageData;
+    }
+
     const response = await apiClient.post(
       endpoints.message.create,
-      messageData
+      requestData,
+      config
     );
     return handleApiResponse(response);
   } catch (error) {
@@ -176,17 +214,48 @@ export const deleteMessage = async (messageId) => {
 };
 
 /**
- * Edit a message
+ * Edit a message with optional media files
  * @param {string} messageId - Message ID
  * @param {Object} messageData - Message data
- * @param {string} messageData.content - New message content
+ * @param {string} messageData.content - New message content (optional if media is provided)
+ * @param {string} messageData.chatId - Chat ID
+ * @param {Array<File>} messageData.media - Array of media files (optional)
  * @returns {Promise<Object>} Response object
  */
 export const editMessage = async (messageId, messageData) => {
   try {
+    // Check if we have media files to upload
+    const hasMedia = messageData.media && messageData.media.length > 0;
+
+    let requestData;
+    let config = {};
+
+    if (hasMedia) {
+      // Create FormData for multipart/form-data request
+      const formData = new FormData();
+      formData.append('content', messageData.content || '');
+      formData.append('chatId', messageData.chatId);
+
+      // Append media files
+      messageData.media.forEach((file) => {
+        formData.append('media', file);
+      });
+
+      requestData = formData;
+      config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+    } else {
+      // Regular JSON request
+      requestData = messageData;
+    }
+
     const response = await apiClient.put(
       endpoints.message.update(messageId),
-      messageData
+      requestData,
+      config
     );
     return handleApiResponse(response);
   } catch (error) {

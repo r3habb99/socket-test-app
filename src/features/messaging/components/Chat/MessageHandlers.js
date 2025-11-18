@@ -1,5 +1,6 @@
 import { useRef, useCallback } from "react";
 import { debugLog } from "../../utils/socketDebug";
+import { sendMessage as sendMessageApi } from "../../api/messagingApi";
 
 /**
  * Custom hook that contains all the message handling logic for the Chat component
@@ -13,7 +14,10 @@ export const useMessageHandlers = ({
   setMessage,
   userId,
   scrollToBottom,
-  handleTyping
+  handleTyping,
+  selectedMedia,
+  setSelectedMedia,
+  setMediaPreview
 }) => {
   // Track received messages to prevent duplicates - using a Map for better tracking with timestamps
   const receivedMessagesRef = useRef(new Map());
@@ -29,12 +33,16 @@ export const useMessageHandlers = ({
   // Track messages that are currently being sent to prevent duplicates
   const pendingMessagesRef = useRef(new Set());
 
-  const handleSendMessage = useCallback(() => {
+  const handleSendMessage = useCallback(async () => {
     // Ensure we have a valid chat ID (either _id or id)
     const chatId = selectedChat?._id || selectedChat?.id;
 
-    if (!message.trim() || !chatId) {
-      debugLog("Cannot send message: missing content or chat ID");
+    // Check if we have either message content or media
+    const hasContent = message.trim().length > 0;
+    const hasMedia = selectedMedia && selectedMedia.length > 0;
+
+    if ((!hasContent && !hasMedia) || !chatId) {
+      debugLog("Cannot send message: missing content/media or chat ID");
       return;
     }
 
@@ -44,7 +52,7 @@ export const useMessageHandlers = ({
       const currentTime = Date.now();
 
       // Create a unique signature for this message to track duplicates
-      const messageSignature = `${messageContent}-${userId}-${chatId}`;
+      const messageSignature = `${messageContent}-${userId}-${chatId}-${hasMedia ? 'media' : 'text'}`;
 
       // Prevent duplicate sends by checking if this message is already being sent
       if (pendingMessagesRef.current.has(messageSignature)) {
@@ -54,6 +62,7 @@ export const useMessageHandlers = ({
 
       // Prevent duplicate sends by checking if this is the same message sent within the last 2 seconds
       if (
+        !hasMedia &&
         messageContent === lastSentMessageRef.current.content &&
         currentTime - lastSentMessageRef.current.timestamp < 2000
       ) {
@@ -70,24 +79,37 @@ export const useMessageHandlers = ({
       // Add this message to pending set
       pendingMessagesRef.current.add(messageSignature);
 
-      // Clear the input field immediately to prevent multiple sends
+      // Clear the input field and media immediately to prevent multiple sends
       setMessage("");
+      setSelectedMedia([]);
+      setMediaPreview([]);
 
       // Stop typing indicator
       handleTyping(false);
 
-      // Clear the input field immediately after sending
-      debugLog(`Sending message via socket: ${messageContent.substring(0, 20)}...`);
+      debugLog(`Sending message: ${messageContent.substring(0, 20)}... with ${selectedMedia?.length || 0} media files`);
 
-      // Note: We don't add the message locally anymore
-      // The socket handler in useSocket.js will handle the message response
-      // This prevents duplicate messages and ensures proper state management
+      // If we have media, use the API (which supports FormData)
+      // Otherwise, use socket for faster text-only messages
+      if (hasMedia) {
+        const response = await sendMessageApi({
+          content: messageContent,
+          chatId: chatId,
+          media: selectedMedia
+        });
 
-      // Send message via socket context
-      socketContext.sendMessage({
-        content: messageContent,
-        chatId: chatId
-      });
+        if (response.success) {
+          debugLog("Message with media sent successfully via API");
+        } else {
+          throw new Error(response.message || "Failed to send message");
+        }
+      } else {
+        // Send text-only message via socket context for real-time delivery
+        socketContext.sendMessage({
+          content: messageContent,
+          chatId: chatId
+        });
+      }
 
       // Remove from pending set after 10 seconds (should be delivered by then)
       setTimeout(() => {
@@ -99,8 +121,12 @@ export const useMessageHandlers = ({
     } catch (error) {
       debugLog("Error sending message:", error);
       alert("Failed to send message. Please try again.");
+
+      // Remove from pending set on error
+      const messageSignature = `${message.trim()}-${userId}-${chatId}-${selectedMedia && selectedMedia.length > 0 ? 'media' : 'text'}`;
+      pendingMessagesRef.current.delete(messageSignature);
     }
-  }, [message, selectedChat, userId, socketContext, setMessage, handleTyping, scrollToBottom]);
+  }, [message, selectedChat, userId, socketContext, setMessage, handleTyping, scrollToBottom, selectedMedia, setSelectedMedia, setMediaPreview]);
 
   const handleKeyPress = useCallback((e) => {
     // If Enter is pressed without Shift key, send the message

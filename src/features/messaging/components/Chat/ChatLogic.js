@@ -16,6 +16,8 @@ export const useChatLogic = (selectedChat, socketContext) => {
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [isAtTop, setIsAtTop] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [selectedMedia, setSelectedMedia] = useState([]);
+  const [mediaPreview, setMediaPreview] = useState([]);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
@@ -126,11 +128,11 @@ export const useChatLogic = (selectedChat, socketContext) => {
           return [];
         }
 
-        // Filter out invalid messages
+        // Filter out invalid messages (must have content OR media)
         const validMessages = messages.filter(msg => {
           if (!msg) return false;
-          if (!msg.content) {
-            console.warn("Skipping message without content:", msg);
+          if (!msg.content && (!msg.media || msg.media.length === 0)) {
+            console.warn("Skipping message without content or media:", msg);
             return false;
           }
           return true;
@@ -199,8 +201,8 @@ export const useChatLogic = (selectedChat, socketContext) => {
         }
       }
 
-      // Filter and normalize messages
-      const validMessages = olderMessages.filter(msg => msg && msg.content);
+      // Filter and normalize messages (must have content OR media)
+      const validMessages = olderMessages.filter(msg => msg && (msg.content || (msg.media && msg.media.length > 0)));
       const normalizedMessages = validMessages.map(msg => ({
         ...msg,
         _id: msg._id || msg.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -335,6 +337,10 @@ export const useChatLogic = (selectedChat, socketContext) => {
     setTypingTimeout,
     isAtTop,
     setIsAtTop,
+    selectedMedia,
+    setSelectedMedia,
+    mediaPreview,
+    setMediaPreview,
     messagesEndRef,
     messagesContainerRef,
     userId,
