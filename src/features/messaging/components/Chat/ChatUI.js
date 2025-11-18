@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Layout, Button, Avatar, Input, Spin, Typography, Empty, Image as AntImage, Popconfirm } from "antd";
+import { Layout, Button, Avatar, Input, Spin, Typography, Empty, Image as AntImage, Popconfirm, Modal } from "antd";
 import {
   ArrowLeftOutlined,
   SearchOutlined,
@@ -23,6 +23,7 @@ import { DEFAULT_PROFILE_PIC } from "../../../../constants";
 import { searchMessages } from "../../api/messagingApi";
 import MessageStatus from "../MessageStatus";
 import UserStatus from "../UserStatus";
+import { compressImages, formatFileSize } from "../../utils/imageCompression";
 import "./Chat.css";
 
 /**
@@ -453,9 +454,12 @@ export const MessageInput = ({
   setMediaPreview
 }) => {
   const fileInputRef = useRef(null);
+  const [lightboxVisible, setLightboxVisible] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [compressing, setCompressing] = useState(false);
 
-  // Handle file selection
-  const handleFileChange = (e) => {
+  // Handle file selection with compression
+  const handleFileChange = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
@@ -468,43 +472,73 @@ export const MessageInput = ({
 
     // Validate files
     const validFiles = [];
-    const previews = [];
 
-    filesToAdd.forEach(file => {
+    for (const file of filesToAdd) {
       // Check file type
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
 
       if (!isImage && !isVideo) {
         console.warn(`File ${file.name} is not an image or video`);
-        return;
+        continue;
       }
 
-      // Check file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        console.warn(`File ${file.name} exceeds 5MB limit`);
-        return;
+      // Check file size (5MB limit for videos, will compress images)
+      if (isVideo && file.size > 5 * 1024 * 1024) {
+        console.warn(`Video ${file.name} exceeds 5MB limit`);
+        continue;
       }
 
       validFiles.push(file);
+    }
 
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        previews.push({
-          file,
-          url: reader.result,
-          type: isImage ? 'image' : 'video'
+    if (validFiles.length === 0) {
+      e.target.value = '';
+      return;
+    }
+
+    // Compress images
+    setCompressing(true);
+    try {
+      const compressedFiles = await compressImages(validFiles, {
+        maxWidth: 1920,
+        maxHeight: 1080,
+        quality: 0.8,
+        maxSizeMB: 1
+      });
+
+      // Create previews for compressed files
+      const previews = [];
+      for (const file of compressedFiles) {
+        const isImage = file.type.startsWith('image/');
+        const reader = new FileReader();
+
+        const preview = await new Promise((resolve) => {
+          reader.onloadend = () => {
+            resolve({
+              file,
+              url: reader.result,
+              type: isImage ? 'image' : 'video',
+              size: file.size,
+              originalName: file.name
+            });
+          };
+          reader.readAsDataURL(file);
         });
 
-        // Update state when all previews are ready
-        if (previews.length === validFiles.length) {
-          setSelectedMedia(prev => [...(prev || []), ...validFiles]);
-          setMediaPreview(prev => [...(prev || []), ...previews]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+        previews.push(preview);
+      }
+
+      // Update state with compressed files and previews
+      setSelectedMedia(prev => [...(prev || []), ...compressedFiles]);
+      setMediaPreview(prev => [...(prev || []), ...previews]);
+
+      console.log(`✅ Added ${compressedFiles.length} file(s) with compression`);
+    } catch (error) {
+      console.error('Error processing files:', error);
+    } finally {
+      setCompressing(false);
+    }
 
     // Reset file input
     e.target.value = '';
@@ -516,75 +550,183 @@ export const MessageInput = ({
     setMediaPreview(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Open lightbox to view full-size preview
+  const handlePreviewClick = (preview) => {
+    setLightboxImage(preview);
+    setLightboxVisible(true);
+  };
+
+  // Close lightbox
+  const handleCloseLightbox = () => {
+    setLightboxVisible(false);
+    setLightboxImage(null);
+  };
+
   // Check if send button should be disabled
   const isDisabled = (!message.trim() && (!selectedMedia || selectedMedia.length === 0)) || !socketContext.connected;
 
   return (
-    <div className="input-container mobile-input-container">
-      {/* Media Preview */}
+    <div className="message-input-wrapper">
+      {/* Media Preview - Full width above input */}
       {mediaPreview && mediaPreview.length > 0 && (
-        <div className="media-preview-container">
-          {mediaPreview.map((preview, index) => (
-            <div key={index} className="media-preview-item">
-              {preview.type === 'image' ? (
-                <img src={preview.url} alt={`Preview ${index + 1}`} className="media-preview-image" />
-              ) : (
-                <div className="media-preview-video">
-                  <PlayCircleOutlined className="video-icon" />
-                  <video src={preview.url} className="media-preview-video-element" />
+        <div className="media-preview-overlay">
+          <div className="media-preview-header">
+            <Typography.Text strong style={{ color: '#fff' }}>
+              {mediaPreview.length} {mediaPreview.length === 1 ? 'file' : 'files'} selected
+            </Typography.Text>
+            <Button
+              type="text"
+              icon={<CloseOutlined />}
+              className="media-preview-close-all"
+              onClick={() => {
+                setSelectedMedia([]);
+                setMediaPreview([]);
+              }}
+            />
+          </div>
+          <div className="media-preview-grid">
+            {compressing && (
+              <div className="media-preview-compressing">
+                <Spin size="small" />
+                <Typography.Text style={{ color: '#fff', marginLeft: 8 }}>
+                  Compressing images...
+                </Typography.Text>
+              </div>
+            )}
+            {mediaPreview.map((preview, index) => (
+              <div key={index} className="media-preview-card">
+                <div
+                  className="media-preview-thumbnail"
+                  onClick={() => handlePreviewClick(preview)}
+                  style={{ cursor: 'pointer' }}
+                  title="Click to view full size"
+                >
+                  {preview.type === 'image' ? (
+                    <img src={preview.url} alt={`Preview ${index + 1}`} className="media-preview-image" />
+                  ) : (
+                    <div className="media-preview-video-wrapper">
+                      <video src={preview.url} className="media-preview-video-element" />
+                      <div className="video-overlay">
+                        <PlayCircleOutlined className="video-play-icon" />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              <Button
-                type="text"
-                danger
-                size="small"
-                icon={<DeleteOutlined />}
-                className="media-preview-remove"
-                onClick={() => handleRemoveMedia(index)}
-              />
-            </div>
-          ))}
+                <Button
+                  type="text"
+                  danger
+                  size="small"
+                  icon={<CloseOutlined />}
+                  className="media-preview-remove-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveMedia(index);
+                  }}
+                  title="Remove"
+                />
+                <div className="media-preview-filename">
+                  {preview.file.name}
+                  {preview.size && (
+                    <span className="media-preview-filesize">
+                      {' '}({formatFileSize(preview.size)})
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+            {/* Add more button if less than 5 files */}
+            {mediaPreview.length < 5 && (
+              <div className="media-preview-add-more" onClick={() => fileInputRef.current?.click()}>
+                <PictureOutlined className="add-more-icon" />
+                <Typography.Text className="add-more-text">Add more</Typography.Text>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      <div className="message-actions">
-        {/* Hidden file input */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          accept="image/*,video/*"
-          multiple
-          style={{ display: 'none' }}
+      <div className="input-container mobile-input-container">
+        <div className="message-actions">
+          {/* Hidden file input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*,video/*"
+            multiple
+            style={{ display: 'none' }}
+          />
+
+          <Button
+            type="text"
+            className="message-action-button"
+            title="Add photo or video"
+            icon={<PictureOutlined />}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={selectedMedia && selectedMedia.length >= 5}
+          />
+        </div>
+
+        <Input
+          placeholder={selectedMedia && selectedMedia.length > 0 ? "Add a caption (optional)" : "Start a new message"}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyPress}
+          variant="borderless"
+          className="message-input"
         />
 
         <Button
-          type="text"
-          className="message-action-button"
-          title="Add photo or video"
-          icon={<PictureOutlined />}
-          onClick={() => fileInputRef.current?.click()}
-          disabled={selectedMedia && selectedMedia.length >= 5}
+          type="primary"
+          shape="circle"
+          icon={<SendOutlined />}
+          className="send-btn"
+          onClick={handleSendMessage}
+          disabled={isDisabled}
         />
       </div>
 
-      <Input
-        placeholder={selectedMedia && selectedMedia.length > 0 ? "Add a caption (optional)" : "Start a new message"}
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        onKeyDown={handleKeyPress}
-        variant="borderless"
-        className="message-input"
-      />
-
-      <Button
-        type="primary"
-        shape="circle"
-        icon={<SendOutlined />}
-        className="send-btn"
-        onClick={handleSendMessage}
-        disabled={isDisabled}
-      />
+      {/* Lightbox Modal for Full-Size Preview */}
+      <Modal
+        open={lightboxVisible}
+        onCancel={handleCloseLightbox}
+        footer={null}
+        width="90vw"
+        centered
+        className="media-lightbox-modal"
+        styles={{
+          body: { padding: 0, background: '#000' }
+        }}
+      >
+        {lightboxImage && (
+          <div className="media-lightbox-content">
+            {lightboxImage.type === 'image' ? (
+              <img
+                src={lightboxImage.url}
+                alt="Full size preview"
+                className="media-lightbox-image"
+              />
+            ) : (
+              <video
+                src={lightboxImage.url}
+                controls
+                className="media-lightbox-video"
+                autoPlay
+              />
+            )}
+            <div className="media-lightbox-info">
+              <Typography.Text strong style={{ color: '#fff' }}>
+                {lightboxImage.file?.name || 'Preview'}
+              </Typography.Text>
+              {lightboxImage.size && (
+                <Typography.Text style={{ color: 'rgba(255,255,255,0.7)', marginLeft: 16 }}>
+                  {formatFileSize(lightboxImage.size)}
+                </Typography.Text>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
