@@ -1,5 +1,70 @@
 /* AntdResponsive.css - Global styles for Ant Design components to ensure mobile responsiveness */
 
+/* ===== Fix Ant Design input styles (overrides Tailwind preflight) ===== */
+/* Target all Ant Design form inputs with high specificity */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-affix-wrapper > input.ant-input,
+.ant-input-password,
+.ant-input-password input,
+.ant-input-number,
+.ant-input-number-input,
+.ant-select-selector,
+.ant-picker,
+.ant-picker-input > input,
+input.ant-input,
+.ant-form input[type="text"],
+.ant-form input[type="password"],
+.ant-form input[type="email"] {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.ant-input::placeholder,
+.ant-input-affix-wrapper input::placeholder,
+.ant-form input::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Dark mode support for Ant Design inputs */
+.dark .ant-input,
+.dark .ant-input-affix-wrapper,
+.dark .ant-input-affix-wrapper > input.ant-input,
+.dark .ant-input-password,
+.dark .ant-input-password input,
+.dark .ant-input-number,
+.dark .ant-input-number-input,
+.dark .ant-select-selector,
+.dark .ant-picker,
+.dark .ant-picker-input > input,
+.dark input.ant-input,
+.dark .ant-form input[type="text"],
+.dark .ant-form input[type="password"],
+.dark .ant-form input[type="email"] {
+  background-color: #374151 !important;
+  background: #374151 !important;
+  color: #f9fafb !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .ant-input::placeholder,
+.dark .ant-input-affix-wrapper input::placeholder,
+.dark .ant-form input::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Fix input prefix/suffix icons */
+.ant-input-prefix,
+.ant-input-suffix {
+  color: #9ca3af !important;
+}
+
+.dark .ant-input-prefix,
+.dark .ant-input-suffix {
+  color: #9ca3af !important;
+}
+
 /* Modal responsiveness */
 @media (max-width: 768px) {
   /* Make modals take full width on mobile */
@@ -103,7 +168,7 @@
     overflow-y: auto !important;
   }
 
-  .ant-dropdown-menu-item, 
+  .ant-dropdown-menu-item,
   .ant-dropdown-menu-submenu-title {
     padding: 12px 16px !important;
     min-height: 44px !important;

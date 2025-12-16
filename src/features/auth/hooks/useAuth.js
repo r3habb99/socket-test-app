@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { login as loginApi, register as registerApi } from "../api/authApi";
+import { login as loginApi, register as registerApi, logout as logoutApi } from "../api/authApi";
 
 /**
  * Custom hook for authentication
@@ -28,7 +28,6 @@ export const useAuth = () => {
     setError(null);
 
     try {
-
       const response = await loginApi(credentials);
 
       if (response.error) {
@@ -59,8 +58,6 @@ export const useAuth = () => {
 
       // Try to extract username
       username = userData?.username || userData?.name;
-
-
 
       if (!token) {
         console.error("Token is missing from the response:", responseData);
@@ -97,13 +94,12 @@ export const useAuth = () => {
         localStorage.setItem("lastName", userData.lastName);
       }
       if (userData.profilePic) {
-
         // Process the profile picture URL to ensure it's in the correct format
         let profilePicUrl = userData.profilePic;
 
         // If the URL is a relative path starting with /uploads/, make sure it's stored as is
         // without any protocol or domain, so it can be properly processed by getImageUrl
-        if (profilePicUrl.includes('/uploads/')) {
+        if (profilePicUrl.includes("/uploads/")) {
           // Extract just the /uploads/... part if it's a full URL
           const uploadsMatch = profilePicUrl.match(/\/uploads\/.*$/);
           if (uploadsMatch) {
@@ -111,12 +107,12 @@ export const useAuth = () => {
           }
 
           // If it doesn't start with a slash, add one
-          if (!profilePicUrl.startsWith('/')) {
-            profilePicUrl = '/' + profilePicUrl;
+          if (!profilePicUrl.startsWith("/")) {
+            profilePicUrl = "/" + profilePicUrl;
           }
         }
 
-      localStorage.setItem("profilePic", profilePicUrl);
+        localStorage.setItem("profilePic", profilePicUrl);
       }
       if (userData.email) {
         localStorage.setItem("email", userData.email);
@@ -129,20 +125,19 @@ export const useAuth = () => {
         firstName: userData.firstName,
         lastName: userData.lastName,
         profilePic: userData.profilePic,
-        email: userData.email
+        email: userData.email,
       });
 
-  
       return { success: true };
     } catch (err) {
       // Enhanced error logging
       console.error("Login error details:", err);
 
       // Check for network errors specifically
-      const isNetworkError = err.message === 'Network Error';
+      const isNetworkError = err.message === "Network Error";
       const message = isNetworkError
         ? "Unable to connect to the server. Please check your internet connection and try again."
-        : (err.message || "An error occurred during login");
+        : err.message || "An error occurred during login";
 
       setError(message);
       return { success: false, message };
@@ -174,21 +169,55 @@ export const useAuth = () => {
     }
   }, []);
 
-  // Logout function
-  // const logout = useCallback(() => {
-  //   // Remove all user-related data from localStorage
-  //   localStorage.removeItem("token");
-  //   localStorage.removeItem("userId");
-  //   localStorage.removeItem("username");
-  //   localStorage.removeItem("firstName");
-  //   localStorage.removeItem("lastName");
-  //   localStorage.removeItem("profilePic");
-  //   localStorage.removeItem("email");
+  /**
+   * Logout function - calls API and clears all user data from storage
+   * @param {Function} [cleanupCallback] - Optional callback to cleanup resources (e.g., socket, WebRTC)
+   * @returns {Promise<Object>} Result of logout operation
+   */
+  const logout = useCallback(async (cleanupCallback) => {
+    setLoading(true);
 
-  //   setUser(null);
-  // }, []);
+    try {
+      // Call cleanup callback first (for socket/WebRTC cleanup)
+      if (typeof cleanupCallback === "function") {
+        try {
+          cleanupCallback();
+        } catch (cleanupError) {
+          console.error("Error during cleanup callback:", cleanupError);
+        }
+      }
 
-  // Check if user is authenticated
+      // Call the logout API to invalidate token on server
+      const response = await logoutApi();
+
+      if (response.error) {
+        console.warn("Logout API returned an error:", response.message);
+        // Continue with local logout even if API fails
+      }
+    } catch (err) {
+      console.error("Logout API error:", err);
+      // Continue with local logout even if API fails
+    } finally {
+      // Always clear local storage regardless of API result
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("username");
+      localStorage.removeItem("firstName");
+      localStorage.removeItem("lastName");
+      localStorage.removeItem("profilePic");
+      localStorage.removeItem("email");
+
+      setUser(null);
+      setLoading(false);
+    }
+
+    return { success: true };
+  }, []);
+
+  /**
+   * Check if user is authenticated
+   * @returns {boolean} True if user has a valid token
+   */
   const isAuthenticated = useCallback(() => {
     return !!localStorage.getItem("token");
   }, []);
@@ -199,7 +228,7 @@ export const useAuth = () => {
     error,
     login,
     register,
-    // logout,
+    logout,
     isAuthenticated,
   };
 };

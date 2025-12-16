@@ -193,6 +193,8 @@ const ImageProxy = ({
       src={imageSrc || defaultSrc}
       alt={alt}
       className={`image-proxy ${error ? 'image-proxy-error' : ''} ${className || ''}`}
+      loading="lazy"
+      decoding="async"
       {...rest}
     />
   );

@@ -22,15 +22,15 @@ export const Sidebar = ({ links, onLogout }) => {
   };
 
   return (
-    <div className="sidebar">
+    <aside className="sidebar" role="navigation" aria-label="Main navigation">
       <div className="sidebar-header">
         <h2>ChatSphere</h2>
       </div>
 
       {/* Search Component */}
 
-      <nav className="sidebar-nav">
-        <ul>
+      <nav className="sidebar-nav" aria-label="Primary navigation">
+        <ul role="menubar" aria-label="Navigation menu">
           {links.map((link) => {
             // Skip logout, we'll add it separately at the end
             if (link.name === "logout") return null;
@@ -43,13 +43,16 @@ export const Sidebar = ({ links, onLogout }) => {
             const isActive = currentPath === linkPath;
 
             return (
-              <li key={link.name}>
+              <li key={link.name} role="none">
                 <Link
                   to={`/${link.name}`}
                   className={isActive ? "active" : ""}
                   onClick={() => handleLinkClick(link.name)}
+                  role="menuitem"
+                  aria-label={`Navigate to ${link.label}`}
+                  aria-current={isActive ? "page" : undefined}
                 >
-                  <span className="nav-icon">{link.icon}</span>
+                  <span className="nav-icon" aria-hidden="true">{link.icon}</span>
                   {link.label}
                 </Link>
               </li>
@@ -59,22 +62,24 @@ export const Sidebar = ({ links, onLogout }) => {
 
         {/* Bottom section with Theme Controls and Logout */}
         <div className="sidebar-bottom">
-          <ul>
+          <ul role="menubar" aria-label="Settings and logout">
             {/* Theme Selector */}
-            <li>
+            <li role="none">
               <ThemeSelector />
             </li>
             {/* Theme Toggle */}
-            <li>
+            <li role="none">
               <ThemeToggle />
             </li>
             {/* Logout Button */}
-            <li>
+            <li role="none">
               <button
                 className="logout-button"
                 onClick={() => handleLinkClick("logout")}
+                role="menuitem"
+                aria-label="Log out of your account"
               >
-                <span className="nav-icon">
+                <span className="nav-icon" aria-hidden="true">
                   {links.find(l => l.name === "logout")?.icon}
                 </span>
                 Logout
@@ -83,6 +88,6 @@ export const Sidebar = ({ links, onLogout }) => {
           </ul>
         </div>
       </nav>
-    </div>
+    </aside>
   );
 };

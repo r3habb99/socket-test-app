@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuthContext } from "../../../core/providers/AuthProvider";
+import { useSocketContext } from "../../../core/providers/SocketProvider";
 import { Sidebar } from "../Sidebar/Sidebar";
 import { ThemeToggle } from "../ThemeToggle";
-import { logout } from "../../../features/auth/api/authApi";
 import {
   HomeOutlined,
   MessageOutlined,
@@ -25,6 +25,7 @@ const Layout = () => {
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const authContext = useAuthContext();
+  const socketContext = useSocketContext();
   const navigate = useNavigate();
   const location = useLocation();
   const moreMenuRef = useRef(null);
@@ -93,16 +94,25 @@ const Layout = () => {
 
   // No sidebar toggle needed - using bottom navigation only
 
+  /**
+   * Handle logout - cleans up socket/WebRTC, calls API, clears local state
+   */
   const handleLogout = async () => {
     try {
-      // First call the API to logout from the server
-      await logout();
+      // Get the cleanup function from socket context
+      const cleanupForLogout = socketContext?.cleanupForLogout;
 
-      // Then use the context logout to clear local state
+      // Call auth context logout which will:
+      // 1. Execute the cleanup callback (socket/WebRTC cleanup)
+      // 2. Call the logout API to invalidate token on server
+      // 3. Clear all localStorage data
       if (typeof authContext.logout === 'function') {
-        authContext.logout();
+        await authContext.logout(cleanupForLogout);
       } else {
         // Fallback if logout function is not available
+        if (typeof cleanupForLogout === 'function') {
+          cleanupForLogout();
+        }
         localStorage.removeItem("token");
         localStorage.removeItem("userId");
       }
@@ -111,14 +121,7 @@ const Layout = () => {
       navigate('/login');
     } catch (error) {
       console.error("Logout failed:", error);
-      // Still logout locally even if server logout fails
-      if (typeof authContext.logout === 'function') {
-        authContext.logout();
-      } else {
-        // Fallback if logout function is not available
-        localStorage.removeItem("token");
-        localStorage.removeItem("userId");
-      }
+      // Navigate to login even on error
       navigate('/login');
     }
   };

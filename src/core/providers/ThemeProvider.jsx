@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { applyThemePreset, getThemePresetNames } from './themePresets';
 
 // Create context
@@ -161,21 +161,21 @@ export const ThemeProvider = ({ children }) => {
   }, [themePreset]);
 
   /**
-   * Set theme mode
+   * Set theme mode - memoized with useCallback
    * @param {string} mode - Theme mode to set
    */
-  const setTheme = (mode) => {
+  const setTheme = useCallback((mode) => {
     if (!Object.values(THEME_MODES).includes(mode)) {
       console.error(`Invalid theme mode: ${mode}`);
       return;
     }
     setThemeMode(mode);
-  };
+  }, []);
 
   /**
-   * Toggle between light and dark modes
+   * Toggle between light and dark modes - memoized with useCallback
    */
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setThemeMode((prevMode) => {
       if (prevMode === THEME_MODES.SYSTEM) {
         // If in system mode, toggle to the opposite of current system theme
@@ -183,33 +183,37 @@ export const ThemeProvider = ({ children }) => {
       }
       return prevMode === THEME_MODES.LIGHT ? THEME_MODES.DARK : THEME_MODES.LIGHT;
     });
-  };
+  }, []);
 
   /**
-   * Change theme preset
+   * Change theme preset - memoized with useCallback
    * @param {string} preset - Theme preset name
    */
-  const changeThemePreset = (preset) => {
+  const changeThemePreset = useCallback((preset) => {
     const availablePresets = getThemePresetNames();
     if (!availablePresets.includes(preset)) {
       console.error(`Invalid theme preset: ${preset}`);
       return;
     }
     setThemePreset(preset);
-  };
+  }, []);
 
-  const value = {
+  // Memoize available presets
+  const availablePresets = useMemo(() => getThemePresetNames(), []);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(() => ({
     themeMode, // Current theme preference (light/dark/system)
     resolvedTheme, // Actual theme being applied (light/dark)
     themePreset, // Current theme preset
     setTheme,
     toggleTheme,
     changeThemePreset,
-    availablePresets: getThemePresetNames(),
+    availablePresets,
     isDark: resolvedTheme === THEME_MODES.DARK,
     isLight: resolvedTheme === THEME_MODES.LIGHT,
     isSystem: themeMode === THEME_MODES.SYSTEM,
-  };
+  }), [themeMode, resolvedTheme, themePreset, setTheme, toggleTheme, changeThemePreset, availablePresets]);
 
   return (
     <ThemeContext.Provider value={value}>

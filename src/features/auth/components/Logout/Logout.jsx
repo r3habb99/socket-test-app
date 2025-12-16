@@ -1,27 +1,33 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { logout } from '../../api/authApi';
 import { useAuthContext } from '../../../../core/providers/AuthProvider';
+import { useSocketContext } from '../../../../core/providers/SocketProvider';
 import './Logout.css';
 
+/**
+ * Logout component - handles user logout with proper cleanup
+ */
 const Logout = () => {
   const { logout: contextLogout } = useAuthContext();
+  const socketContext = useSocketContext();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      // First call the API to logout from the server
-      await logout();
-      
-      // Then use the context logout to clear local state
-      contextLogout();
-      
+      // Get the cleanup function from socket context
+      const cleanupForLogout = socketContext?.cleanupForLogout;
+
+      // Call context logout which will:
+      // 1. Execute the cleanup callback (socket/WebRTC cleanup)
+      // 2. Call the logout API to invalidate token on server
+      // 3. Clear all localStorage data
+      await contextLogout(cleanupForLogout);
+
       // Navigate to login page
       navigate('/login');
     } catch (error) {
       console.error('Error during logout:', error);
-      // Still logout locally even if server logout fails
-      contextLogout();
+      // Navigate to login even on error
       navigate('/login');
     }
   };

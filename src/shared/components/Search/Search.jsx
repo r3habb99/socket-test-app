@@ -150,30 +150,46 @@ export const Search = () => {
   };
 
   return (
-    <div className="sidebar-search-container" ref={searchContainerRef}>
+    <div
+      className="sidebar-search-container"
+      ref={searchContainerRef}
+      role="search"
+      aria-label="Search users"
+    >
       <div className="sidebar-search">
         <Input.Search
           placeholder="Search Users"
-          prefix={<SearchOutlined style={{ color: '#536471' }} />}
+          prefix={<SearchOutlined style={{ color: '#536471' }} aria-hidden="true" />}
           value={searchQuery}
           onChange={handleSearchInputChange}
           onSearch={handleSearch}
           onFocus={() => setShowSearchResults(true)}
           className="sidebar-search-input"
           allowClear
-          enterButton={<SearchOutlined style={{ color: '#ffffff' }} />}
+          enterButton={<SearchOutlined style={{ color: '#ffffff' }} aria-hidden="true" />}
+          aria-label="Search for users by name, username, or email"
+          aria-expanded={showSearchResults}
+          aria-controls="search-results"
+          aria-autocomplete="list"
         />
       </div>
 
       {/* Search Results */}
       {showSearchResults && (
-        <div className="sidebar-search-results">
+        <div
+          id="search-results"
+          className="sidebar-search-results"
+          role="listbox"
+          aria-label="Search results"
+          aria-busy={isSearching}
+        >
           {isSearching ? (
-            <div className="sidebar-search-loading">
+            <div className="sidebar-search-loading" role="status" aria-live="polite">
               <Spin size="small" tip="Searching..." />
+              <span className="sr-only">Searching for users...</span>
             </div>
           ) : searchQuery.trim() === "" ? (
-            <div className="sidebar-search-instructions">
+            <div className="sidebar-search-instructions" role="status">
               <Text type="secondary">Try searching for people by name, username, or email</Text>
             </div>
           ) : searchResults.length > 0 ? (
@@ -186,6 +202,15 @@ export const Search = () => {
                   key={user._id || user.id}
                   className="sidebar-search-result-item"
                   onClick={() => navigateToUserProfile(user)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigateToUserProfile(user);
+                    }
+                  }}
+                  role="option"
+                  tabIndex={0}
+                  aria-label={`${user.firstName || ''} ${user.lastName || ''} ${user.username ? `@${user.username}` : ''}`}
                 >
                   <div className="sidebar-search-result-avatar-container">
                     <Avatar
@@ -198,12 +223,12 @@ export const Search = () => {
                       }
                       alt={user.username || 'User'}
                       className={user.profilePic ? "sidebar-search-result-avatar-img" : "sidebar-search-result-avatar"}
-                      icon={!user.profilePic ? <UserOutlined /> : null}
+                      icon={!user.profilePic ? <UserOutlined aria-hidden="true" /> : null}
                       style={!user.profilePic ? { backgroundColor: '#1d9bf0' } : {}}
                     >
                       {!user.profilePic && user.username ? user.username.charAt(0).toUpperCase() :
                        !user.profilePic && user.firstName ? user.firstName.charAt(0).toUpperCase() :
-                       !user.profilePic ? <UserOutlined /> : null}
+                       !user.profilePic ? <UserOutlined aria-hidden="true" /> : null}
                     </Avatar>
                   </div>
                   <div className="sidebar-search-result-content">
@@ -224,7 +249,7 @@ export const Search = () => {
           ) : (
             <Empty
               description={
-                <div className="sidebar-search-no-results-text">
+                <div className="sidebar-search-no-results-text" role="status" aria-live="polite">
                   <Text strong>No users found</Text>
                   <Text type="secondary">Try searching for a different term</Text>
                 </div>

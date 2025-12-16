@@ -1,9 +1,4 @@
-import {
-  apiClient,
-  endpoints,
-  handleApiError,
-  handleApiResponse,
-} from "../../../shared/api";
+import { apiClient, endpoints, handleApiError, handleApiResponse } from "../../../shared/api";
 import { toast } from "react-toastify";
 
 /**
@@ -72,12 +67,11 @@ export const refreshToken = async () => {
  */
 export const login = async (credentials) => {
   try {
-
     // Make sure we're not sending any auth headers for login
     const response = await apiClient.post(endpoints.auth.login, credentials, {
       headers: {
         "Content-Type": "application/json",
-      }
+      },
     });
 
     toast.success("Login successful!");
@@ -92,7 +86,8 @@ export const login = async (credentials) => {
       toast.error("Unable to connect to the server. Please check your internet connection.");
       return {
         error: true,
-        message: "Network Error: Unable to connect to the server. Please check your internet connection.",
+        message:
+          "Network Error: Unable to connect to the server. Please check your internet connection.",
       };
     } else if (error.response.status === 401) {
       toast.error("Invalid credentials");
@@ -125,7 +120,8 @@ export const register = async (userData) => {
 };
 
 /**
- * Logout user
+ * Logout user - calls API to invalidate token on server
+ * Note: localStorage cleanup is handled by useAuth hook
  * @returns {Promise<Object>} Response object
  */
 export const logout = async () => {
@@ -136,41 +132,24 @@ export const logout = async () => {
       console.warn("No token found in localStorage during logout");
       return {
         error: true,
-        message: "No authentication token found"
+        message: "No authentication token found",
       };
     }
 
     // Use the endpoint from endpoints.js
     const response = await apiClient.delete(endpoints.auth.logout, {
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
       // Remove withCredentials to avoid CORS issues
-      withCredentials: false
+      withCredentials: false,
     });
-
-    // Clear local storage
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("username");
-    localStorage.removeItem("firstName");
-    localStorage.removeItem("lastName");
-    localStorage.removeItem("profilePic");
-    localStorage.removeItem("email");
 
     toast.success("Logout successful!");
     return handleApiResponse(response);
   } catch (error) {
     console.error("Logout error:", error);
-    // Still clear localStorage even if the API call fails
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("username");
-    localStorage.removeItem("firstName");
-    localStorage.removeItem("lastName");
-    localStorage.removeItem("profilePic");
-    localStorage.removeItem("email");
-
+    // Return error but don't clear localStorage here - that's handled by useAuth
     return handleApiError(error);
   }
 };
@@ -182,10 +161,7 @@ export const logout = async () => {
  */
 export const updateUserProfile = async (updateData) => {
   try {
-    const response = await apiClient.put(
-      endpoints.user.updateProfile,
-      updateData
-    );
+    const response = await apiClient.put(endpoints.user.updateProfile, updateData);
     toast.success("Profile updated successfully!");
     return handleApiResponse(response);
   } catch (error) {
@@ -235,7 +211,6 @@ export const searchUsers = async (searchParams) => {
 export const getUserById = async (userId) => {
   try {
     if (typeof userId !== "string") {
-
       throw new Error("Invalid userId type. Expected a string.");
     }
 

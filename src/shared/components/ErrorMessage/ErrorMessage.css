@@ -1,0 +1,92 @@
+.error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.error-message__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Compact variant */
+.error-message--compact {
+  flex-direction: row;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  gap: 12px;
+  text-align: left;
+}
+
+.error-message--compact .error-message__icon {
+  font-size: 20px;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.error-message--compact .error-message__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.error-message--compact .error-message__title {
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+}
+
+.error-message--compact .error-message__text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Error type colors */
+.error-message[data-type="warning"] .error-message__icon {
+  color: #faad14;
+}
+
+.error-message[data-type="error"] .error-message__icon {
+  color: #ff4d4f;
+}
+
+.error-message[data-type="info"] .error-message__icon {
+  color: #1890ff;
+}
+
+/* Animation for error appearance */
+@keyframes error-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-message {
+  animation: error-fade-in 0.3s ease-out;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .error-message {
+    animation: none;
+  }
+}
+
+/* Dark mode adjustments */
+.dark .error-message--compact {
+  background: var(--bg-surface);
+  border-color: var(--border-color);
+}
+

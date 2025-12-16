@@ -7,24 +7,17 @@ import {
   addToOfflineQueue,
   getOfflineQueue,
   removeFromOfflineQueue,
-  incrementAttemptCount
+  incrementAttemptCount,
 } from "../utils/offlineQueue";
-import {
-  setUserOnline,
-  setUserOffline,
-  updateLastSeen
-} from "../utils/userPresence";
+import { setUserOnline, setUserOffline, updateLastSeen } from "../utils/userPresence";
 import {
   debugLog,
   addSocketLogging,
   trackRoomJoin,
   trackRoomLeave,
-  isRoomJoined
+  isRoomJoined,
 } from "../utils/socketDebug";
-import {
-  sanitizeMessageObject,
-  convertObjectIdToString
-} from "../utils/objectIdUtils";
+import { sanitizeMessageObject, convertObjectIdToString } from "../utils/objectIdUtils";
 
 /**
  * Custom hook for socket.io functionality
@@ -33,17 +26,14 @@ import {
  * @param {boolean} options.silentMode - If true, connection-related toast notifications will be suppressed
  * @returns {Object} Socket methods and state
  */
-export const useSocket = (
-  url = SOCKET_URL,
-  options = {}
-) => {
+export const useSocket = (url = SOCKET_URL, options = {}) => {
   // Extract options with defaults
   const { silentMode = false } = options;
 
   // Socket connection state
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
-  const [connectionStatus, setConnectionStatus] = useState('disconnected'); // 'disconnected', 'connecting', 'connected', 'reconnecting'
+  const [connectionStatus, setConnectionStatus] = useState("disconnected"); // 'disconnected', 'connecting', 'connected', 'reconnecting'
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
   // Chat state
@@ -63,8 +53,6 @@ export const useSocket = (
   const reconnectTimeoutRef = useRef(null);
   const maxReconnectAttempts = 10;
   const reconnectDelayBase = 1000; // Base delay in ms
-
-
 
   // Initialize refs with initial state values
   useEffect(() => {
@@ -91,253 +79,256 @@ export const useSocket = (
     }
 
     // Load online users from localStorage
-    const storedOnlineUsers = localStorage.getItem('online_users');
+    const storedOnlineUsers = localStorage.getItem("online_users");
     if (storedOnlineUsers) {
       try {
         const parsedUsers = JSON.parse(storedOnlineUsers);
         setOnlineUsers(parsedUsers);
       } catch (error) {
-        console.error('Failed to parse online users:', error);
+        console.error("Failed to parse online users:", error);
       }
     }
 
     // Load last seen times from localStorage
-    const storedLastSeen = localStorage.getItem('last_seen_users');
+    const storedLastSeen = localStorage.getItem("last_seen_users");
     if (storedLastSeen) {
       try {
         const parsedLastSeen = JSON.parse(storedLastSeen);
         setLastSeenTimes(parsedLastSeen);
       } catch (error) {
-        console.error('Failed to parse last seen times:', error);
+        console.error("Failed to parse last seen times:", error);
       }
     }
   }, []);
-// Helper function to ensure message listeners are always registered
-const ensureMessageListenersRegistered = useCallback((socket) => {
-  if (!socket) {
-    return;
-  }
-
-  if (!socket.connected) {
-    // Set up a one-time listener to register when connected
-    socket.once('connect', () => {
-      ensureMessageListenersRegistered(socket);
-    });
-    return;
-  }
-
-  // Check if message received listener is already registered by checking our flag
-  const hasMessageHandler = socket._hasMessageReceivedHandler;
-
-  if (!hasMessageHandler) {
-
-    // Create the message received handler
-    const messageReceivedHandler = (newMessage) => {
-      debugLog("Message received event handler called", newMessage);
-
-      // Process the message (same logic as before)
-      if (!newMessage || !newMessage.sender) {
-        console.warn("Invalid message received:", newMessage);
+  // Helper function to ensure message listeners are always registered
+  const ensureMessageListenersRegistered = useCallback(
+    (socket) => {
+      if (!socket) {
         return;
       }
 
-      // Convert messageId to string to ensure proper comparison and read receipts
-      let messageId = newMessage._id || newMessage.id;
-      if (messageId && typeof messageId === 'object') {
-        // Convert ObjectId to string using our utility function
-        messageId = convertObjectIdToString(messageId);
+      if (!socket.connected) {
+        // Set up a one-time listener to register when connected
+        socket.once("connect", () => {
+          ensureMessageListenersRegistered(socket);
+        });
+        return;
       }
 
-      const localMessageId = newMessage.localId;
-      const messageContent = newMessage.content;
+      // Check if message received listener is already registered by checking our flag
+      const hasMessageHandler = socket._hasMessageReceivedHandler;
 
-      // Extract chat ID properly from object or string
-      let messageChat;
+      if (!hasMessageHandler) {
+        // Create the message received handler
+        const messageReceivedHandler = (newMessage) => {
+          debugLog("Message received event handler called", newMessage);
 
-      if (typeof newMessage.chat === "string") {
-        messageChat = newMessage.chat;
-      } else if (newMessage.chat && typeof newMessage.chat === "object") {
-        let potentialId = newMessage.chat._id || newMessage.chat.id || newMessage.chat.$oid;
-
-        if (typeof potentialId === "string") {
-          messageChat = potentialId;
-        } else if (potentialId && typeof potentialId === "object") {
-          // Method 1: Try standard ObjectId methods
-          if (typeof potentialId.toString === "function") {
-            try {
-              const stringResult = potentialId.toString();
-              if (stringResult && stringResult !== "[object Object]" && stringResult.length === 24) {
-                messageChat = stringResult;
-              }
-            } catch (e) {}
+          // Process the message (same logic as before)
+          if (!newMessage || !newMessage.sender) {
+            console.warn("Invalid message received:", newMessage);
+            return;
           }
 
-          // Method 2: Try toHexString method
-          if (!messageChat && typeof potentialId.toHexString === "function") {
-            try {
-              messageChat = potentialId.toHexString();
-            } catch (e) {}
+          // Convert messageId to string to ensure proper comparison and read receipts
+          let messageId = newMessage._id || newMessage.id;
+          if (messageId && typeof messageId === "object") {
+            // Convert ObjectId to string using our utility function
+            messageId = convertObjectIdToString(messageId);
           }
 
-          // Method 3: Try $oid property
-          if (!messageChat && potentialId.$oid) {
-            messageChat = potentialId.$oid;
-          }
+          const localMessageId = newMessage.localId;
+          const messageContent = newMessage.content;
 
-          // Method 4: Try str property
-          if (!messageChat && potentialId.str) {
-            messageChat = potentialId.str;
-          }
+          // Extract chat ID properly from object or string
+          let messageChat;
 
-          // Method 5: Handle BSON ObjectId buffer property (updated)
-          if (!messageChat && potentialId.buffer) {
-            const buffer = potentialId.buffer;
+          if (typeof newMessage.chat === "string") {
+            messageChat = newMessage.chat;
+          } else if (newMessage.chat && typeof newMessage.chat === "object") {
+            let potentialId = newMessage.chat._id || newMessage.chat.id || newMessage.chat.$oid;
 
-            if (typeof buffer === 'object' && buffer !== null) {
-              const keys = Object.keys(buffer);
-              if (
-                keys.length === 12 &&
-                keys.every(key => !isNaN(key) && parseInt(key) >= 0 && parseInt(key) <= 11)
-              ) {
-                // --- Option 1: Safe manual conversion ---
-                const bytes = [];
-                for (let i = 0; i < 12; i++) {
-                  const val = buffer[i];
-                  if (typeof val !== 'number' || val < 0 || val > 255) {
-                    continue;
+            if (typeof potentialId === "string") {
+              messageChat = potentialId;
+            } else if (potentialId && typeof potentialId === "object") {
+              // Method 1: Try standard ObjectId methods
+              if (typeof potentialId.toString === "function") {
+                try {
+                  const stringResult = potentialId.toString();
+                  if (
+                    stringResult &&
+                    stringResult !== "[object Object]" &&
+                    stringResult.length === 24
+                  ) {
+                    messageChat = stringResult;
                   }
-                  bytes.push(val);
+                } catch (e) {}
+              }
+
+              // Method 2: Try toHexString method
+              if (!messageChat && typeof potentialId.toHexString === "function") {
+                try {
+                  messageChat = potentialId.toHexString();
+                } catch (e) {}
+              }
+
+              // Method 3: Try $oid property
+              if (!messageChat && potentialId.$oid) {
+                messageChat = potentialId.$oid;
+              }
+
+              // Method 4: Try str property
+              if (!messageChat && potentialId.str) {
+                messageChat = potentialId.str;
+              }
+
+              // Method 5: Handle BSON ObjectId buffer property (updated)
+              if (!messageChat && potentialId.buffer) {
+                const buffer = potentialId.buffer;
+
+                if (typeof buffer === "object" && buffer !== null) {
+                  const keys = Object.keys(buffer);
+                  if (
+                    keys.length === 12 &&
+                    keys.every((key) => !isNaN(key) && parseInt(key) >= 0 && parseInt(key) <= 11)
+                  ) {
+                    // --- Option 1: Safe manual conversion ---
+                    const bytes = [];
+                    for (let i = 0; i < 12; i++) {
+                      const val = buffer[i];
+                      if (typeof val !== "number" || val < 0 || val > 255) {
+                        continue;
+                      }
+                      bytes.push(val);
+                    }
+                    messageChat = bytes.map((byte) => byte.toString(16).padStart(2, "0")).join("");
+
+                    // --- Option 2: Cleaner Node.js-native version (optional) ---
+                    // const bytes = Uint8Array.from(Object.values(buffer));
+                    // messageChat = Buffer.from(bytes).toString('hex');
+                  }
                 }
-                messageChat = bytes.map(byte => byte.toString(16).padStart(2, '0')).join('');
-
-                // --- Option 2: Cleaner Node.js-native version (optional) ---
-                // const bytes = Uint8Array.from(Object.values(buffer));
-                // messageChat = Buffer.from(bytes).toString('hex');
               }
+
+              // Method 6: Try direct property access for hex string
+              if (!messageChat) {
+                const possibleHexProps = ["hex", "hexString", "id"];
+                for (const prop of possibleHexProps) {
+                  if (
+                    potentialId[prop] &&
+                    typeof potentialId[prop] === "string" &&
+                    potentialId[prop].length === 24
+                  ) {
+                    messageChat = potentialId[prop];
+                    break;
+                  }
+                }
+              }
+            }
+
+            // Last resort: try toString on the chat object itself
+            if (!messageChat && typeof newMessage.chat.toString === "function") {
+              const stringified = newMessage.chat.toString();
+              if (stringified !== "[object Object]") {
+                messageChat = stringified;
+              }
+            }
+          } else {
+            messageChat = newMessage.chatId || newMessage.chat;
+          }
+
+          // Convert senderId to string to ensure proper comparison
+          let senderId = newMessage.sender._id || newMessage.sender.id || newMessage.sender;
+          if (senderId && typeof senderId === "object") {
+            // Convert ObjectId to string using our utility function
+            senderId = convertObjectIdToString(senderId);
+          }
+
+          const senderUsername = newMessage.sender.username || newMessage.sender.name || "Unknown";
+          const currentUserId = localStorage.getItem("userId");
+          const isFromCurrentUser = senderId === currentUserId;
+
+          // Only process messages for the current chat
+          if (messageChat !== currentChatIdRef.current) {
+            return;
+          }
+
+          if (isFromCurrentUser) {
+            const isRecentlySentMessage =
+              recentlySentMessagesRef.current[messageId] ||
+              (localMessageId && recentlySentMessagesRef.current[localMessageId]) ||
+              Object.keys(recentlySentMessagesRef.current).some((key) =>
+                key.startsWith(`${messageContent}-`)
+              );
+
+            if (isRecentlySentMessage) {
+              debugLog(`Skipping recently sent message: ${messageId || localMessageId}`);
+              return;
             }
           }
 
-          // Method 6: Try direct property access for hex string
-          if (!messageChat) {
-            const possibleHexProps = ['hex', 'hexString', 'id'];
-            for (const prop of possibleHexProps) {
-              if (
-                potentialId[prop] &&
-                typeof potentialId[prop] === 'string' &&
-                potentialId[prop].length === 24
-              ) {
-                messageChat = potentialId[prop];
-                break;
-              }
+          setMessages((prevMessages) => {
+            const existingMessage = prevMessages.find(
+              (msg) =>
+                (msg._id && msg._id === messageId) ||
+                (msg.id && msg.id === messageId) ||
+                (localMessageId &&
+                  ((msg._id && msg._id === localMessageId) ||
+                    (msg.id && msg.id === localMessageId)))
+            );
+
+            if (existingMessage) {
+              return prevMessages;
+            }
+
+            // Sanitize the message object to convert all ObjectIds to strings before storing in state
+            const sanitizedMessage = sanitizeMessageObject(newMessage);
+
+            const messageWithStatus = {
+              ...sanitizedMessage,
+              status: MESSAGE_STATUS.DELIVERED,
+            };
+
+            const updatedMessages = [...prevMessages, messageWithStatus];
+
+            if (updatedMessages.length > 0 && updatedMessages[0].createdAt) {
+              return updatedMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            }
+
+            return updatedMessages;
+          });
+
+          if (!isFromCurrentUser && messageChat === currentChatIdRef.current && socket?.connected) {
+            socket.emit("message read", {
+              messageId,
+              chatId: messageChat,
+              userId: currentUserId,
+            });
+          }
+
+          if (!isFromCurrentUser) {
+            if (window.location.pathname.includes("/messages")) {
+              toast.info(`New message from ${senderUsername}`, {
+                onClick: () => {
+                  if (socket && messageChat !== currentChatIdRef.current) {
+                    if (socket.connected) {
+                      socket.emit("join room", messageChat);
+                    }
+                  }
+                },
+                autoClose: 5000,
+              });
             }
           }
-        }
-
-        // Last resort: try toString on the chat object itself
-        if (!messageChat && typeof newMessage.chat.toString === "function") {
-          const stringified = newMessage.chat.toString();
-          if (stringified !== "[object Object]") {
-            messageChat = stringified;
-          }
-        }
-      } else {
-        messageChat = newMessage.chatId || newMessage.chat;
-      }
-
-      // Convert senderId to string to ensure proper comparison
-      let senderId = newMessage.sender._id || newMessage.sender.id || newMessage.sender;
-      if (senderId && typeof senderId === 'object') {
-        // Convert ObjectId to string using our utility function
-        senderId = convertObjectIdToString(senderId);
-      }
-
-      const senderUsername = newMessage.sender.username || newMessage.sender.name || "Unknown";
-      const currentUserId = localStorage.getItem("userId");
-      const isFromCurrentUser = senderId === currentUserId;
-
-      // Only process messages for the current chat
-      if (messageChat !== currentChatIdRef.current) {
-        return;
-      }
-
-      if (isFromCurrentUser) {
-        const isRecentlySentMessage =
-          recentlySentMessagesRef.current[messageId] ||
-          (localMessageId && recentlySentMessagesRef.current[localMessageId]) ||
-          Object.keys(recentlySentMessagesRef.current).some((key) =>
-            key.startsWith(`${messageContent}-`)
-          );
-
-        if (isRecentlySentMessage) {
-          debugLog(`Skipping recently sent message: ${messageId || localMessageId}`);
-          return;
-        }
-      }
-
-      setMessages((prevMessages) => {
-        const existingMessage = prevMessages.find(
-          (msg) =>
-            (msg._id && msg._id === messageId) ||
-            (msg.id && msg.id === messageId) ||
-            (localMessageId &&
-              ((msg._id && msg._id === localMessageId) ||
-                (msg.id && msg.id === localMessageId)))
-        );
-
-        if (existingMessage) {
-          return prevMessages;
-        }
-
-        // Sanitize the message object to convert all ObjectIds to strings before storing in state
-        const sanitizedMessage = sanitizeMessageObject(newMessage);
-
-        const messageWithStatus = {
-          ...sanitizedMessage,
-          status: MESSAGE_STATUS.DELIVERED,
         };
 
-        const updatedMessages = [...prevMessages, messageWithStatus];
+        socket.on("message received", messageReceivedHandler);
 
-        if (updatedMessages.length > 0 && updatedMessages[0].createdAt) {
-          return updatedMessages.sort(
-            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-          );
-        }
-
-        return updatedMessages;
-      });
-
-      if (!isFromCurrentUser && messageChat === currentChatIdRef.current && socket?.connected) {
-        socket.emit("message read", {
-          messageId,
-          chatId: messageChat,
-          userId: currentUserId,
-        });
+        socket._messageReceivedHandler = messageReceivedHandler;
+        socket._hasMessageReceivedHandler = true;
       }
-
-      if (!isFromCurrentUser) {
-        if (window.location.pathname.includes('/messages')) {
-          toast.info(`New message from ${senderUsername}`, {
-            onClick: () => {
-              if (socket && messageChat !== currentChatIdRef.current) {
-                if (socket.connected) {
-                  socket.emit("join room", messageChat);
-                }
-              }
-            },
-            autoClose: 5000,
-          });
-        }
-      }
-    };
-
-    socket.on("message received", messageReceivedHandler);
-
-    socket._messageReceivedHandler = messageReceivedHandler;
-    socket._hasMessageReceivedHandler = true;
-  }
-}, [currentChatIdRef, recentlySentMessagesRef, setMessages]);
-
+    },
+    [currentChatIdRef, recentlySentMessagesRef, setMessages]
+  );
 
   // Helper function to create a socket connection
   const createSocketConnection = useCallback(() => {
@@ -350,7 +341,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       return null;
     }
 
-    setConnectionStatus('connecting');
+    setConnectionStatus("connecting");
     debugLog(`Creating new socket connection for user: ${userId} (${username})`);
 
     // Create socket instance with user info
@@ -389,7 +380,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       // If socket exists but is not connected, try to connect it
       if (!socketRef.current.connected) {
         debugLog("Socket exists but not connected. Attempting to connect...");
-        setConnectionStatus('connecting');
+        setConnectionStatus("connecting");
         socketRef.current.connect();
       }
 
@@ -399,7 +390,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
         ensureMessageListenersRegistered(socketRef.current);
       } else {
         // Register listeners once socket connects
-        socketRef.current.once('connect', () => {
+        socketRef.current.once("connect", () => {
           ensureMessageListenersRegistered(socketRef.current);
         });
       }
@@ -414,7 +405,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
     socket.on("connect", () => {
       debugLog("Socket connected successfully");
       setConnected(true);
-      setConnectionStatus('connected');
+      setConnectionStatus("connected");
       setError(null);
       setReconnectAttempts(0);
 
@@ -460,7 +451,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       const queue = getOfflineQueue();
       if (queue.length > 0) {
         // Process each message in the queue
-        queue.forEach(queuedMessage => {
+        queue.forEach((queuedMessage) => {
           // Increment attempt count
           const updatedMessage = incrementAttemptCount(queuedMessage._id || queuedMessage.id);
 
@@ -469,7 +460,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
             const messagePayload = {
               content: updatedMessage.content,
               chat: updatedMessage.chat || updatedMessage.chatId,
-              _id: updatedMessage._id || updatedMessage.id
+              _id: updatedMessage._id || updatedMessage.id,
             };
 
             // Send the message
@@ -481,10 +472,12 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
                 removeFromOfflineQueue(updatedMessage._id || updatedMessage.id);
 
                 // Update message status to sent
-                setMessages(prevMessages => {
-                  return prevMessages.map(msg => {
-                    if ((msg._id === updatedMessage._id || msg.id === updatedMessage.id) &&
-                        msg.status === MESSAGE_STATUS.FAILED) {
+                setMessages((prevMessages) => {
+                  return prevMessages.map((msg) => {
+                    if (
+                      (msg._id === updatedMessage._id || msg.id === updatedMessage.id) &&
+                      msg.status === MESSAGE_STATUS.FAILED
+                    ) {
                       return { ...msg, status: MESSAGE_STATUS.SENT };
                     }
                     return msg;
@@ -504,19 +497,21 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
 
     // Handle user joined event
     socket.on("user joined", (data) => {
-      debugLog(`User joined room: ${data.username || data.userId} joined ${data.roomId || data.chatId}`);
+      debugLog(
+        `User joined room: ${data.username || data.userId} joined ${data.roomId || data.chatId}`
+      );
 
       // Always update online users regardless of the room
       // This ensures we track all online users across the app
       if (data.userId && data.userId !== localStorage.getItem("userId")) {
         debugLog(`Setting user ${data.userId} as online`);
-        setOnlineUsers(prevUsers => ({
+        setOnlineUsers((prevUsers) => ({
           ...prevUsers,
           [data.userId]: {
             ...data,
             timestamp: new Date().toISOString(),
-            online: true
-          }
+            online: true,
+          },
         }));
       }
     });
@@ -524,13 +519,13 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
     socket.on("connect_error", (err) => {
       console.error("Socket connection error:", err.message);
       setConnected(false);
-      setConnectionStatus('disconnected');
+      setConnectionStatus("disconnected");
       setError(err.message);
     });
 
     socket.on("disconnect", (reason) => {
       setConnected(false);
-      setConnectionStatus('disconnected');
+      setConnectionStatus("disconnected");
 
       // Set current user as offline
       const userId = localStorage.getItem("userId");
@@ -550,7 +545,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
         reason === "transport close" ||
         reason === "transport error"
       ) {
-        setConnectionStatus('reconnecting');
+        setConnectionStatus("reconnecting");
 
         // Calculate delay with exponential backoff
         const attempts = reconnectAttempts + 1;
@@ -585,13 +580,13 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       // Update online users state
       if (data.userId && data.userId !== localStorage.getItem("userId")) {
         debugLog(`Setting user ${data.userId} as online from 'user online' event`);
-        setOnlineUsers(prevUsers => ({
+        setOnlineUsers((prevUsers) => ({
           ...prevUsers,
           [data.userId]: {
             ...data,
             timestamp: new Date().toISOString(),
-            online: true
-          }
+            online: true,
+          },
         }));
       }
     });
@@ -601,22 +596,24 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       debugLog(`User offline: ${data.username || data.userId}`);
 
       // Update online users state
-      setOnlineUsers(prevUsers => {
+      setOnlineUsers((prevUsers) => {
         const updatedUsers = { ...prevUsers };
         delete updatedUsers[data.userId];
         return updatedUsers;
       });
 
       // Update last seen times
-      setLastSeenTimes(prevTimes => ({
+      setLastSeenTimes((prevTimes) => ({
         ...prevTimes,
-        [data.userId]: new Date().toISOString()
+        [data.userId]: new Date().toISOString(),
       }));
     });
 
     // Handle user left event (when a user leaves a specific chat room)
     socket.on("user left", (data) => {
-      debugLog(`User left room: ${data.username || data.userId} left ${data.roomId || data.chatId}`);
+      debugLog(
+        `User left room: ${data.username || data.userId} left ${data.roomId || data.chatId}`
+      );
 
       // Note: When a user leaves a room, they might still be online in the app
       // So we don't remove them from onlineUsers here, we just update their last seen time
@@ -625,9 +622,9 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       // Update last seen time for this user if they're not the current user
       if (data.userId && data.userId !== localStorage.getItem("userId")) {
         debugLog(`Updating last seen time for user ${data.userId}`);
-        setLastSeenTimes(prevTimes => ({
+        setLastSeenTimes((prevTimes) => ({
           ...prevTimes,
-          [data.userId]: new Date().toISOString()
+          [data.userId]: new Date().toISOString(),
         }));
       }
     });
@@ -641,33 +638,33 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
         const processedUsers = { ...data.onlineUsers };
 
         // Make sure each user has the online flag set
-        Object.keys(processedUsers).forEach(userId => {
+        Object.keys(processedUsers).forEach((userId) => {
           processedUsers[userId] = {
             ...processedUsers[userId],
             online: true,
-            timestamp: processedUsers[userId].timestamp || new Date().toISOString()
+            timestamp: processedUsers[userId].timestamp || new Date().toISOString(),
           };
         });
 
         debugLog("Setting online users from bulk update", processedUsers);
-        setOnlineUsers(prevUsers => ({
+        setOnlineUsers((prevUsers) => ({
           ...prevUsers,
-          ...processedUsers
+          ...processedUsers,
         }));
       }
 
       if (data.lastSeen) {
         debugLog("Setting last seen times from bulk update", data.lastSeen);
-        setLastSeenTimes(prevTimes => ({
+        setLastSeenTimes((prevTimes) => ({
           ...prevTimes,
-          ...data.lastSeen
+          ...data.lastSeen,
         }));
       }
     });
 
     socket.on("reconnect", () => {
       setConnected(true);
-      setConnectionStatus('connected');
+      setConnectionStatus("connected");
       setReconnectAttempts(0);
       setError(null);
 
@@ -685,7 +682,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
     socket.on("message delivered", (data) => {
       const messageId = data.messageId || data._id || data.id;
       if (messageId) {
-        setMessages(prevMessages =>
+        setMessages((prevMessages) =>
           updateMessageStatus(prevMessages, messageId, MESSAGE_STATUS.DELIVERED)
         );
       }
@@ -695,7 +692,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
     socket.on("message read", (data) => {
       const messageId = data.messageId || data._id || data.id;
       if (messageId) {
-        setMessages(prevMessages =>
+        setMessages((prevMessages) =>
           updateMessageStatus(prevMessages, messageId, MESSAGE_STATUS.READ)
         );
       }
@@ -704,9 +701,9 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
     // Handle bulk read status updates (when a user reads multiple messages at once)
     socket.on("messages bulk read", (data) => {
       if (data.messageIds && Array.isArray(data.messageIds)) {
-        setMessages(prevMessages => {
+        setMessages((prevMessages) => {
           let updatedMessages = [...prevMessages];
-          data.messageIds.forEach(messageId => {
+          data.messageIds.forEach((messageId) => {
             updatedMessages = updateMessageStatus(updatedMessages, messageId, MESSAGE_STATUS.READ);
           });
           return updatedMessages;
@@ -721,13 +718,15 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
 
       if (messageId) {
         // Remove the deleted message from the messages list
-        setMessages(prevMessages => {
-          const filteredMessages = prevMessages.filter(msg => {
+        setMessages((prevMessages) => {
+          const filteredMessages = prevMessages.filter((msg) => {
             const msgId = msg._id || msg.id;
             return msgId !== messageId;
           });
 
-          debugLog(`Removed message ${messageId} from messages list. Before: ${prevMessages.length}, After: ${filteredMessages.length}`);
+          debugLog(
+            `Removed message ${messageId} from messages list. Before: ${prevMessages.length}, After: ${filteredMessages.length}`
+          );
           return filteredMessages;
         });
       }
@@ -852,7 +851,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       socket.disconnect();
       socketRef.current = null;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createSocketConnection]);
 
   // Join a chat room - improved to handle message state properly and prevent duplicate joins
@@ -900,7 +899,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
         socket.on("connect", () => {
           debugLog(`Socket connected, joining chat room ${chatId}`);
           setConnected(true);
-          setConnectionStatus('connected');
+          setConnectionStatus("connected");
 
           // Join the chat room now that we're connected
           socket.emit("join room", chatId, (response) => {
@@ -920,7 +919,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
           }, 300);
 
           // Only show success toast if we're in the chat section and not in silent mode
-          if (window.location.pathname.includes('/messages') && !silentMode) {
+          if (window.location.pathname.includes("/messages") && !silentMode) {
             toast.success("Connected to chat server");
           }
         });
@@ -969,7 +968,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       } else {
         // Socket exists but is not connected
         debugLog("Socket exists but not connected, attempting to reconnect...");
-        setConnectionStatus('connecting');
+        setConnectionStatus("connecting");
 
         // Connect the socket
         socketRef.current.connect();
@@ -985,7 +984,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
           });
           trackRoomJoin(chatId);
           setConnected(true);
-          setConnectionStatus('connected');
+          setConnectionStatus("connected");
 
           // Ensure message listeners are registered after reconnection
           ensureMessageListenersRegistered(socketRef.current);
@@ -999,7 +998,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
           }, 300);
 
           // Only show success toast if we're in the chat section and not in silent mode
-          if (window.location.pathname.includes('/messages') && !silentMode) {
+          if (window.location.pathname.includes("/messages") && !silentMode) {
             toast.success("Reconnected to chat server");
           }
         });
@@ -1041,7 +1040,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
           setCurrentChatId(null);
           currentChatIdRef.current = null;
         }
-      } else if (!chatId && window.location.pathname !== '/login') {
+      } else if (!chatId && window.location.pathname !== "/login") {
         // Only show error if not on login page
         debugLog("Cannot leave chat: invalid chat ID");
         toast.error("Cannot leave chat: invalid chat ID");
@@ -1115,7 +1114,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
         const messagePayload = {
           content: messageData.content.trim(),
           chat: chatId, // This is what the backend expects
-          localMessageId: messageData.localMessageId // Include local message ID if provided
+          localMessageId: messageData.localMessageId, // Include local message ID if provided
         };
 
         // Initialize socket if it doesn't exist
@@ -1131,7 +1130,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
           // Set up event handlers for the new socket
           socket.on("connect", () => {
             setConnected(true);
-            setConnectionStatus('connected');
+            setConnectionStatus("connected");
 
             // Join the chat room first
             socket.emit("join room", chatId);
@@ -1158,7 +1157,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
         // If socket exists but is not connected, try to reconnect or queue the message
         if (!socketRef.current.connected) {
           console.log("Socket exists but not connected, attempting to reconnect...");
-          setConnectionStatus('connecting');
+          setConnectionStatus("connecting");
 
           // Add message to offline queue
           console.log("Adding message to offline queue");
@@ -1175,7 +1174,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
               id: userId,
               username,
             },
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
           };
 
           addToOfflineQueue(queuedMessage);
@@ -1184,9 +1183,12 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
           console.log("Message will be sent when connection is restored");
 
           // Show toast notification
-          toast.info("Message saved to offline queue. It will be sent when connection is restored.", {
-            autoClose: 3000
-          });
+          toast.info(
+            "Message saved to offline queue. It will be sent when connection is restored.",
+            {
+              autoClose: 3000,
+            }
+          );
 
           // Try to reconnect
           socketRef.current.connect();
@@ -1195,7 +1197,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
           socketRef.current.once("connect", () => {
             console.log(`Socket reconnected, joining chat room ${chatId}`);
             setConnected(true);
-            setConnectionStatus('connected');
+            setConnectionStatus("connected");
 
             // Join the chat room first
             socketRef.current.emit("join room", chatId);
@@ -1203,7 +1205,9 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
             // Process the offline queue
             const queue = getOfflineQueue();
             if (queue.length > 0) {
-              console.log(`Processing ${queue.length} messages from offline queue after reconnection`);
+              console.log(
+                `Processing ${queue.length} messages from offline queue after reconnection`
+              );
               // No toast notification for queued messages - handled silently
 
               // The queue will be processed by the connect event handler
@@ -1231,13 +1235,13 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
           sender: {
             _id: userId,
             id: userId,
-            username: username || "You"
+            username: username || "You",
           },
           createdAt: new Date().toISOString(),
-          status: "sending"
+          status: "sending",
         };
 
-        setMessages(prevMessages => [...prevMessages, optimisticMessage]);
+        setMessages((prevMessages) => [...prevMessages, optimisticMessage]);
 
         // Send message with callback to handle acknowledgement
         socketRef.current.emit("new message", messagePayload, (response) => {
@@ -1246,11 +1250,9 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
             toast.warning("Message may not have been delivered. Please check your connection.");
 
             // Update optimistic message to show error
-            setMessages(prevMessages =>
-              prevMessages.map(msg =>
-                msg._id === optimisticMessage._id
-                  ? { ...msg, status: "failed" }
-                  : msg
+            setMessages((prevMessages) =>
+              prevMessages.map((msg) =>
+                msg._id === optimisticMessage._id ? { ...msg, status: "failed" } : msg
               )
             );
 
@@ -1258,11 +1260,9 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
             toast.error("Failed to send message");
           } else {
             // Message sent successfully - update optimistic message
-            setMessages(prevMessages =>
-              prevMessages.map(msg =>
-                msg._id === optimisticMessage._id
-                  ? { ...msg, status: "sent" }
-                  : msg
+            setMessages((prevMessages) =>
+              prevMessages.map((msg) =>
+                msg._id === optimisticMessage._id ? { ...msg, status: "sent" } : msg
               )
             );
           }
@@ -1270,7 +1270,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       } catch (error) {
         console.error("Failed to send message:", error);
         // Always show error toasts, even in silent mode, but only if we're in the chat section
-        if (window.location.pathname.includes('/messages')) {
+        if (window.location.pathname.includes("/messages")) {
           toast.error("Failed to send message");
         }
       }
@@ -1321,7 +1321,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
         // Set up event handlers for the new socket
         socket.on("connect", () => {
           setConnected(true);
-          setConnectionStatus('connected');
+          setConnectionStatus("connected");
 
           // Join the chat room first
           socket.emit("join room", roomId);
@@ -1337,17 +1337,21 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
 
       // If socket exists but is not connected, reconnect it
       if (!socketRef.current.connected) {
-        console.log("Socket exists but not connected, reconnecting before sending typing indicator...");
-        setConnectionStatus('connecting');
+        console.log(
+          "Socket exists but not connected, reconnecting before sending typing indicator..."
+        );
+        setConnectionStatus("connecting");
 
         // Connect the socket
         socketRef.current.connect();
 
         // Set up a one-time connect handler to send typing indicator when connected
         socketRef.current.once("connect", () => {
-          console.log(`Socket reconnected, joining chat room ${roomId} before sending typing indicator`);
+          console.log(
+            `Socket reconnected, joining chat room ${roomId} before sending typing indicator`
+          );
           setConnected(true);
-          setConnectionStatus('connected');
+          setConnectionStatus("connected");
 
           // Join the chat room first
           socketRef.current.emit("join room", roomId);
@@ -1402,14 +1406,14 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
     // If socket exists, try to reconnect it
     if (socketRef.current) {
       console.log("Reconnecting existing socket...");
-      setConnectionStatus('connecting');
+      setConnectionStatus("connecting");
       socketRef.current.connect();
 
       // Set up a one-time connect handler to confirm reconnection
       socketRef.current.once("connect", () => {
         console.log("Socket reconnected successfully");
         setConnected(true);
-        setConnectionStatus('connected');
+        setConnectionStatus("connected");
         setError(null);
 
         // Rejoin current chat if any
@@ -1437,7 +1441,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
     socket.on("connect", () => {
       console.log("New socket connection established");
       setConnected(true);
-      setConnectionStatus('connected');
+      setConnectionStatus("connected");
       setError(null);
 
       // Rejoin current chat if any
@@ -1447,7 +1451,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
       }
 
       // Show success toast if we're in the chat section and not in silent mode
-      if (window.location.pathname.includes('/messages') && !silentMode) {
+      if (window.location.pathname.includes("/messages") && !silentMode) {
         toast.success("Connected to chat server");
       }
     });
@@ -1460,7 +1464,47 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
   // Get the socket instance (for direct access if needed)
   const getSocket = useCallback(() => socketRef.current, []);
 
+  /**
+   * Disconnect the socket connection
+   * Used for logout to properly clean up the socket connection
+   */
+  const disconnect = useCallback(() => {
+    const socket = socketRef.current;
+    if (!socket) {
+      debugLog("No socket to disconnect");
+      return;
+    }
 
+    debugLog("Manually disconnecting socket for logout");
+
+    // Set current user as offline before disconnecting
+    const userId = localStorage.getItem("userId");
+    if (userId && socket.connected) {
+      debugLog(`Setting user ${userId} as offline before logout disconnect`);
+      socket.emit("user offline", { userId });
+    }
+
+    // Leave current chat room if any
+    if (currentChatIdRef.current && socket.connected) {
+      debugLog(`Leaving chat room ${currentChatIdRef.current} on disconnect`);
+      socket.emit("leave room", currentChatIdRef.current);
+      socket.emit("leave chat", { chatId: currentChatIdRef.current });
+    }
+
+    // Disconnect socket
+    socket.disconnect();
+    socketRef.current = null;
+
+    // Reset state
+    setConnected(false);
+    setConnectionStatus("disconnected");
+    setMessages([]);
+    setCurrentChatId(null);
+    setTypingUsers({});
+    setOnlineUsers({});
+
+    debugLog("Socket disconnected for logout");
+  }, []);
 
   return {
     // Connection state
@@ -1496,6 +1540,7 @@ const ensureMessageListenersRegistered = useCallback((socket) => {
     sendTyping,
     subscribe,
     reconnect,
+    disconnect,
     getSocket,
 
     // Direct socket access (use with caution)

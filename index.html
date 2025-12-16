@@ -17,9 +17,9 @@
   <meta name="theme-color" content="#3b82f6" />
 
   <!-- Favicon and App Icons -->
-  <link rel="icon" href="%PUBLIC_URL%/logo.svg" />
-  <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo.svg" />
-  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <link rel="icon" href="/logo.svg" />
+  <link rel="apple-touch-icon" href="/logo.svg" />
+  <link rel="manifest" href="/manifest.json" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
@@ -27,7 +27,7 @@
   <meta property="og:title" content="ChatSphere | Connect Your World">
   <meta property="og:description"
     content="Experience seamless communication with ChatSphere - the modern messaging platform that brings people together in real-time.">
-  <meta property="og:image" content="%PUBLIC_URL%/og-image.jpg">
+  <meta property="og:image" content="/og-image.jpg">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
@@ -35,35 +35,22 @@
   <meta property="twitter:title" content="ChatSphere | Connect Your World">
   <meta property="twitter:description"
     content="Experience seamless communication with ChatSphere - the modern messaging platform that brings people together in real-time.">
-  <meta property="twitter:image" content="%PUBLIC_URL%/og-image.jpg">
+  <meta property="twitter:image" content="/og-image.jpg">
 
   <!-- Preload Critical Resources -->
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Icons -->
+  <!-- Icons - Font Awesome from CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
   <!-- App Specific Meta -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="format-detection" content="telephone=no">
-
-  <!-- PWA Splash Screens for iOS -->
-  <link rel="apple-touch-startup-image" href="%PUBLIC_URL%/splash/apple-splash-2048-2732.jpg"
-    media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-  <link rel="apple-touch-startup-image" href="%PUBLIC_URL%/splash/apple-splash-1668-2388.jpg"
-    media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-  <link rel="apple-touch-startup-image" href="%PUBLIC_URL%/splash/apple-splash-1536-2048.jpg"
-    media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-  <link rel="apple-touch-startup-image" href="%PUBLIC_URL%/splash/apple-splash-1125-2436.jpg"
-    media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
-  <link rel="apple-touch-startup-image" href="%PUBLIC_URL%/splash/apple-splash-1242-2688.jpg"
-    media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 
   <!-- Custom Styles -->
   <style>
@@ -96,20 +83,9 @@
     }
 
     @keyframes pulse {
-      0% {
-        transform: scale(0.95);
-        opacity: 0.7;
-      }
-
-      50% {
-        transform: scale(1.05);
-        opacity: 1;
-      }
-
-      100% {
-        transform: scale(0.95);
-        opacity: 0.7;
-      }
+      0% { transform: scale(0.95); opacity: 0.7; }
+      50% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.7; }
     }
   </style>
 </head>
@@ -117,7 +93,7 @@
 <body>
   <noscript>
     <div style="padding: 20px; text-align: center; font-family: sans-serif;">
-      <img src="%PUBLIC_URL%/logo.svg" alt="ChatSphere Logo" style="width: 80px; height: 80px;">
+      <img src="/logo.svg" alt="ChatSphere Logo" style="width: 80px; height: 80px;">
       <h1 style="color: #3b82f6;">ChatSphere requires JavaScript</h1>
       <p>Please enable JavaScript to experience the full capabilities of ChatSphere.</p>
     </div>
@@ -126,13 +102,14 @@
   <div id="root">
     <!-- Initial loading state before React loads -->
     <div class="app-loading">
-      <img src="%PUBLIC_URL%/ChatSphereDark.png" alt="ChatSphere" class="app-loading-logo">
+      <img src="/ChatSphereDark.png" alt="ChatSphere" class="app-loading-logo">
       <div style="color: #3b82f6; font-weight: 500;">ChatSphere...</div>
     </div>
   </div>
 
-  <!-- Preload critical scripts -->
-  <link rel="preload" href="%PUBLIC_URL%/static/js/main.chunk.js" as="script">
+  <!-- Vite entry point -->
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 
 </html>
+

@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
 import { useSocket } from "../../features/messaging/hooks";
 import { useAuthContext } from "./AuthProvider";
 import { toast } from "react-toastify";
@@ -91,8 +90,8 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket, isAuthenticated]);
 
-  // Global call action handlers
-  const handleGlobalAcceptCall = async () => {
+  // Global call action handlers - memoized with useCallback
+  const handleGlobalAcceptCall = useCallback(async () => {
     try {
       if (globalIncomingCall) {
         await webrtcService.acceptCall(globalIncomingCall);
@@ -101,9 +100,9 @@ export const SocketProvider = ({ children }) => {
       console.error('❌ [SocketProvider] Failed to accept call:', error);
       toast.error('Failed to accept call');
     }
-  };
+  }, [globalIncomingCall]);
 
-  const handleGlobalRejectCall = () => {
+  const handleGlobalRejectCall = useCallback(() => {
     try {
       if (globalIncomingCall) {
         webrtcService.rejectCall(globalIncomingCall);
@@ -114,9 +113,9 @@ export const SocketProvider = ({ children }) => {
       console.error('❌ [SocketProvider] Failed to reject call:', error);
       toast.error('Failed to reject call');
     }
-  };
+  }, [globalIncomingCall]);
 
-  const handleGlobalEndCall = () => {
+  const handleGlobalEndCall = useCallback(() => {
     try {
       webrtcService.endCall();
       setShowGlobalCallModal(false);
@@ -125,9 +124,9 @@ export const SocketProvider = ({ children }) => {
       console.error('❌ [SocketProvider] Failed to end call:', error);
       toast.error('Failed to end call');
     }
-  };
+  }, []);
 
-  const handleGlobalCloseModal = () => {
+  const handleGlobalCloseModal = useCallback(() => {
     if (globalCallState === CALL_STATES.RINGING && globalIncomingCall) {
       // If there's an incoming call, reject it
       handleGlobalRejectCall();
@@ -136,7 +135,7 @@ export const SocketProvider = ({ children }) => {
       setShowGlobalCallModal(false);
       setGlobalIncomingCall(null);
     }
-  };
+  }, [globalCallState, globalIncomingCall, handleGlobalRejectCall]);
 
   // Log socket connection status changes
   useEffect(() => {
@@ -236,13 +235,44 @@ export const SocketProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isAuthenticated]);
 
-  // Only provide socket context if authenticated
-  if (!isAuthenticated()) {
-    return children;
-  }
+  // Memoize subscribe fallback to avoid recreating on each render
+  const subscribeFallback = useCallback(() => () => {}, []);
 
-  // Create enhanced context value that includes both socket and messages state
-  const contextValue = {
+  /**
+   * Cleanup function for logout - cleans up WebRTC and disconnects socket
+   * This should be called before logging out
+   */
+  const cleanupForLogout = useCallback(() => {
+    console.log('🔄 [SocketProvider] Cleaning up for logout...');
+
+    try {
+      // End any active calls and cleanup WebRTC
+      webrtcService.destroy();
+      console.log('✅ [SocketProvider] WebRTC service destroyed');
+    } catch (error) {
+      console.error('❌ [SocketProvider] Error destroying WebRTC service:', error);
+    }
+
+    try {
+      // Disconnect socket
+      if (socket.disconnect) {
+        socket.disconnect();
+        console.log('✅ [SocketProvider] Socket disconnected');
+      }
+    } catch (error) {
+      console.error('❌ [SocketProvider] Error disconnecting socket:', error);
+    }
+
+    // Reset call modal state
+    setShowGlobalCallModal(false);
+    setGlobalIncomingCall(null);
+    setGlobalCallState(CALL_STATES.IDLE);
+
+    console.log('✅ [SocketProvider] Cleanup for logout complete');
+  }, [socket]);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
     ...socket,
     // Expose messages state and functions that components expect (using extracted reactive variables)
     messages,
@@ -252,9 +282,22 @@ export const SocketProvider = ({ children }) => {
     getSocket: socket.getSocket,
     joinChat: socket.joinChat,
     sendMessage: socket.sendMessage,
-    subscribe: socket.subscribe || (() => () => {}), // Add subscribe method if missing
-  };
+    subscribe: socket.subscribe || subscribeFallback,
+    disconnect: socket.disconnect,
+    // Logout cleanup function
+    cleanupForLogout,
+  }), [
+    socket,
+    messages,
+    setMessages,
+    subscribeFallback,
+    cleanupForLogout
+  ]);
 
+  // Only provide socket context if authenticated
+  if (!isAuthenticated()) {
+    return children;
+  }
 
   return (
     <SocketContext.Provider value={contextValue}>
